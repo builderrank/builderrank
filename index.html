@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Builder Rank</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="brand-header">
+        <a class="brand-lockup" href="#" aria-label="Builder Rank home">
+          <img src="assets/builder-rank-logo.png" alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <span class="header-pill">LLM visibility reports for general contractors</span>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="hero-brand">
+            <img src="assets/builder-rank-logo.png" alt="" />
+            <p class="eyebrow">Builder Rank</p>
+          </div>
+          <h1>See how clearly AI can understand your contracting business.</h1>
+          <p class="hero-text">
+            Builder Rank grades general contractor websites for LLM readability, local trust signals, and
+            answer-engine visibility across ChatGPT, Claude, Gemini, and future AI search tools.
+          </p>
+          <form id="auditForm" class="audit-form">
+            <label class="url-field">
+              <span>Contractor website</span>
+              <input id="websiteInput" type="url" value="https://front-range-remodels.com" required />
+            </label>
+            <label class="city-field">
+              <span>Primary market</span>
+              <input id="marketInput" value="Denver, CO" required />
+            </label>
+            <button type="submit">Generate Report Card</button>
+          </form>
+          <p id="auditStatus" class="audit-status" role="status">Ready to run a local website audit.</p>
+        </div>
+
+        <aside class="score-card" aria-label="Builder Rank score">
+          <div class="score-ring">
+            <svg viewBox="0 0 160 160" role="img" aria-label="Builder Rank score">
+              <circle class="ring-bg" cx="80" cy="80" r="68"></circle>
+              <circle id="scoreArc" class="ring-progress" cx="80" cy="80" r="68"></circle>
+            </svg>
+            <div>
+              <strong id="overallScore">72</strong>
+              <span>AI Health Score</span>
+            </div>
+          </div>
+          <div class="model-strip" aria-label="LLM model readability">
+            <span>ChatGPT <strong id="chatgptScore">74</strong></span>
+            <span>Claude <strong id="claudeScore">71</strong></span>
+            <span>Gemini <strong id="geminiScore">69</strong></span>
+          </div>
+          <p id="scoreSummary">
+            AI can identify the business, but it needs stronger license, service-area, and project proof
+            before it confidently recommends this contractor for high-intent remodel searches.
+          </p>
+        </aside>
+      </section>
+
+      <section class="report-grid" aria-label="Report card">
+        <article class="panel audit-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Report Card</p>
+              <h2 id="reportTitle">Front Range Remodels</h2>
+            </div>
+            <span id="gradeBadge" class="grade-badge">B-</span>
+          </div>
+
+          <div id="auditCategories" class="audit-categories"></div>
+        </article>
+
+        <article class="panel fixes-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Highest Impact Fixes</p>
+              <h2>What to change first</h2>
+            </div>
+          </div>
+          <div id="fixList" class="fix-list"></div>
+        </article>
+
+        <article class="panel intent-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Customer Intent</p>
+              <h2>Searches AI should connect to this GC</h2>
+            </div>
+          </div>
+          <div id="intentList" class="intent-list"></div>
+        </article>
+
+        <article class="panel model-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Live Model Analysis</p>
+              <h2>ChatGPT, Claude, and Gemini</h2>
+            </div>
+          </div>
+          <div id="modelAnalysisList" class="model-analysis-list"></div>
+        </article>
+
+        <article class="panel evidence-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Audit Evidence</p>
+              <h2>What the local crawler read</h2>
+            </div>
+          </div>
+          <div id="evidenceList" class="evidence-list"></div>
+        </article>
+
+        <article class="panel roadmap-panel">
+          <div class="panel-header">
+            <img class="panel-logo" src="assets/builder-rank-logo.png" alt="" />
+            <div>
+              <p class="eyebrow">Product Roadmap</p>
+              <h2>From audit to autopilot</h2>
+            </div>
+          </div>
+          <div class="phase-list">
+            <div class="phase active">
+              <span>Phase 1</span>
+              <strong>LLM report card</strong>
+              <p>Audit entity signals, semantic coverage, and AI-friendly technical structure.</p>
+            </div>
+            <div class="phase">
+              <span>Phase 2</span>
+              <strong>Auto-optimization</strong>
+              <p>Generate schema, llms.txt, localized service copy, and backend implementation tasks.</p>
+            </div>
+            <div class="phase">
+              <span>Phase 3</span>
+              <strong>LLM traffic dashboard</strong>
+              <p>Track AI referrals, quoted services, contact conversions, and visibility by market.</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
