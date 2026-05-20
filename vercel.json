@@ -1,17 +1,38 @@
 {
-  "functions": {
-    "api/audit.js": {
-      "maxDuration": 60
-    }
-  },
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/audit",
-      "destination": "/api/audit.js"
+      "src": "api/**/*.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 60
+      }
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "**/*",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/audit",
+      "dest": "/api/audit.js"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/styles.css",
+      "dest": "/styles.css"
+    },
+    {
+      "src": "/llms.txt",
+      "dest": "/llms.txt"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
