@@ -58,8 +58,17 @@ if (isDirectRun()) {
 export async function runAudit(website, market = "") {
   const startUrl = normalizeWebsiteUrl(website);
   const origin = new URL(startUrl).origin;
-  const homepage = await fetchPage(startUrl);
-  const candidateLinks = discoverInternalLinks(homepage.html, startUrl);
+  let crawlError = "";
+  let homepage;
+
+  try {
+    homepage = await fetchPage(startUrl);
+  } catch (error) {
+    crawlError = error.message;
+    homepage = buildUnavailablePage(startUrl, crawlError);
+  }
+
+  const candidateLinks = crawlError ? [] : discoverInternalLinks(homepage.html, startUrl);
   const selectedLinks = selectUsefulLinks(candidateLinks);
   const pages = [homepage];
 
@@ -93,6 +102,7 @@ export async function runAudit(website, market = "") {
       llmsTxtFound: Boolean(llms),
       wordsRead: wordCount(combinedText),
       title,
+      crawlError,
     },
     text: combinedText,
   });
@@ -116,6 +126,7 @@ export async function runAudit(website, market = "") {
       llmsTxtFound: Boolean(llms),
       wordsRead: wordCount(combinedText),
       title,
+      crawlError,
     },
   };
 }
@@ -611,6 +622,25 @@ async function fetchPage(url) {
     html,
     text: normalizeWhitespace(stripNoise(stripTags(html))),
   };
+}
+
+function buildUnavailablePage(url, reason) {
+  const hostname = new URL(url).hostname.replace(/^www\./, "");
+  const escapedReason = escapeHtml(reason);
+
+  return {
+    url,
+    html: `<html><head><title>${hostname}</title></head><body><h1>${hostname}</h1><p>Builder Rank could not fetch this website. Reason: ${escapedReason}</p></body></html>`,
+    text: `${hostname}. Builder Rank could not fetch this website. Reason: ${reason}`,
+  };
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 async function fetchOptionalText(url) {
