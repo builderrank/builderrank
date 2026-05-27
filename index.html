@@ -44,7 +44,13 @@
             </label>
             <button type="submit">Generate Report Card</button>
           </form>
-          <p id="auditStatus" class="audit-status" role="status">Ready to run a local website audit.</p>
+          <div class="report-actions" aria-label="Save report">
+            <p id="auditStatus" class="audit-status" role="status">Ready to run a local website audit.</p>
+            <div class="save-buttons">
+              <button id="pdfButton" type="button">Save PDF</button>
+              <button id="jsonButton" type="button">Export JSON</button>
+            </div>
+          </div>
         </div>
 
         <aside class="score-card" aria-label="Builder Rank score">
