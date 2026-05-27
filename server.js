@@ -179,9 +179,9 @@ async function analyzeWithModels(auditContext) {
           model: provider.model,
           status: "complete",
           score: extractScore(result.score),
-          summary: String(result.summary || `${provider.label} completed the audit.`).slice(0, 420),
+          summary: stringifyModelText(result.summary || `${provider.label} completed the audit.`).slice(0, 420),
           recommendations: Array.isArray(result.recommendations)
-            ? result.recommendations.map((item) => String(item).slice(0, 180)).slice(0, 4)
+            ? result.recommendations.map((item) => stringifyModelText(item).slice(0, 180)).slice(0, 4)
             : [],
         };
       } catch (error) {
@@ -210,7 +210,7 @@ async function callOpenAI(provider, auditContext) {
       model: provider.model,
       instructions: modelSystemPrompt("ChatGPT"),
       input: modelUserPrompt(auditContext),
-      max_output_tokens: 700,
+      max_output_tokens: 1000,
       text: {
         format: {
           type: "json_schema",
@@ -235,7 +235,7 @@ async function callAnthropic(provider, auditContext) {
     },
     body: JSON.stringify({
       model: provider.model,
-      max_tokens: 700,
+      max_tokens: 900,
       system: modelSystemPrompt("Claude"),
       tools: [
         {
@@ -287,6 +287,8 @@ async function callGemini(provider, auditContext) {
         ],
         generationConfig: {
           responseMimeType: "application/json",
+          responseSchema: geminiResponseSchema(),
+          maxOutputTokens: 900,
         },
       }),
     },
@@ -344,6 +346,27 @@ function modelJsonSchema() {
           type: "string",
         },
         maxItems: 4,
+      },
+    },
+    required: ["score", "summary", "recommendations"],
+  };
+}
+
+function geminiResponseSchema() {
+  return {
+    type: "object",
+    properties: {
+      score: {
+        type: "number",
+      },
+      summary: {
+        type: "string",
+      },
+      recommendations: {
+        type: "array",
+        items: {
+          type: "string",
+        },
       },
     },
     required: ["score", "summary", "recommendations"],
@@ -732,8 +755,30 @@ function parseJsonFromText(text) {
       return JSON.parse(match[0]);
     }
 
-    throw new Error("Model response was not valid JSON");
+    return parseFallbackModelText(trimmed);
   }
+}
+
+function parseFallbackModelText(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const scoreMatch = text.match(/(?:score|rating|grade)[^0-9]{0,30}(\d+(\.\d+)?)/i) || text.match(/\b(\d{1,3})\s*\/\s*100\b/);
+  const recommendations = lines
+    .filter((line) => /^[-*•]|\d+\./.test(line))
+    .map((line) => line.replace(/^[-*•]\s*|\d+\.\s*/, ""))
+    .filter((line) => line.length > 20)
+    .slice(0, 4);
+  const summary = lines
+    .find((line) => line.length > 40 && !/^[-*•]|\d+\./.test(line))
+    || text.slice(0, 420);
+
+  return {
+    score: scoreMatch ? Number(scoreMatch[1]) : 0,
+    summary,
+    recommendations,
+  };
 }
 
 function extractScore(value) {
@@ -751,34 +796,74 @@ function extractScore(value) {
 }
 
 function normalizeModelResult(result, providerLabel) {
+  const repairedResult = repairNestedModelResult(result);
   const score =
-    result.score ??
-    result.llm_score ??
-    result.llmVisibilityScore ??
-    result.ai_visibility_score ??
-    result.aiVisibilityScore ??
-    result.visibility_score ??
-    result.rating;
+    repairedResult.score ??
+    repairedResult.llm_score ??
+    repairedResult.llmVisibilityScore ??
+    repairedResult.ai_visibility_score ??
+    repairedResult.aiVisibilityScore ??
+    repairedResult.visibility_score ??
+    repairedResult.rating;
   const summary =
-    result.summary ??
-    result.assessment ??
-    result.analysis ??
-    result.explanation ??
-    result.rationale ??
+    repairedResult.summary ??
+    repairedResult.assessment ??
+    repairedResult.analysis ??
+    repairedResult.explanation ??
+    repairedResult.rationale ??
     `${providerLabel} completed the audit.`;
   const recommendations =
-    result.recommendations ??
-    result.fixes ??
-    result.suggestions ??
-    result.action_items ??
-    result.actionItems ??
+    repairedResult.recommendations ??
+    repairedResult.fixes ??
+    repairedResult.suggestions ??
+    repairedResult.action_items ??
+    repairedResult.actionItems ??
     [];
 
   return {
-    score: score ?? JSON.stringify(result).match(/(?:score|rating)[^0-9]{0,20}(\d+(\.\d+)?)/i)?.[1] ?? 0,
-    summary,
+    score: score ?? JSON.stringify(repairedResult).match(/(?:score|rating)[^0-9]{0,20}(\d+(\.\d+)?)/i)?.[1] ?? 0,
+    summary: stringifyModelText(summary),
     recommendations: Array.isArray(recommendations) ? recommendations : [recommendations].filter(Boolean),
   };
+}
+
+function repairNestedModelResult(result) {
+  const summary = result?.summary;
+
+  if (typeof summary !== "string" || !summary.includes('"summary"')) {
+    return result || {};
+  }
+
+  try {
+    const nested = parseJsonFromText(`{${summary.replace(/^\s*\{?|\}?\s*$/g, "")}}`);
+    return {
+      ...result,
+      ...nested,
+    };
+  } catch {
+    return result;
+  }
+}
+
+function stringifyModelText(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") {
+    return value
+      .replace(/^\s*"?(summary|recommendation|description|text)"?\s*:\s*"?/i, "")
+      .replace(/",?\s*"?recommendations"?\s*:\s*\[.*$/is, "")
+      .trim();
+  }
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return value.map(stringifyModelText).filter(Boolean).join("; ");
+
+  const preferredFields = ["title", "recommendation", "body", "description", "action", "fix", "text", "summary"];
+  const parts = preferredFields
+    .map((field) => value[field])
+    .filter((part) => part !== null && part !== undefined)
+    .map(stringifyModelText)
+    .filter(Boolean);
+
+  return parts.length ? parts.join(": ") : JSON.stringify(value);
 }
 
 function providerEnvName(provider) {
