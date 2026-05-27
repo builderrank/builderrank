@@ -67,12 +67,12 @@ button {
 }
 
 .brand-lockup img {
-  width: 54px;
-  height: 54px;
+  width: 68px;
+  height: 68px;
   border: 1px solid rgba(255, 121, 0, 0.42);
   border-radius: 8px;
   background: #000;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .header-pill {
@@ -119,12 +119,12 @@ button {
 }
 
 .hero-brand img {
-  width: 86px;
-  height: 86px;
+  width: 126px;
+  height: 126px;
   border: 1px solid rgba(255, 121, 0, 0.48);
   border-radius: 8px;
   background: #000;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .eyebrow {
@@ -352,13 +352,13 @@ button:disabled {
 }
 
 .panel-logo {
-  width: 42px;
-  height: 42px;
-  flex: 0 0 42px;
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
   border: 1px solid rgba(255, 121, 0, 0.42);
   border-radius: 8px;
   background: #000;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .grade-badge {
