@@ -97,6 +97,8 @@ const geminiScore = document.querySelector("#geminiScore");
 const auditStatus = document.querySelector("#auditStatus");
 const evidenceList = document.querySelector("#evidenceList");
 const modelAnalysisList = document.querySelector("#modelAnalysisList");
+const pdfButton = document.querySelector("#pdfButton");
+const jsonButton = document.querySelector("#jsonButton");
 
 auditForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -128,6 +130,21 @@ auditForm.addEventListener("submit", async (event) => {
   } finally {
     setLoading(false);
   }
+});
+
+pdfButton.addEventListener("click", () => {
+  const originalTitle = document.title;
+  document.title = reportFilename("pdf").replace(/\.pdf$/, "");
+  window.print();
+  document.title = originalTitle;
+});
+
+jsonButton.addEventListener("click", () => {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    report: audit,
+  };
+  downloadFile(reportFilename("json"), JSON.stringify(payload, null, 2), "application/json");
 });
 
 function createDemoAudit(website, market) {
@@ -215,6 +232,31 @@ function render() {
   intentList.innerHTML = audit.intents.map(renderIntent).join("");
   evidenceList.innerHTML = renderEvidence(audit.evidence);
   modelAnalysisList.innerHTML = renderModelAnalyses(audit.modelAnalyses);
+}
+
+function reportFilename(extension) {
+  const company = audit.company || getHostname(audit.website || websiteInput.value) || "builder-rank-report";
+  const date = new Date().toISOString().slice(0, 10);
+  const slug = company
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "builder-rank-report";
+
+  return `${date}-${slug}-builder-rank.${extension}`;
+}
+
+function downloadFile(filename, contents, type) {
+  const blob = new Blob([contents], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function summaryForScore(score, market) {
