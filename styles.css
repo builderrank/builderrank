@@ -55,6 +55,26 @@ button {
   padding: 12px 14px;
 }
 
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.site-nav a {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.nav-pay-button {
+  min-height: 38px;
+  padding: 0 14px;
+}
+
 .brand-lockup {
   display: inline-flex;
   align-items: center;
@@ -86,6 +106,7 @@ button {
   text-transform: uppercase;
 }
 
+.marketing-hero,
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 390px;
@@ -95,12 +116,139 @@ button {
 }
 
 .hero-copy,
+.marketing-copy,
+.marketing-card,
 .panel,
 .score-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(17, 17, 17, 0.88);
   box-shadow: var(--shadow);
+}
+
+.marketing-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.42fr);
+}
+
+.marketing-copy {
+  min-height: 560px;
+  display: grid;
+  align-content: center;
+  background:
+    linear-gradient(120deg, rgba(255, 121, 0, 0.13), transparent 42%),
+    rgba(10, 10, 10, 0.92);
+  padding: clamp(28px, 6vw, 64px);
+}
+
+.marketing-copy h1 {
+  max-width: 960px;
+  margin-bottom: 24px;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: 0.98;
+}
+
+.marketing-copy p {
+  max-width: 760px;
+  color: #d2d2d2;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.62;
+}
+
+.marketing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.marketing-actions a {
+  display: inline-grid;
+  min-height: 48px;
+  place-items: center;
+  border: 1px solid rgba(255, 121, 0, 0.42);
+  border-radius: 8px;
+  color: var(--orange);
+  padding: 0 18px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.marketing-card,
+.pricing-card {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  background: #080808;
+  padding: 28px;
+}
+
+.mini-report-topline,
+.mini-score {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+}
+
+.mini-report-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.mini-report-topline span,
+.pricing-card span,
+.mini-score span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mini-report-topline strong,
+.pricing-card strong {
+  color: var(--orange);
+  font-size: 2.2rem;
+}
+
+.mini-score strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.4rem;
+}
+
+.education-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.education-panel p:not(.eyebrow),
+.pricing-section p,
+.pricing-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pricing-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(14, 14, 14, 0.92);
+  box-shadow: var(--shadow);
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.pricing-section h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
 }
 
 .hero-copy {
@@ -583,14 +731,29 @@ li {
 }
 
 @media (max-width: 940px) {
+  .marketing-hero,
   .hero,
   .report-grid,
-  .audit-form {
+  .audit-form,
+  .education-grid,
+  .pricing-section {
     grid-template-columns: 1fr;
   }
 
+  .marketing-copy,
   .hero-copy {
     min-height: auto;
+  }
+
+  .site-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .brand-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 
@@ -601,6 +764,8 @@ li {
   }
 
   .hero-copy,
+  .marketing-copy,
+  .marketing-card,
   .score-card,
   .panel {
     padding: 18px;
@@ -622,6 +787,10 @@ li {
   .report-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .site-nav a {
+    display: none;
   }
 }
 
@@ -646,6 +815,8 @@ li {
   }
 
   .brand-header,
+  .marketing-copy,
+  .marketing-card,
   .hero-copy,
   .score-card,
   .panel {
@@ -653,6 +824,7 @@ li {
     box-shadow: none;
   }
 
+  .marketing-hero,
   .hero {
     grid-template-columns: 1fr 320px;
   }
@@ -662,10 +834,14 @@ li {
   }
 
   .audit-form,
+  .site-nav,
+  .marketing-actions,
   .save-buttons {
     display: none;
   }
 
+  .marketing-copy,
+  .marketing-card,
   .hero-copy,
   .score-card,
   .panel,
