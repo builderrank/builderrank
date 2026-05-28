@@ -162,7 +162,7 @@ jsonButton.addEventListener("click", () => {
 
 function handlePaymentClick() {
   if (BUILDER_RANK_PAYMENT_URL) {
-    window.open(BUILDER_RANK_PAYMENT_URL, "_blank", "noopener");
+    window.location.href = BUILDER_RANK_PAYMENT_URL;
     return;
   }
 
