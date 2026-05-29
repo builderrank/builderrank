@@ -84,6 +84,8 @@ This project is Vercel-ready:
 - Static files are served from the project root.
 - The production audit endpoint lives at `/api/audit`.
 - API keys must be configured in Vercel Project Settings, not committed to GitHub.
+- Stripe should redirect successful payments to `https://builderrank.vercel.app/?checkout=success#report-workspace`
+  so the site restores the saved website and market inputs after checkout.
 
 Add these Vercel Environment Variables for Production and Preview:
 
