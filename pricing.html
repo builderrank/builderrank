@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pricing | Builder Rank</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="brand-header">
+        <a class="brand-lockup" href="/" aria-label="Builder Rank home">
+          <img data-builder-logo alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/why-geo">Why GEO</a>
+          <a href="/pricing" aria-current="page">Pricing</a>
+          <a href="/run-report">Run Report</a>
+          <a href="/account">Account</a>
+          <button class="nav-pay-button" type="button" data-payment-link>Buy Report</button>
+        </nav>
+      </header>
+
+      <section class="pricing-section" aria-label="Pricing">
+        <div>
+          <p class="eyebrow">Start with one report</p>
+          <h1>Pay once, run a Builder Rank report, save the PDF.</h1>
+          <p>
+            The current payment path uses Stripe checkout. After payment, customers return to Builder Rank
+            and can run the report from the report workspace.
+          </p>
+        </div>
+        <div class="pricing-card">
+          <span>Single Report</span>
+          <strong>$49</strong>
+          <p>One contractor website, one market, AI model analysis, PDF export, and raw JSON export.</p>
+          <button type="button" data-payment-link>Buy Report</button>
+        </div>
+      </section>
+
+      <section class="journey-grid" aria-label="Customer journey">
+        <article class="panel">
+          <p class="eyebrow">Step 1</p>
+          <h2>Buy the report</h2>
+          <p>Checkout is handled by Stripe, so the payment screen feels familiar and secure.</p>
+        </article>
+        <article class="panel">
+          <p class="eyebrow">Step 2</p>
+          <h2>Run the audit</h2>
+          <p>Return to the report workspace, enter the website and market, and generate the audit.</p>
+        </article>
+        <article class="panel">
+          <p class="eyebrow">Step 3</p>
+          <h2>Account history next</h2>
+          <p>The next build connects login and saved reports so customers can return any time.</p>
+        </article>
+      </section>
+    </main>
+
+    <script src="assets/client.js"></script>
+  </body>
+</html>

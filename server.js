@@ -937,7 +937,15 @@ function selectUsefulLinks(links) {
 }
 
 async function serveStatic(pathname, response) {
-  const cleanPath = pathname === "/" ? "/index.html" : pathname;
+  const routeFiles = {
+    "/": "/index.html",
+    "/why-geo": "/why-geo.html",
+    "/pricing": "/pricing.html",
+    "/run-report": "/run-report.html",
+    "/account": "/account.html",
+  };
+  const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
+  const cleanPath = routeFiles[normalizedPath] || pathname;
   const filePath = normalize(join(ROOT, cleanPath));
 
   if (!filePath.startsWith(ROOT)) {

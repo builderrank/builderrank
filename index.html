@@ -15,14 +15,15 @@
   <body>
     <main class="app-shell">
       <header class="brand-header">
-        <a class="brand-lockup" href="#" aria-label="Builder Rank home">
+        <a class="brand-lockup" href="/" aria-label="Builder Rank home">
           <img data-builder-logo alt="Builder Rank logo" />
           <span>Builder Rank</span>
         </a>
         <nav class="site-nav" aria-label="Primary navigation">
-          <a href="#why-geo">Why GEO</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#report-workspace">Run Report</a>
+          <a href="/why-geo">Why GEO</a>
+          <a href="/pricing">Pricing</a>
+          <a href="/run-report">Run Report</a>
+          <a href="/account">Account</a>
           <button class="nav-pay-button" type="button" data-payment-link>Buy Report</button>
         </nav>
       </header>
@@ -37,8 +38,8 @@
             when homeowners ask who to hire.
           </p>
           <div class="marketing-actions">
-            <button type="button" data-payment-link>Buy a Report</button>
-            <a href="#report-workspace">View sample report</a>
+            <a class="button-link" href="/pricing">See Pricing</a>
+            <a href="/run-report">Run report workspace</a>
           </div>
         </div>
         <aside class="marketing-card" aria-label="Builder Rank report preview">
@@ -58,194 +59,22 @@
         </aside>
       </section>
 
-      <section id="why-geo" class="education-grid" aria-label="Why GEO matters">
-        <article class="panel education-panel">
-          <p class="eyebrow">Why GEO matters</p>
-          <h2>Homeowners are starting searches inside AI assistants.</h2>
-          <p>
-            Search is moving from blue links to answers. When someone asks for a bathroom remodeler,
-            kitchen contractor, or basement finishing company, AI tools need clean evidence before they
-            confidently name a business.
-          </p>
-        </article>
-        <article class="panel education-panel">
-          <p class="eyebrow">What Builder Rank checks</p>
-          <h2>We grade the signals AI can actually read.</h2>
-          <p>
-            Reports inspect service pages, local language, license and insurance proof, reviews,
-            schema, crawlable copy, llms.txt, and model-specific feedback from ChatGPT, Claude, and Gemini.
-          </p>
-        </article>
-        <article class="panel education-panel">
-          <p class="eyebrow">What contractors get</p>
-          <h2>A prioritized report card, not a generic SEO scan.</h2>
-          <p>
-            Each report gives a health score, model-by-model analysis, crawl evidence, customer intent
-            phrases, and the first fixes most likely to improve AI readability.
-          </p>
-        </article>
-      </section>
-
-      <section id="pricing" class="pricing-section" aria-label="Pricing">
-        <div>
-          <p class="eyebrow">Start with one report</p>
-          <h2>Pay once, run a Builder Rank report, save the PDF.</h2>
-          <p>
-            The MVP payment path uses a hosted payment link. After payment, customers can be routed back
-            to the report workspace. Phase two can add accounts, report history, and automated fixes.
-          </p>
-        </div>
-        <div class="pricing-card">
-          <span>Single Report</span>
-          <strong>$49</strong>
-          <p>One contractor website, one market, AI model analysis, PDF export, and raw JSON export.</p>
-          <button type="button" data-payment-link>Buy Report</button>
-        </div>
-      </section>
-
-      <section id="report-workspace" class="hero">
-        <div class="hero-copy">
-          <div class="hero-brand">
-            <img data-builder-logo alt="" />
-            <p class="eyebrow">Report Workspace</p>
-          </div>
-          <h1>Generate the contractor AI visibility report.</h1>
-          <p class="hero-text">
-            Enter a contractor website and market to crawl the site, score GEO readiness, and compare
-            how ChatGPT, Claude, and Gemini read the business.
-          </p>
-          <form id="auditForm" class="audit-form">
-            <label class="url-field">
-              <span>Contractor website</span>
-              <input id="websiteInput" type="url" value="https://front-range-remodels.com" required />
-            </label>
-            <label class="city-field">
-              <span>Primary market</span>
-              <input id="marketInput" value="Denver, CO" required />
-            </label>
-            <button type="submit">Generate Report Card</button>
-          </form>
-          <div id="checkoutNotice" class="checkout-notice" hidden>
-            <strong>Payment received</strong>
-            <p>Generate the audit whenever you are ready.</p>
-            <button id="returnedReportButton" type="button">Run Paid Report</button>
-          </div>
-          <div class="report-actions" aria-label="Save report">
-            <p id="auditStatus" class="audit-status" role="status">Ready to run a local website audit.</p>
-            <div class="save-buttons">
-              <button id="pdfButton" type="button">Save PDF</button>
-              <button id="jsonButton" type="button">Export JSON</button>
-            </div>
-          </div>
-        </div>
-
-        <aside class="score-card" aria-label="Builder Rank score">
-          <div class="score-ring">
-            <svg viewBox="0 0 160 160" role="img" aria-label="Builder Rank score">
-              <circle class="ring-bg" cx="80" cy="80" r="68"></circle>
-              <circle id="scoreArc" class="ring-progress" cx="80" cy="80" r="68"></circle>
-            </svg>
-            <div>
-              <strong id="overallScore">72</strong>
-              <span>AI Health Score</span>
-            </div>
-          </div>
-          <div class="model-strip" aria-label="LLM model readability">
-            <span>ChatGPT <strong id="chatgptScore">74</strong></span>
-            <span>Claude <strong id="claudeScore">71</strong></span>
-            <span>Gemini <strong id="geminiScore">69</strong></span>
-          </div>
-          <p id="scoreSummary">
-            AI can identify the business, but it needs stronger license, service-area, and project proof
-            before it confidently recommends this contractor for high-intent remodel searches.
-          </p>
-        </aside>
-      </section>
-
-      <section class="report-grid" aria-label="Report card">
-        <article class="panel audit-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Report Card</p>
-              <h2 id="reportTitle">Front Range Remodels</h2>
-            </div>
-            <span id="gradeBadge" class="grade-badge">B-</span>
-          </div>
-
-          <div id="auditCategories" class="audit-categories"></div>
-        </article>
-
-        <article class="panel fixes-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Highest Impact Fixes</p>
-              <h2>What to change first</h2>
-            </div>
-          </div>
-          <div id="fixList" class="fix-list"></div>
-        </article>
-
-        <article class="panel intent-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Customer Intent</p>
-              <h2>Searches AI should connect to this GC</h2>
-            </div>
-          </div>
-          <div id="intentList" class="intent-list"></div>
-        </article>
-
-        <article class="panel model-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Live Model Analysis</p>
-              <h2>ChatGPT, Claude, and Gemini</h2>
-            </div>
-          </div>
-          <div id="modelAnalysisList" class="model-analysis-list"></div>
-        </article>
-
-        <article class="panel evidence-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Audit Evidence</p>
-              <h2>What the local crawler read</h2>
-            </div>
-          </div>
-          <div id="evidenceList" class="evidence-list"></div>
-        </article>
-
-        <article class="panel roadmap-panel">
-          <div class="panel-header">
-            <img class="panel-logo" data-builder-logo alt="" />
-            <div>
-              <p class="eyebrow">Product Roadmap</p>
-              <h2>From audit to autopilot</h2>
-            </div>
-          </div>
-          <div class="phase-list">
-            <div class="phase active">
-              <span>Phase 1</span>
-              <strong>LLM report card</strong>
-              <p>Audit entity signals, semantic coverage, and AI-friendly technical structure.</p>
-            </div>
-            <div class="phase">
-              <span>Phase 2</span>
-              <strong>Auto-optimization</strong>
-              <p>Generate schema, llms.txt, localized service copy, and backend implementation tasks.</p>
-            </div>
-            <div class="phase">
-              <span>Phase 3</span>
-              <strong>LLM traffic dashboard</strong>
-              <p>Track AI referrals, quoted services, contact conversions, and visibility by market.</p>
-            </div>
-          </div>
-        </article>
+      <section class="page-grid" aria-label="Builder Rank pages">
+        <a class="route-card" href="/why-geo">
+          <span>01</span>
+          <h2>Why GEO matters</h2>
+          <p>Learn why AI assistants need clean proof before recommending a contractor.</p>
+        </a>
+        <a class="route-card" href="/pricing">
+          <span>02</span>
+          <h2>Pricing</h2>
+          <p>Buy a single report for one website and market.</p>
+        </a>
+        <a class="route-card" href="/run-report">
+          <span>03</span>
+          <h2>Run Report</h2>
+          <p>Enter the website and market, then generate the Builder Rank audit.</p>
+        </a>
       </section>
     </main>
 

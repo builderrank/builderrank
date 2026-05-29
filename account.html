@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account | Builder Rank</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="brand-header">
+        <a class="brand-lockup" href="/" aria-label="Builder Rank home">
+          <img data-builder-logo alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/why-geo">Why GEO</a>
+          <a href="/pricing">Pricing</a>
+          <a href="/run-report">Run Report</a>
+          <a href="/account" aria-current="page">Account</a>
+          <button class="nav-pay-button" type="button" data-payment-link>Buy Report</button>
+        </nav>
+      </header>
+
+      <section class="account-shell">
+        <div class="login-panel">
+          <p class="eyebrow">Customer Account</p>
+          <h1>Sign in to view purchased reports.</h1>
+          <p>
+            This is the customer home for the next phase: login, paid report history, email delivery,
+            and saved PDF/JSON exports.
+          </p>
+          <div class="login-form" aria-label="Preview login form">
+            <label>
+              <span>Email</span>
+              <input type="email" placeholder="you@company.com" />
+            </label>
+            <button type="button">Continue</button>
+          </div>
+        </div>
+
+        <aside class="report-history" aria-label="Purchased reports">
+          <div class="history-topline">
+            <div>
+              <p class="eyebrow">Your reports</p>
+              <h2>Purchased report history</h2>
+            </div>
+            <span>Coming next</span>
+          </div>
+          <div class="history-card">
+            <strong>No saved reports yet</strong>
+            <p>Once login and the report database are connected, purchased reports will appear here.</p>
+          </div>
+          <div class="history-card muted-history">
+            <strong>Front Range Remodels</strong>
+            <p>Example report · Denver, CO · PDF and JSON export</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="assets/client.js"></script>
+  </body>
+</html>

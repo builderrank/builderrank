@@ -27,6 +27,22 @@
       "dest": "/styles.css"
     },
     {
+      "src": "/why-geo/?",
+      "dest": "/why-geo.html"
+    },
+    {
+      "src": "/pricing/?",
+      "dest": "/pricing.html"
+    },
+    {
+      "src": "/run-report/?",
+      "dest": "/run-report.html"
+    },
+    {
+      "src": "/account/?",
+      "dest": "/account.html"
+    },
+    {
       "src": "/llms.txt",
       "dest": "/llms.txt"
     },

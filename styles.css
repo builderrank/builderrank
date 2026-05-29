@@ -70,6 +70,10 @@ button {
   text-transform: uppercase;
 }
 
+.site-nav a[aria-current="page"] {
+  color: var(--orange);
+}
+
 .nav-pay-button {
   min-height: 38px;
   padding: 0 14px;
@@ -171,6 +175,220 @@ button {
   padding: 0 18px;
   font-weight: 900;
   text-decoration: none;
+}
+
+.button-link {
+  display: inline-grid;
+  min-height: 48px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #080808;
+  padding: 0 18px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.page-grid,
+.journey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.route-card {
+  display: grid;
+  gap: 10px;
+  min-height: 210px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(14, 14, 14, 0.92);
+  color: var(--ink);
+  padding: 22px;
+  text-decoration: none;
+}
+
+.route-card span,
+.history-topline span {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--orange-soft);
+  color: var(--orange);
+  padding: 5px 10px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.route-card p,
+.page-hero p,
+.content-band p,
+.journey-grid p,
+.account-shell p,
+.history-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.page-hero,
+.content-band,
+.account-shell {
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(120deg, rgba(255, 121, 0, 0.1), transparent 38%),
+    rgba(10, 10, 10, 0.92);
+  box-shadow: var(--shadow);
+  padding: clamp(28px, 6vw, 58px);
+}
+
+.page-hero p,
+.content-band p,
+.account-shell p {
+  max-width: 780px;
+}
+
+.page-hero h1,
+.pricing-section h1,
+.account-shell h1 {
+  max-width: 920px;
+  margin-bottom: 18px;
+  font-size: clamp(2.3rem, 5vw, 4.7rem);
+  line-height: 0.98;
+}
+
+.content-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.content-band .button-link {
+  flex: 0 0 auto;
+}
+
+.account-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.45fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.login-panel,
+.report-history {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+}
+
+.login-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  max-width: 680px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.login-form span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.history-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.history-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080808;
+  padding: 16px;
+}
+
+.muted-history {
+  opacity: 0.58;
+}
+
+.sample-mark {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border: 1px solid rgba(255, 121, 0, 0.42);
+  border-radius: 8px;
+  background: #000;
+  color: var(--orange);
+  font-size: 1.35rem;
+  letter-spacing: 0;
+}
+
+.sample-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.36fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+
+.sample-hero > div,
+.sample-proof {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(120deg, rgba(255, 121, 0, 0.12), transparent 42%),
+    rgba(10, 10, 10, 0.92);
+  box-shadow: var(--shadow);
+  padding: clamp(28px, 6vw, 58px);
+}
+
+.sample-hero h1 {
+  max-width: 980px;
+  font-size: clamp(2.2rem, 5vw, 4.7rem);
+  line-height: 0.98;
+}
+
+.sample-hero p,
+.sample-proof p {
+  max-width: 780px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.sample-proof {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  background: #080808;
+}
+
+.sample-proof span {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--orange-soft);
+  color: var(--orange);
+  padding: 6px 11px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.sample-proof strong {
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  line-height: 1;
 }
 
 .marketing-card,
@@ -770,8 +988,17 @@ li {
   .report-grid,
   .audit-form,
   .education-grid,
-  .pricing-section {
+  .pricing-section,
+  .page-grid,
+  .journey-grid,
+  .account-shell,
+  .sample-hero {
     grid-template-columns: 1fr;
+  }
+
+  .content-band {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .marketing-copy,
@@ -830,6 +1057,10 @@ li {
   .checkout-notice button {
     grid-row: auto;
     grid-column: auto;
+  }
+
+  .login-form {
+    grid-template-columns: 1fr;
   }
 
   .site-nav a {
