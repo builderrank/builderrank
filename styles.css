@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   min-height: 100vh;
   margin: 0;
@@ -28,7 +32,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -306,6 +311,59 @@ button {
   text-transform: uppercase;
 }
 
+.compact-login-form {
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr) auto;
+  max-width: 100%;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.auth-actions a,
+.secondary-button {
+  display: inline-grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 121, 0, 0.42);
+  border-radius: 8px;
+  background: #080808;
+  color: var(--orange);
+  padding: 0 14px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.account-profile-summary,
+.report-auth-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080808;
+  padding: 16px;
+}
+
+.account-profile-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.account-profile-summary strong,
+.report-auth-panel strong {
+  font-size: 1rem;
+}
+
+.account-profile-summary span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .history-topline {
   display: flex;
   align-items: flex-start;
@@ -564,10 +622,27 @@ h3 {
 
 .hero-text {
   max-width: 720px;
-  margin-bottom: 34px;
+  margin-bottom: 18px;
   color: #d2d2d2;
   font-size: clamp(1rem, 2vw, 1.16rem);
   line-height: 1.6;
+}
+
+.report-auth-panel {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.report-auth-panel.signed-in {
+  border-color: rgba(255, 121, 0, 0.48);
+  background: rgba(255, 121, 0, 0.1);
+}
+
+.report-auth-panel p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .audit-form {
@@ -608,7 +683,8 @@ h3 {
   text-transform: uppercase;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 48px;
   border: 1px solid var(--line);
@@ -618,7 +694,12 @@ input {
   padding: 0 14px;
 }
 
-input:focus {
+select {
+  appearance: none;
+}
+
+input:focus,
+select:focus {
   border-color: var(--orange);
   box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.18);
   outline: none;
@@ -643,6 +724,77 @@ button {
 button:disabled {
   cursor: wait;
   opacity: 0.68;
+}
+
+.modal-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.74);
+  padding: 18px;
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.modal-card {
+  width: min(760px, 100%);
+  max-height: min(860px, calc(100vh - 36px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0c0c0c;
+  box-shadow: var(--shadow);
+  padding: clamp(20px, 4vw, 32px);
+}
+
+.modal-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.modal-topline h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1.05;
+}
+
+.icon-button {
+  width: 42px;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: #080808;
+  color: var(--ink);
+  padding: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.create-account-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.create-account-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.create-account-form span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.create-account-form button {
+  grid-column: 1 / -1;
 }
 
 .audit-status {
@@ -1058,6 +1210,18 @@ li {
     flex-direction: column;
   }
 
+  .email-field,
+  .password-field,
+  .url-field,
+  .city-field,
+  #auditSubmitButton {
+    grid-column: 1;
+  }
+
+  .compact-login-form {
+    grid-template-columns: 1fr;
+  }
+
   .marketing-copy,
   .hero-copy {
     min-height: auto;
@@ -1117,6 +1281,10 @@ li {
   }
 
   .login-form {
+    grid-template-columns: 1fr;
+  }
+
+  .create-account-form {
     grid-template-columns: 1fr;
   }
 

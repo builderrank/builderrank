@@ -36,18 +36,33 @@
           </div>
           <h1>Generate the contractor AI visibility report.</h1>
           <p class="hero-text">
-            Create your report workspace, enter the contractor website and market, then checkout. After
-            payment, you will return here to generate and save the report.
+            Log in, enter the contractor website and market, then checkout. After payment, you will
+            return here to generate and save the report.
           </p>
+          <div id="reportAuthPanel" class="report-auth-panel">
+            <div>
+              <p class="eyebrow">Customer Login</p>
+              <strong id="reportAuthTitle">Log in before buying a report</strong>
+              <p id="reportAuthSummary">Use the same login any time you come back to view purchased reports.</p>
+            </div>
+            <div id="reportLoginForm" class="login-form compact-login-form">
+              <label>
+                <span>Email</span>
+                <input id="reportLoginEmailInput" type="email" placeholder="you@company.com" required />
+              </label>
+              <label>
+                <span>Password</span>
+                <input id="reportLoginPasswordInput" type="password" minlength="8" placeholder="Your password" required />
+              </label>
+              <button id="reportLoginButton" type="button">Log In</button>
+            </div>
+            <div class="auth-actions">
+              <button id="reportCreateOpenButton" class="secondary-button" type="button">Create Account</button>
+              <a href="/account">View dashboard</a>
+            </div>
+          </div>
           <form id="auditForm" class="audit-form">
-            <label class="email-field">
-              <span>Account email</span>
-              <input id="emailInput" type="email" placeholder="you@company.com" required />
-            </label>
-            <label class="password-field">
-              <span>Create password</span>
-              <input id="passwordInput" type="password" minlength="8" placeholder="8+ characters" required />
-            </label>
+            <input id="emailInput" type="hidden" />
             <label class="url-field">
               <span>Contractor website</span>
               <input id="websiteInput" type="url" placeholder="https://example-contractor.com" required />
@@ -65,7 +80,7 @@
           </div>
           <div class="report-actions" aria-label="Save report">
             <p id="auditStatus" class="audit-status" role="status">
-              Create your account workspace and complete all fields before checkout.
+              Log in or create an account, then complete the report fields before checkout.
             </p>
             <div class="save-buttons">
               <button id="pdfButton" type="button">Save PDF</button>
@@ -182,6 +197,59 @@
         </article>
       </section>
     </main>
+
+    <div id="createAccountModal" class="modal-backdrop" hidden>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createAccountTitle">
+        <div class="modal-topline">
+          <div>
+            <p class="eyebrow">Create Account</p>
+            <h2 id="createAccountTitle">Set up your Builder Rank workspace</h2>
+          </div>
+          <button id="createAccountCloseButton" class="icon-button" type="button" aria-label="Close create account form">X</button>
+        </div>
+        <form id="createAccountForm" class="create-account-form">
+          <label>
+            <span>Email</span>
+            <input id="createEmailInput" type="email" placeholder="you@company.com" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="createPasswordInput" type="password" minlength="8" placeholder="8+ characters" required />
+          </label>
+          <label>
+            <span>Confirm password</span>
+            <input id="createPasswordConfirmInput" type="password" minlength="8" placeholder="Re-enter password" required />
+          </label>
+          <label>
+            <span>First name</span>
+            <input id="createFirstNameInput" autocomplete="given-name" required />
+          </label>
+          <label>
+            <span>Last name</span>
+            <input id="createLastNameInput" autocomplete="family-name" required />
+          </label>
+          <label>
+            <span>Company name</span>
+            <input id="createCompanyInput" autocomplete="organization" required />
+          </label>
+          <label>
+            <span>Company size</span>
+            <select id="createCompanySizeInput" required>
+              <option value="">Select size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="50+">50+ employees</option>
+            </select>
+          </label>
+          <label>
+            <span>Trade</span>
+            <input id="createTradeInput" placeholder="General contractor, roofer, remodeler..." required />
+          </label>
+          <button type="submit">Create Account</button>
+        </form>
+        <p id="createAccountStatus" class="account-status" role="status"></p>
+      </section>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/client.js"></script>

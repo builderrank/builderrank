@@ -31,22 +31,27 @@
       <section class="account-shell">
         <div class="login-panel">
           <p class="eyebrow">Customer Account</p>
-          <h1>Create an account to view purchased reports.</h1>
+          <h1>Log in to your report dashboard.</h1>
           <p>
-            Create a password before checkout so reports save to your Builder Rank account and can be
-            loaded again later.
+            Sign in to view purchased reports, run new audits, and keep report history tied to one
+            Builder Rank workspace.
           </p>
-          <div class="login-form" aria-label="Preview login form">
+          <div id="accountLoginForm" class="login-form" aria-label="Customer login form">
             <label>
               <span>Email</span>
-              <input id="accountEmailInput" type="email" placeholder="you@company.com" required />
+              <input id="accountLoginEmailInput" type="email" placeholder="you@company.com" required />
             </label>
             <label>
-              <span>Create password</span>
-              <input id="accountPasswordInput" type="password" minlength="8" placeholder="8+ characters" required />
+              <span>Password</span>
+              <input id="accountLoginPasswordInput" type="password" minlength="8" placeholder="Your password" required />
             </label>
-            <button id="accountEmailButton" type="button">Create Account</button>
+            <button id="accountLoginButton" type="button">Log In</button>
           </div>
+          <div class="auth-actions">
+            <button id="accountCreateOpenButton" class="secondary-button" type="button">Create Account</button>
+            <button id="accountSignOutButton" class="secondary-button" type="button" hidden>Log Out</button>
+          </div>
+          <div id="accountProfileSummary" class="account-profile-summary" hidden></div>
         </div>
 
         <aside class="report-history" aria-label="Purchased reports">
@@ -62,6 +67,59 @@
         </aside>
       </section>
     </main>
+
+    <div id="createAccountModal" class="modal-backdrop" hidden>
+      <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createAccountTitle">
+        <div class="modal-topline">
+          <div>
+            <p class="eyebrow">Create Account</p>
+            <h2 id="createAccountTitle">Set up your Builder Rank workspace</h2>
+          </div>
+          <button id="createAccountCloseButton" class="icon-button" type="button" aria-label="Close create account form">X</button>
+        </div>
+        <form id="createAccountForm" class="create-account-form">
+          <label>
+            <span>Email</span>
+            <input id="createEmailInput" type="email" placeholder="you@company.com" required />
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="createPasswordInput" type="password" minlength="8" placeholder="8+ characters" required />
+          </label>
+          <label>
+            <span>Confirm password</span>
+            <input id="createPasswordConfirmInput" type="password" minlength="8" placeholder="Re-enter password" required />
+          </label>
+          <label>
+            <span>First name</span>
+            <input id="createFirstNameInput" autocomplete="given-name" required />
+          </label>
+          <label>
+            <span>Last name</span>
+            <input id="createLastNameInput" autocomplete="family-name" required />
+          </label>
+          <label>
+            <span>Company name</span>
+            <input id="createCompanyInput" autocomplete="organization" required />
+          </label>
+          <label>
+            <span>Company size</span>
+            <select id="createCompanySizeInput" required>
+              <option value="">Select size</option>
+              <option value="1-10">1-10 employees</option>
+              <option value="11-50">11-50 employees</option>
+              <option value="50+">50+ employees</option>
+            </select>
+          </label>
+          <label>
+            <span>Trade</span>
+            <input id="createTradeInput" placeholder="General contractor, roofer, remodeler..." required />
+          </label>
+          <button type="submit">Create Account</button>
+        </form>
+        <p id="createAccountStatus" class="account-status" role="status"></p>
+      </section>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/client.js"></script>
