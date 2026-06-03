@@ -552,6 +552,8 @@ async function refreshAuthState() {
         : "Your reports will save to this account.";
     }
     if (accountLoginButton) accountLoginButton.disabled = true;
+    if (accountCreateOpenButton) accountCreateOpenButton.hidden = true;
+    if (reportCreateOpenButton) reportCreateOpenButton.hidden = true;
     if (accountSignOutButton) accountSignOutButton.hidden = false;
     renderProfileSummary(user, profile);
   } else {
@@ -561,6 +563,8 @@ async function refreshAuthState() {
     if (reportAuthTitle) reportAuthTitle.textContent = "Log in before buying a report";
     if (reportAuthSummary) reportAuthSummary.textContent = "Use the same login any time you come back to view purchased reports.";
     if (accountLoginButton) accountLoginButton.disabled = false;
+    if (accountCreateOpenButton) accountCreateOpenButton.hidden = false;
+    if (reportCreateOpenButton) reportCreateOpenButton.hidden = false;
     if (accountSignOutButton) accountSignOutButton.hidden = true;
     if (accountProfileSummary) {
       accountProfileSummary.hidden = true;
