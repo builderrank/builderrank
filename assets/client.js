@@ -87,6 +87,7 @@ const baseAudit = {
 };
 
 let audit = structuredClone(baseAudit);
+let checkoutConfirmed = false;
 
 const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
@@ -106,6 +107,7 @@ const geminiScore = document.querySelector("#geminiScore");
 const auditStatus = document.querySelector("#auditStatus");
 const evidenceList = document.querySelector("#evidenceList");
 const modelAnalysisList = document.querySelector("#modelAnalysisList");
+const auditSubmitButton = document.querySelector("#auditSubmitButton");
 const pdfButton = document.querySelector("#pdfButton");
 const jsonButton = document.querySelector("#jsonButton");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
@@ -128,6 +130,12 @@ paymentButtons.forEach((button) => {
 if (auditForm) {
   auditForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+
+    if (!checkoutConfirmed) {
+      beginCheckout();
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -185,6 +193,22 @@ hydrateCheckoutReturn();
 hydrateAccountPage();
 
 function handlePaymentClick() {
+  if (!auditForm) {
+    window.location.href = "/run-report";
+    return;
+  }
+
+  beginCheckout();
+}
+
+function beginCheckout() {
+  if (!auditForm) {
+    window.location.href = "/run-report";
+    return;
+  }
+
+  if (!validateReportIntake()) return;
+
   if (BUILDER_RANK_PAYMENT_URL) {
     savePendingReport();
     window.location.href = BUILDER_RANK_PAYMENT_URL;
@@ -192,6 +216,26 @@ function handlePaymentClick() {
   }
 
   alert("Payment link is not connected yet. Create a Stripe Payment Link, then replace BUILDER_RANK_PAYMENT_URL in assets/client.js.");
+}
+
+function validateReportIntake() {
+  if (!auditForm.checkValidity()) {
+    auditForm.reportValidity();
+    if (auditStatus) {
+      auditStatus.textContent = "Create your account with email, then enter the contractor website and market before checkout.";
+    }
+    return false;
+  }
+
+  if (emailInput?.value) {
+    try {
+      localStorage.setItem(ACCOUNT_EMAIL_KEY, emailInput.value);
+    } catch {
+      // Continue to checkout even if browser storage is unavailable.
+    }
+  }
+
+  return true;
 }
 
 function savePendingReport() {
@@ -217,20 +261,30 @@ function hydrateCheckoutReturn() {
   const checkoutValue = params.get("checkout") || params.get("paid") || params.get("payment");
   const isCheckoutReturn = checkoutValue && CHECKOUT_SUCCESS_VALUES.has(checkoutValue.toLowerCase());
   const pendingReport = readPendingReport();
+  checkoutConfirmed = Boolean(isCheckoutReturn);
 
   if (isCheckoutReturn && !auditForm) {
     window.location.href = "/run-report?checkout=success#report-workspace";
     return;
   }
 
-  if (pendingReport) {
+  if (emailInput) emailInput.value = readAccountEmail() || emailInput.value;
+
+  if (pendingReport && isCheckoutReturn) {
     if (emailInput) emailInput.value = pendingReport.email || emailInput.value;
     if (websiteInput) websiteInput.value = pendingReport.website || websiteInput.value;
     if (marketInput) marketInput.value = pendingReport.market || marketInput.value;
   }
 
-  if (!isCheckoutReturn) return;
+  if (!isCheckoutReturn) {
+    if (auditSubmitButton) auditSubmitButton.textContent = "Continue to Checkout";
+    if (auditStatus) {
+      auditStatus.textContent = "Create your account workspace and complete all fields before checkout.";
+    }
+    return;
+  }
 
+  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Report Card";
   if (checkoutNotice) checkoutNotice.hidden = false;
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
