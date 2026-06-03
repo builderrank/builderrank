@@ -1,11 +1,19 @@
 const BUILDER_RANK_LOGO_SRC = "/assets/builder-rank-logo.png";
 
 const BUILDER_RANK_PAYMENT_URL = "https://buy.stripe.com/5kQeVd0Gdb1UaRu7AQ8bS00";
+const SUPABASE_URL = "https://hosepwwflfpqgemfcafj.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Tq-L9aiYVbdtij2JL3oW3Q_FBDNokzQ";
 const PENDING_REPORT_KEY = "builderRankPendingReport";
 const REPORT_HISTORY_KEY = "builderRankReportHistory";
 const ACCOUNT_EMAIL_KEY = "builderRankAccountEmail";
 const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
+const builderRankSupabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+  },
+});
 
 const baseAudit = {
   company: "Front Range Remodels",
@@ -135,7 +143,7 @@ if (auditForm) {
     event.preventDefault();
 
     if (!checkoutConfirmed) {
-      beginCheckout();
+      await beginCheckout();
       return;
     }
 
@@ -160,8 +168,10 @@ if (auditForm) {
       }
 
       audit = payload;
-      saveCompletedReport(payload);
-      auditStatus.textContent = `Real audit complete for ${payload.website}.`;
+      const saveResult = await saveCompletedReport(payload);
+      auditStatus.textContent = saveResult?.cloudSaved
+        ? `Real audit complete for ${payload.website}. Saved to your account.`
+        : `Real audit complete for ${payload.website}. Saved in this browser.`;
       render();
     } catch (error) {
       auditStatus.textContent = `Could not complete the audit: ${error.message}`;
@@ -201,16 +211,16 @@ function handlePaymentClick() {
     return;
   }
 
-  beginCheckout();
+  void beginCheckout();
 }
 
-function beginCheckout() {
+async function beginCheckout() {
   if (!auditForm) {
     window.location.href = "/run-report";
     return;
   }
 
-  if (!validateReportIntake()) return;
+  if (!(await validateReportIntake())) return;
 
   if (BUILDER_RANK_PAYMENT_URL) {
     savePendingReport();
@@ -221,7 +231,7 @@ function beginCheckout() {
   alert("Payment link is not connected yet. Create a Stripe Payment Link, then replace BUILDER_RANK_PAYMENT_URL in assets/client.js.");
 }
 
-function validateReportIntake() {
+async function validateReportIntake() {
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
@@ -230,16 +240,85 @@ function validateReportIntake() {
     return false;
   }
 
-  if (emailInput?.value) {
+  const email = emailInput?.value.trim();
+  const password = passwordInput?.value;
+
+  if (email && password) {
     try {
-      localStorage.setItem(ACCOUNT_EMAIL_KEY, emailInput.value);
-      saveAccountProfile(emailInput.value);
-    } catch {
-      // Continue to checkout even if browser storage is unavailable.
+      setCheckoutPreparing(true);
+      await ensureSupabaseAccount(email, password, auditStatus);
+      localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
+      saveAccountProfile(email);
+      if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure checkout...";
+    } catch (error) {
+      if (auditStatus) {
+        auditStatus.textContent = error.message || "Could not create or sign in to the account before checkout.";
+      }
+      return false;
+    } finally {
+      setCheckoutPreparing(false);
     }
   }
 
   return true;
+}
+
+async function ensureSupabaseAccount(email, password, statusElement) {
+  if (!builderRankSupabase) {
+    saveAccountProfile(email);
+    return { mode: "local" };
+  }
+
+  const normalizedEmail = email.toLowerCase();
+  const { data: sessionData } = await builderRankSupabase.auth.getSession();
+  const sessionUser = sessionData?.session?.user;
+
+  if (sessionUser?.email?.toLowerCase() === normalizedEmail) {
+    saveAccountProfile(email);
+    return { mode: "signed-in", user: sessionUser };
+  }
+
+  if (statusElement) statusElement.textContent = "Creating your account workspace...";
+
+  const signUpResult = await builderRankSupabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        product: "Builder Rank",
+      },
+    },
+  });
+
+  if (signUpResult.error) {
+    const message = signUpResult.error.message || "";
+    if (/already|registered|exists/i.test(message)) {
+      const signInResult = await builderRankSupabase.auth.signInWithPassword({ email, password });
+      if (signInResult.error) throw signInResult.error;
+      saveAccountProfile(email);
+      return { mode: "signed-in", user: signInResult.data.user };
+    }
+
+    throw signUpResult.error;
+  }
+
+  if (signUpResult.data?.session) {
+    saveAccountProfile(email);
+    return { mode: "signed-in", user: signUpResult.data.user };
+  }
+
+  throw new Error("Account created. Check your email to confirm it, then sign in before checkout.");
+}
+
+function setCheckoutPreparing(isPreparing) {
+  if (!auditSubmitButton) return;
+
+  auditSubmitButton.disabled = isPreparing;
+  auditSubmitButton.textContent = isPreparing
+    ? "Creating Account..."
+    : checkoutConfirmed
+      ? "Generate Report Card"
+      : "Continue to Checkout";
 }
 
 function savePendingReport() {
@@ -282,6 +361,11 @@ function hydrateCheckoutReturn() {
   }
 
   if (!isCheckoutReturn) {
+    if (passwordInput) {
+      passwordInput.required = true;
+      passwordInput.disabled = false;
+      passwordInput.placeholder = "8+ characters";
+    }
     if (auditSubmitButton) auditSubmitButton.textContent = "Continue to Checkout";
     if (auditStatus) {
       auditStatus.textContent = "Create your account workspace and complete all fields before checkout.";
@@ -289,6 +373,11 @@ function hydrateCheckoutReturn() {
     return;
   }
 
+  if (passwordInput) {
+    passwordInput.required = false;
+    passwordInput.disabled = true;
+    passwordInput.placeholder = "Account already created";
+  }
   if (auditSubmitButton) auditSubmitButton.textContent = "Generate Report Card";
   if (checkoutNotice) checkoutNotice.hidden = false;
   if (auditStatus) {
@@ -306,9 +395,9 @@ function hydrateAccountPage() {
   const savedEmail = readAccountEmail();
   if (accountEmailInput && savedEmail) accountEmailInput.value = savedEmail;
 
-  accountEmailButton?.addEventListener("click", () => {
+  accountEmailButton?.addEventListener("click", async () => {
     const email = accountEmailInput?.value.trim();
-    const password = accountPasswordInput?.value.trim();
+    const password = accountPasswordInput?.value;
 
     if (!email) {
       if (accountStatus) accountStatus.textContent = "Enter an email to create the account workspace.";
@@ -323,16 +412,26 @@ function hydrateAccountPage() {
     }
 
     try {
+      accountEmailButton.disabled = true;
+      accountEmailButton.textContent = "Creating...";
+      if (accountStatus) accountStatus.textContent = "Creating your account workspace...";
+      await ensureSupabaseAccount(email, password, accountStatus);
       localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
       saveAccountProfile(email);
       accountPasswordInput.value = "";
-      if (accountStatus) accountStatus.textContent = `Account workspace created for ${email}.`;
-    } catch {
-      if (accountStatus) accountStatus.textContent = "Could not save the account workspace in this browser.";
+      if (accountStatus) accountStatus.textContent = `Account created and signed in for ${email}.`;
+      await renderReportHistory();
+    } catch (error) {
+      if (accountStatus) {
+        accountStatus.textContent = error.message || "Could not create or sign in to the account.";
+      }
+    } finally {
+      accountEmailButton.disabled = false;
+      accountEmailButton.textContent = "Create Account";
     }
   });
 
-  renderReportHistory();
+  void renderReportHistory();
 }
 
 function readAccountEmail() {
@@ -374,7 +473,7 @@ function readReportHistory() {
   }
 }
 
-function saveCompletedReport(report) {
+async function saveCompletedReport(report) {
   const score = typeof report.score === "number" ? report.score : scoreAudit();
   const completedReport = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -394,28 +493,89 @@ function saveCompletedReport(report) {
   } catch {
     // The generated report still works if browser storage is unavailable.
   }
+
+  let cloudSaved = false;
+  if (builderRankSupabase) {
+    const { data: sessionData } = await builderRankSupabase.auth.getSession();
+    if (sessionData?.session) {
+      const { error } = await builderRankSupabase.from("reports").insert({
+        email: completedReport.email,
+        company: completedReport.company,
+        website: completedReport.website,
+        market: completedReport.market,
+        score: completedReport.score,
+        grade: completedReport.grade,
+        report,
+      });
+
+      if (error) {
+        console.warn("Could not save Supabase report", error);
+      } else {
+        cloudSaved = true;
+      }
+    }
+  }
+
+  return { cloudSaved };
 }
 
-function renderReportHistory() {
+async function renderReportHistory() {
   if (!reportHistoryList) return;
 
-  const history = readReportHistory();
+  let history = [];
+  let source = "local";
+
+  if (builderRankSupabase) {
+    const { data: sessionData } = await builderRankSupabase.auth.getSession();
+    if (sessionData?.session) {
+      const { data, error } = await builderRankSupabase
+        .from("reports")
+        .select("id,email,company,website,market,score,grade,created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.warn("Could not load Supabase reports", error);
+      } else {
+        history = data.map((item) => ({
+          id: item.id,
+          email: item.email,
+          company: item.company,
+          website: item.website,
+          market: item.market,
+          score: item.score,
+          grade: item.grade,
+          createdAt: item.created_at,
+        }));
+        source = "cloud";
+      }
+    }
+  }
+
+  if (!history.length) history = readReportHistory();
   if (reportCountBadge) reportCountBadge.textContent = `${history.length} saved`;
 
   if (!history.length) {
     reportHistoryList.innerHTML = `
       <div class="history-card">
         <strong>No saved reports yet</strong>
-        <p>Run a report from the workspace and it will appear here in this browser.</p>
+        <p>Run a report from the workspace and it will appear here in your account.</p>
         <a href="/run-report">Run first report</a>
       </div>
     `;
-    if (accountStatus) accountStatus.textContent = "Report history is local for now. Supabase will make it permanent across devices.";
+    if (accountStatus) {
+      accountStatus.textContent = source === "cloud"
+        ? "Signed in. No saved reports yet."
+        : "Create or sign in to an account to load saved reports.";
+    }
     return;
   }
 
   reportHistoryList.innerHTML = history.map(renderHistoryCard).join("");
-  if (accountStatus) accountStatus.textContent = "These reports are saved in this browser until cloud accounts are connected.";
+  if (accountStatus) {
+    accountStatus.textContent = source === "cloud"
+      ? "Loaded from your Builder Rank account."
+      : "Showing reports saved in this browser.";
+  }
 }
 
 function renderHistoryCard(report) {
