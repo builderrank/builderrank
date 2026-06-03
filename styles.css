@@ -572,10 +572,10 @@ h3 {
 
 .audit-form {
   display: grid;
-  grid-template-columns: minmax(170px, 0.75fr) minmax(170px, 0.65fr) minmax(0, 1.2fr) minmax(150px, 0.55fr) auto;
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
   align-items: end;
-  max-width: 1180px;
+  max-width: 100%;
 }
 
 .email-field,
@@ -586,6 +586,17 @@ h3 {
   gap: 8px;
 }
 
+.email-field,
+.password-field,
+.url-field {
+  grid-column: span 2;
+}
+
+.city-field,
+#auditSubmitButton {
+  grid-column: span 1;
+}
+
 .email-field span,
 .password-field span,
 .url-field span,
@@ -593,6 +604,7 @@ h3 {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 900;
+  line-height: 1.15;
   text-transform: uppercase;
 }
 
@@ -620,6 +632,12 @@ button {
   color: #080808;
   padding: 0 18px;
   font-weight: 900;
+}
+
+#auditSubmitButton {
+  min-height: 56px;
+  padding: 0 16px;
+  line-height: 1.1;
 }
 
 button:disabled {
