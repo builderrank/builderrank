@@ -4,6 +4,7 @@ const BUILDER_RANK_PAYMENT_URL = "https://buy.stripe.com/5kQeVd0Gdb1UaRu7AQ8bS00
 const PENDING_REPORT_KEY = "builderRankPendingReport";
 const REPORT_HISTORY_KEY = "builderRankReportHistory";
 const ACCOUNT_EMAIL_KEY = "builderRankAccountEmail";
+const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
 
 const baseAudit = {
@@ -91,6 +92,7 @@ let checkoutConfirmed = false;
 
 const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
+const passwordInput = document.querySelector("#passwordInput");
 const websiteInput = document.querySelector("#websiteInput");
 const marketInput = document.querySelector("#marketInput");
 const overallScore = document.querySelector("#overallScore");
@@ -114,6 +116,7 @@ const paymentButtons = document.querySelectorAll("[data-payment-link]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
 const returnedReportButton = document.querySelector("#returnedReportButton");
 const accountEmailInput = document.querySelector("#accountEmailInput");
+const accountPasswordInput = document.querySelector("#accountPasswordInput");
 const accountEmailButton = document.querySelector("#accountEmailButton");
 const accountStatus = document.querySelector("#accountStatus");
 const reportHistoryList = document.querySelector("#reportHistoryList");
@@ -222,7 +225,7 @@ function validateReportIntake() {
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
-      auditStatus.textContent = "Create your account with email, then enter the contractor website and market before checkout.";
+      auditStatus.textContent = "Create your account with email and password, then enter the contractor website and market before checkout.";
     }
     return false;
   }
@@ -230,6 +233,7 @@ function validateReportIntake() {
   if (emailInput?.value) {
     try {
       localStorage.setItem(ACCOUNT_EMAIL_KEY, emailInput.value);
+      saveAccountProfile(emailInput.value);
     } catch {
       // Continue to checkout even if browser storage is unavailable.
     }
@@ -243,6 +247,7 @@ function savePendingReport() {
 
   const pendingReport = {
     email: emailInput?.value || accountEmailInput?.value || readAccountEmail() || "",
+    accountCreated: Boolean(passwordInput?.value || accountPasswordInput?.value || readAccountProfile()?.accountCreated),
     website: websiteInput?.value || "",
     market: marketInput?.value || "",
     savedAt: new Date().toISOString(),
@@ -303,16 +308,27 @@ function hydrateAccountPage() {
 
   accountEmailButton?.addEventListener("click", () => {
     const email = accountEmailInput?.value.trim();
+    const password = accountPasswordInput?.value.trim();
+
     if (!email) {
-      if (accountStatus) accountStatus.textContent = "Enter an email to label this workspace.";
+      if (accountStatus) accountStatus.textContent = "Enter an email to create the account workspace.";
+      accountEmailInput?.reportValidity();
+      return;
+    }
+
+    if (!password || password.length < 8) {
+      if (accountStatus) accountStatus.textContent = "Create a password with at least 8 characters.";
+      accountPasswordInput?.reportValidity();
       return;
     }
 
     try {
       localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
-      if (accountStatus) accountStatus.textContent = `Workspace email saved for ${email}.`;
+      saveAccountProfile(email);
+      accountPasswordInput.value = "";
+      if (accountStatus) accountStatus.textContent = `Account workspace created for ${email}.`;
     } catch {
-      if (accountStatus) accountStatus.textContent = "Could not save the email in this browser.";
+      if (accountStatus) accountStatus.textContent = "Could not save the account workspace in this browser.";
     }
   });
 
@@ -325,6 +341,28 @@ function readAccountEmail() {
   } catch {
     return "";
   }
+}
+
+function readAccountProfile() {
+  try {
+    return JSON.parse(localStorage.getItem(ACCOUNT_PROFILE_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function saveAccountProfile(email) {
+  if (!email) return;
+
+  const existing = readAccountProfile();
+  const profile = {
+    email,
+    accountCreated: true,
+    createdAt: existing?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  localStorage.setItem(ACCOUNT_PROFILE_KEY, JSON.stringify(profile));
 }
 
 function readReportHistory() {
