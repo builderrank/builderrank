@@ -36,23 +36,23 @@
           </div>
           <h1>Generate the contractor AI visibility report.</h1>
           <p class="hero-text">
-            Enter a contractor website and market to crawl the site, score GEO readiness, and compare
-            how ChatGPT, Claude, and Gemini read the business.
+            Create your report workspace, enter the contractor website and market, then checkout. After
+            payment, you will return here to generate and save the report.
           </p>
           <form id="auditForm" class="audit-form">
             <label class="email-field">
-              <span>Email</span>
-              <input id="emailInput" type="email" placeholder="you@company.com" />
+              <span>Account email</span>
+              <input id="emailInput" type="email" placeholder="you@company.com" required />
             </label>
             <label class="url-field">
               <span>Contractor website</span>
-              <input id="websiteInput" type="url" value="https://front-range-remodels.com" required />
+              <input id="websiteInput" type="url" placeholder="https://example-contractor.com" required />
             </label>
             <label class="city-field">
               <span>Primary market</span>
-              <input id="marketInput" value="Denver, CO" required />
+              <input id="marketInput" placeholder="Denver, CO" required />
             </label>
-            <button type="submit">Generate Report Card</button>
+            <button id="auditSubmitButton" type="submit">Continue to Checkout</button>
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
             <strong>Payment received</strong>
@@ -60,7 +60,9 @@
             <button id="returnedReportButton" type="button">Run Paid Report</button>
           </div>
           <div class="report-actions" aria-label="Save report">
-            <p id="auditStatus" class="audit-status" role="status">Ready to run a local website audit.</p>
+            <p id="auditStatus" class="audit-status" role="status">
+              Create your account workspace and complete all fields before checkout.
+            </p>
             <div class="save-buttons">
               <button id="pdfButton" type="button">Save PDF</button>
               <button id="jsonButton" type="button">Export JSON</button>
