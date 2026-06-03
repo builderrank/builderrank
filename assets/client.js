@@ -2,6 +2,8 @@ const BUILDER_RANK_LOGO_SRC = "/assets/builder-rank-logo.png";
 
 const BUILDER_RANK_PAYMENT_URL = "https://buy.stripe.com/5kQeVd0Gdb1UaRu7AQ8bS00";
 const PENDING_REPORT_KEY = "builderRankPendingReport";
+const REPORT_HISTORY_KEY = "builderRankReportHistory";
+const ACCOUNT_EMAIL_KEY = "builderRankAccountEmail";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
 
 const baseAudit = {
@@ -87,6 +89,7 @@ const baseAudit = {
 let audit = structuredClone(baseAudit);
 
 const auditForm = document.querySelector("#auditForm");
+const emailInput = document.querySelector("#emailInput");
 const websiteInput = document.querySelector("#websiteInput");
 const marketInput = document.querySelector("#marketInput");
 const overallScore = document.querySelector("#overallScore");
@@ -108,6 +111,11 @@ const jsonButton = document.querySelector("#jsonButton");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
 const returnedReportButton = document.querySelector("#returnedReportButton");
+const accountEmailInput = document.querySelector("#accountEmailInput");
+const accountEmailButton = document.querySelector("#accountEmailButton");
+const accountStatus = document.querySelector("#accountStatus");
+const reportHistoryList = document.querySelector("#reportHistoryList");
+const reportCountBadge = document.querySelector("#reportCountBadge");
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -141,6 +149,7 @@ if (auditForm) {
       }
 
       audit = payload;
+      saveCompletedReport(payload);
       auditStatus.textContent = `Real audit complete for ${payload.website}.`;
       render();
     } catch (error) {
@@ -173,6 +182,7 @@ if (auditForm) {
 }
 
 hydrateCheckoutReturn();
+hydrateAccountPage();
 
 function handlePaymentClick() {
   if (BUILDER_RANK_PAYMENT_URL) {
@@ -185,9 +195,10 @@ function handlePaymentClick() {
 }
 
 function savePendingReport() {
-  if (!websiteInput && !marketInput) return;
+  if (!emailInput && !accountEmailInput && !websiteInput && !marketInput) return;
 
   const pendingReport = {
+    email: emailInput?.value || accountEmailInput?.value || readAccountEmail() || "",
     website: websiteInput?.value || "",
     market: marketInput?.value || "",
     savedAt: new Date().toISOString(),
@@ -195,6 +206,7 @@ function savePendingReport() {
 
   try {
     localStorage.setItem(PENDING_REPORT_KEY, JSON.stringify(pendingReport));
+    if (pendingReport.email) localStorage.setItem(ACCOUNT_EMAIL_KEY, pendingReport.email);
   } catch {
     // Checkout should still continue if storage is unavailable.
   }
@@ -212,6 +224,7 @@ function hydrateCheckoutReturn() {
   }
 
   if (pendingReport) {
+    if (emailInput) emailInput.value = pendingReport.email || emailInput.value;
     if (websiteInput) websiteInput.value = pendingReport.website || websiteInput.value;
     if (marketInput) marketInput.value = pendingReport.market || marketInput.value;
   }
@@ -226,6 +239,105 @@ function hydrateCheckoutReturn() {
   }
 
   document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function hydrateAccountPage() {
+  if (!reportHistoryList) return;
+
+  const savedEmail = readAccountEmail();
+  if (accountEmailInput && savedEmail) accountEmailInput.value = savedEmail;
+
+  accountEmailButton?.addEventListener("click", () => {
+    const email = accountEmailInput?.value.trim();
+    if (!email) {
+      if (accountStatus) accountStatus.textContent = "Enter an email to label this workspace.";
+      return;
+    }
+
+    try {
+      localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
+      if (accountStatus) accountStatus.textContent = `Workspace email saved for ${email}.`;
+    } catch {
+      if (accountStatus) accountStatus.textContent = "Could not save the email in this browser.";
+    }
+  });
+
+  renderReportHistory();
+}
+
+function readAccountEmail() {
+  try {
+    return localStorage.getItem(ACCOUNT_EMAIL_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function readReportHistory() {
+  try {
+    const history = JSON.parse(localStorage.getItem(REPORT_HISTORY_KEY) || "[]");
+    return Array.isArray(history) ? history : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCompletedReport(report) {
+  const score = typeof report.score === "number" ? report.score : scoreAudit();
+  const completedReport = {
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    email: emailInput?.value || readPendingReport()?.email || readAccountEmail() || "",
+    company: report.company || getHostname(report.website),
+    website: report.website,
+    market: report.market,
+    score,
+    grade: report.grade || gradeForScore(score),
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    if (completedReport.email) localStorage.setItem(ACCOUNT_EMAIL_KEY, completedReport.email);
+    const history = readReportHistory().filter((item) => item.website !== completedReport.website);
+    localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify([completedReport, ...history].slice(0, 12)));
+  } catch {
+    // The generated report still works if browser storage is unavailable.
+  }
+}
+
+function renderReportHistory() {
+  if (!reportHistoryList) return;
+
+  const history = readReportHistory();
+  if (reportCountBadge) reportCountBadge.textContent = `${history.length} saved`;
+
+  if (!history.length) {
+    reportHistoryList.innerHTML = `
+      <div class="history-card">
+        <strong>No saved reports yet</strong>
+        <p>Run a report from the workspace and it will appear here in this browser.</p>
+        <a href="/run-report">Run first report</a>
+      </div>
+    `;
+    if (accountStatus) accountStatus.textContent = "Report history is local for now. Supabase will make it permanent across devices.";
+    return;
+  }
+
+  reportHistoryList.innerHTML = history.map(renderHistoryCard).join("");
+  if (accountStatus) accountStatus.textContent = "These reports are saved in this browser until cloud accounts are connected.";
+}
+
+function renderHistoryCard(report) {
+  const created = report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "Saved report";
+  const scoreLabel = report.score === undefined ? "Score pending" : `${report.score} AI Health Score`;
+
+  return `
+    <article class="history-card">
+      <strong>${escapeHtml(report.company || "Contractor report")}</strong>
+      <p>${escapeHtml(report.market || "Market not set")} · ${escapeHtml(scoreLabel)} · ${escapeHtml(report.grade || "Ungraded")}</p>
+      <span>${escapeHtml(report.website || "")}${report.email ? ` · ${escapeHtml(report.email)}` : ""} · ${escapeHtml(created)}</span>
+      <a href="/run-report">Run another report</a>
+    </article>
+  `;
 }
 
 function readPendingReport() {
