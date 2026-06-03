@@ -31,17 +31,21 @@
       <section class="account-shell">
         <div class="login-panel">
           <p class="eyebrow">Customer Account</p>
-          <h1>Sign in to view purchased reports.</h1>
+          <h1>Create an account to view purchased reports.</h1>
           <p>
-            Enter the email used at checkout to see reports saved in this browser. Full password login
-            and cloud report storage come next.
+            Create a password before checkout so reports have an account workspace. Full password login
+            and cloud report storage come next with Supabase.
           </p>
           <div class="login-form" aria-label="Preview login form">
             <label>
               <span>Email</span>
-              <input id="accountEmailInput" type="email" placeholder="you@company.com" />
+              <input id="accountEmailInput" type="email" placeholder="you@company.com" required />
             </label>
-            <button id="accountEmailButton" type="button">Continue</button>
+            <label>
+              <span>Create password</span>
+              <input id="accountPasswordInput" type="password" minlength="8" placeholder="8+ characters" required />
+            </label>
+            <button id="accountEmailButton" type="button">Create Account</button>
           </div>
         </div>
 

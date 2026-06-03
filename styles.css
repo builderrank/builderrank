@@ -288,10 +288,10 @@ button {
 
 .login-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.7fr) auto;
   gap: 10px;
   align-items: end;
-  max-width: 680px;
+  max-width: 880px;
 }
 
 .login-form label {
@@ -572,13 +572,14 @@ h3 {
 
 .audit-form {
   display: grid;
-  grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1.25fr) minmax(150px, 0.6fr) auto;
+  grid-template-columns: minmax(170px, 0.75fr) minmax(170px, 0.65fr) minmax(0, 1.2fr) minmax(150px, 0.55fr) auto;
   gap: 10px;
   align-items: end;
-  max-width: 1080px;
+  max-width: 1180px;
 }
 
 .email-field,
+.password-field,
 .url-field,
 .city-field {
   display: grid;
@@ -586,6 +587,7 @@ h3 {
 }
 
 .email-field span,
+.password-field span,
 .url-field span,
 .city-field span {
   color: var(--muted);
