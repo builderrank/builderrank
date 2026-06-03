@@ -320,6 +320,41 @@ button {
   padding: 16px;
 }
 
+.history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.history-card strong,
+.history-card span,
+.history-card a {
+  display: block;
+}
+
+.history-card span {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.history-card a {
+  width: fit-content;
+  margin-top: 12px;
+  color: var(--orange);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.account-status {
+  min-height: 22px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
 .muted-history {
   opacity: 0.58;
 }
@@ -537,18 +572,20 @@ h3 {
 
 .audit-form {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(160px, 0.7fr) auto;
+  grid-template-columns: minmax(170px, 0.75fr) minmax(0, 1.25fr) minmax(150px, 0.6fr) auto;
   gap: 10px;
   align-items: end;
-  max-width: 900px;
+  max-width: 1080px;
 }
 
+.email-field,
 .url-field,
 .city-field {
   display: grid;
   gap: 8px;
 }
 
+.email-field span,
 .url-field span,
 .city-field span {
   color: var(--muted);

@@ -33,15 +33,15 @@
           <p class="eyebrow">Customer Account</p>
           <h1>Sign in to view purchased reports.</h1>
           <p>
-            This is the customer home for the next phase: login, paid report history, email delivery,
-            and saved PDF/JSON exports.
+            Enter the email used at checkout to keep this workspace organized. Full password login and
+            cloud report storage come next.
           </p>
           <div class="login-form" aria-label="Preview login form">
             <label>
               <span>Email</span>
-              <input type="email" placeholder="you@company.com" />
+              <input id="accountEmailInput" type="email" placeholder="you@company.com" />
             </label>
-            <button type="button">Continue</button>
+            <button id="accountEmailButton" type="button">Continue</button>
           </div>
         </div>
 
@@ -51,16 +51,10 @@
               <p class="eyebrow">Your reports</p>
               <h2>Purchased report history</h2>
             </div>
-            <span>Coming next</span>
+            <span id="reportCountBadge">0 saved</span>
           </div>
-          <div class="history-card">
-            <strong>No saved reports yet</strong>
-            <p>Once login and the report database are connected, purchased reports will appear here.</p>
-          </div>
-          <div class="history-card muted-history">
-            <strong>Front Range Remodels</strong>
-            <p>Example report · Denver, CO · PDF and JSON export</p>
-          </div>
+          <div id="accountStatus" class="account-status" role="status"></div>
+          <div id="reportHistoryList" class="history-list"></div>
         </aside>
       </section>
     </main>
