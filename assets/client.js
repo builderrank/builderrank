@@ -126,6 +126,7 @@ const accountLoginEmailInput = document.querySelector("#accountLoginEmailInput")
 const accountLoginPasswordInput = document.querySelector("#accountLoginPasswordInput");
 const accountLoginForm = document.querySelector("#accountLoginForm");
 const accountLoginButton = document.querySelector("#accountLoginButton");
+const accountResetOpenButton = document.querySelector("#accountResetOpenButton");
 const accountCreateOpenButton = document.querySelector("#accountCreateOpenButton");
 const accountSignOutButton = document.querySelector("#accountSignOutButton");
 const accountProfileSummary = document.querySelector("#accountProfileSummary");
@@ -139,6 +140,7 @@ const reportLoginForm = document.querySelector("#reportLoginForm");
 const reportLoginEmailInput = document.querySelector("#reportLoginEmailInput");
 const reportLoginPasswordInput = document.querySelector("#reportLoginPasswordInput");
 const reportLoginButton = document.querySelector("#reportLoginButton");
+const reportResetOpenButton = document.querySelector("#reportResetOpenButton");
 const reportCreateOpenButton = document.querySelector("#reportCreateOpenButton");
 const createAccountModal = document.querySelector("#createAccountModal");
 const createAccountForm = document.querySelector("#createAccountForm");
@@ -152,6 +154,16 @@ const createLastNameInput = document.querySelector("#createLastNameInput");
 const createCompanyInput = document.querySelector("#createCompanyInput");
 const createCompanySizeInput = document.querySelector("#createCompanySizeInput");
 const createTradeInput = document.querySelector("#createTradeInput");
+const resetPasswordModal = document.querySelector("#resetPasswordModal");
+const resetPasswordForm = document.querySelector("#resetPasswordForm");
+const resetPasswordCloseButton = document.querySelector("#resetPasswordCloseButton");
+const resetPasswordStatus = document.querySelector("#resetPasswordStatus");
+const resetEmailInput = document.querySelector("#resetEmailInput");
+const updatePasswordModal = document.querySelector("#updatePasswordModal");
+const updatePasswordForm = document.querySelector("#updatePasswordForm");
+const updatePasswordStatus = document.querySelector("#updatePasswordStatus");
+const newPasswordInput = document.querySelector("#newPasswordInput");
+const newPasswordConfirmInput = document.querySelector("#newPasswordConfirmInput");
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -427,6 +439,23 @@ function hydrateAuthFlows() {
     await handleLogin(reportLoginEmailInput, reportLoginPasswordInput, auditStatus, reportLoginButton);
   });
 
+  accountResetOpenButton?.addEventListener("click", () => openResetPasswordModal(accountLoginEmailInput?.value));
+  reportResetOpenButton?.addEventListener("click", () => openResetPasswordModal(reportLoginEmailInput?.value));
+  resetPasswordCloseButton?.addEventListener("click", closeResetPasswordModal);
+  resetPasswordModal?.addEventListener("click", (event) => {
+    if (event.target === resetPasswordModal) closeResetPasswordModal();
+  });
+
+  resetPasswordForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await handlePasswordResetRequest();
+  });
+
+  updatePasswordForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await handlePasswordUpdate();
+  });
+
   accountCreateOpenButton?.addEventListener("click", () => openCreateAccountModal(accountLoginEmailInput?.value));
   reportCreateOpenButton?.addEventListener("click", () => openCreateAccountModal(reportLoginEmailInput?.value));
   createAccountCloseButton?.addEventListener("click", closeCreateAccountModal);
@@ -483,6 +512,8 @@ function hydrateAuthFlows() {
     if (accountStatus) accountStatus.textContent = "Logged out.";
     await refreshAuthState();
   });
+
+  maybeOpenPasswordRecovery();
 }
 
 async function handleLogin(emailElement, passwordElement, statusElement, buttonElement) {
@@ -528,6 +559,105 @@ function closeCreateAccountModal() {
   if (!createAccountModal) return;
   createAccountModal.hidden = true;
   createAccountForm?.reset();
+}
+
+function openResetPasswordModal(prefillEmail = "") {
+  if (!resetPasswordModal) return;
+  resetPasswordModal.hidden = false;
+  if (resetEmailInput && prefillEmail) resetEmailInput.value = prefillEmail;
+  if (resetPasswordStatus) resetPasswordStatus.textContent = "";
+  resetEmailInput?.focus();
+}
+
+function closeResetPasswordModal() {
+  if (!resetPasswordModal) return;
+  resetPasswordModal.hidden = true;
+  resetPasswordForm?.reset();
+}
+
+async function handlePasswordResetRequest() {
+  if (!builderRankSupabase) {
+    if (resetPasswordStatus) resetPasswordStatus.textContent = "Password reset is unavailable because Supabase did not load.";
+    return;
+  }
+
+  if (!resetPasswordForm.checkValidity()) {
+    resetPasswordForm.reportValidity();
+    return;
+  }
+
+  const submitButton = resetPasswordForm.querySelector("button[type='submit']");
+  const email = resetEmailInput.value.trim();
+
+  try {
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending...";
+    const { error } = await builderRankSupabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/account?reset=password`,
+    });
+    if (error) throw error;
+    if (resetPasswordStatus) {
+      resetPasswordStatus.textContent = "Reset link sent. Check your email and follow the link to create a new password.";
+    }
+  } catch (error) {
+    if (resetPasswordStatus) resetPasswordStatus.textContent = error.message || "Could not send the reset email.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Send Reset Link";
+  }
+}
+
+function maybeOpenPasswordRecovery() {
+  if (!updatePasswordModal) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const isRecovery = params.get("reset") === "password" || hashParams.get("type") === "recovery";
+
+  if (isRecovery) {
+    updatePasswordModal.hidden = false;
+    if (updatePasswordStatus) updatePasswordStatus.textContent = "Enter a new password for your Builder Rank account.";
+    newPasswordInput?.focus();
+  }
+}
+
+async function handlePasswordUpdate() {
+  if (!builderRankSupabase) {
+    if (updatePasswordStatus) updatePasswordStatus.textContent = "Password update is unavailable because Supabase did not load.";
+    return;
+  }
+
+  if (!updatePasswordForm.checkValidity()) {
+    updatePasswordForm.reportValidity();
+    return;
+  }
+
+  if (newPasswordInput.value !== newPasswordConfirmInput.value) {
+    newPasswordConfirmInput.setCustomValidity("Passwords must match.");
+    newPasswordConfirmInput.reportValidity();
+    newPasswordConfirmInput.setCustomValidity("");
+    if (updatePasswordStatus) updatePasswordStatus.textContent = "Passwords must match.";
+    return;
+  }
+
+  const submitButton = updatePasswordForm.querySelector("button[type='submit']");
+
+  try {
+    submitButton.disabled = true;
+    submitButton.textContent = "Updating...";
+    const { error } = await builderRankSupabase.auth.updateUser({ password: newPasswordInput.value });
+    if (error) throw error;
+    updatePasswordForm.reset();
+    updatePasswordModal.hidden = true;
+    window.history.replaceState({}, document.title, "/account");
+    if (accountStatus) accountStatus.textContent = "Password updated. You are signed in.";
+    await refreshAuthState();
+  } catch (error) {
+    if (updatePasswordStatus) updatePasswordStatus.textContent = error.message || "Could not update the password.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Update Password";
+  }
 }
 
 async function refreshAuthState() {
