@@ -48,6 +48,7 @@
             <button id="accountLoginButton" type="button">Log In</button>
           </div>
           <div class="auth-actions">
+            <button id="accountResetOpenButton" class="text-button" type="button">Forgot password?</button>
             <button id="accountCreateOpenButton" class="secondary-button" type="button">Create Account</button>
             <button id="accountSignOutButton" class="secondary-button" type="button" hidden>Log Out</button>
           </div>
@@ -118,6 +119,49 @@
           <button type="submit">Create Account</button>
         </form>
         <p id="createAccountStatus" class="account-status" role="status"></p>
+      </section>
+    </div>
+
+    <div id="resetPasswordModal" class="modal-backdrop" hidden>
+      <section class="modal-card small-modal-card" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
+        <div class="modal-topline">
+          <div>
+            <p class="eyebrow">Password Reset</p>
+            <h2 id="resetPasswordTitle">Send a password reset link</h2>
+          </div>
+          <button id="resetPasswordCloseButton" class="icon-button" type="button" aria-label="Close password reset form">X</button>
+        </div>
+        <form id="resetPasswordForm" class="single-field-form">
+          <label>
+            <span>Email</span>
+            <input id="resetEmailInput" type="email" placeholder="you@company.com" required />
+          </label>
+          <button type="submit">Send Reset Link</button>
+        </form>
+        <p id="resetPasswordStatus" class="account-status" role="status"></p>
+      </section>
+    </div>
+
+    <div id="updatePasswordModal" class="modal-backdrop" hidden>
+      <section class="modal-card small-modal-card" role="dialog" aria-modal="true" aria-labelledby="updatePasswordTitle">
+        <div class="modal-topline">
+          <div>
+            <p class="eyebrow">New Password</p>
+            <h2 id="updatePasswordTitle">Create a new password</h2>
+          </div>
+        </div>
+        <form id="updatePasswordForm" class="single-field-form">
+          <label>
+            <span>New password</span>
+            <input id="newPasswordInput" type="password" minlength="8" placeholder="8+ characters" required />
+          </label>
+          <label>
+            <span>Confirm new password</span>
+            <input id="newPasswordConfirmInput" type="password" minlength="8" placeholder="Re-enter password" required />
+          </label>
+          <button type="submit">Update Password</button>
+        </form>
+        <p id="updatePasswordStatus" class="account-status" role="status"></p>
       </section>
     </div>
 

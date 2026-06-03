@@ -324,7 +324,8 @@ button {
 }
 
 .auth-actions a,
-.secondary-button {
+.secondary-button,
+.text-button {
   display: inline-grid;
   min-height: 42px;
   place-items: center;
@@ -337,6 +338,17 @@ button {
   font-weight: 900;
   text-decoration: none;
   text-transform: uppercase;
+}
+
+.text-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+}
+
+.text-button:hover {
+  color: var(--orange);
 }
 
 .account-profile-summary,
@@ -751,6 +763,10 @@ button:disabled {
   padding: clamp(20px, 4vw, 32px);
 }
 
+.small-modal-card {
+  width: min(520px, 100%);
+}
+
 .modal-topline {
   display: flex;
   align-items: flex-start;
@@ -781,20 +797,28 @@ button:disabled {
   gap: 12px;
 }
 
-.create-account-form label {
+.create-account-form label,
+.single-field-form label {
   display: grid;
   gap: 8px;
 }
 
-.create-account-form span {
+.create-account-form span,
+.single-field-form span {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.create-account-form button {
+.create-account-form button,
+.single-field-form button {
   grid-column: 1 / -1;
+}
+
+.single-field-form {
+  display: grid;
+  gap: 12px;
 }
 
 .audit-status {

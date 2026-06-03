@@ -57,6 +57,7 @@
               <button id="reportLoginButton" type="button">Log In</button>
             </div>
             <div class="auth-actions">
+              <button id="reportResetOpenButton" class="text-button" type="button">Forgot password?</button>
               <button id="reportCreateOpenButton" class="secondary-button" type="button">Create Account</button>
               <a href="/account">View dashboard</a>
             </div>
@@ -248,6 +249,26 @@
           <button type="submit">Create Account</button>
         </form>
         <p id="createAccountStatus" class="account-status" role="status"></p>
+      </section>
+    </div>
+
+    <div id="resetPasswordModal" class="modal-backdrop" hidden>
+      <section class="modal-card small-modal-card" role="dialog" aria-modal="true" aria-labelledby="resetPasswordTitle">
+        <div class="modal-topline">
+          <div>
+            <p class="eyebrow">Password Reset</p>
+            <h2 id="resetPasswordTitle">Send a password reset link</h2>
+          </div>
+          <button id="resetPasswordCloseButton" class="icon-button" type="button" aria-label="Close password reset form">X</button>
+        </div>
+        <form id="resetPasswordForm" class="single-field-form">
+          <label>
+            <span>Email</span>
+            <input id="resetEmailInput" type="email" placeholder="you@company.com" required />
+          </label>
+          <button type="submit">Send Reset Link</button>
+        </form>
+        <p id="resetPasswordStatus" class="account-status" role="status"></p>
       </section>
     </div>
 
