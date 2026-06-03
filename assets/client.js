@@ -100,7 +100,6 @@ let checkoutConfirmed = false;
 
 const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
-const passwordInput = document.querySelector("#passwordInput");
 const websiteInput = document.querySelector("#websiteInput");
 const marketInput = document.querySelector("#marketInput");
 const overallScore = document.querySelector("#overallScore");
@@ -123,12 +122,36 @@ const jsonButton = document.querySelector("#jsonButton");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
 const returnedReportButton = document.querySelector("#returnedReportButton");
-const accountEmailInput = document.querySelector("#accountEmailInput");
-const accountPasswordInput = document.querySelector("#accountPasswordInput");
-const accountEmailButton = document.querySelector("#accountEmailButton");
+const accountLoginEmailInput = document.querySelector("#accountLoginEmailInput");
+const accountLoginPasswordInput = document.querySelector("#accountLoginPasswordInput");
+const accountLoginForm = document.querySelector("#accountLoginForm");
+const accountLoginButton = document.querySelector("#accountLoginButton");
+const accountCreateOpenButton = document.querySelector("#accountCreateOpenButton");
+const accountSignOutButton = document.querySelector("#accountSignOutButton");
+const accountProfileSummary = document.querySelector("#accountProfileSummary");
 const accountStatus = document.querySelector("#accountStatus");
 const reportHistoryList = document.querySelector("#reportHistoryList");
 const reportCountBadge = document.querySelector("#reportCountBadge");
+const reportAuthPanel = document.querySelector("#reportAuthPanel");
+const reportAuthTitle = document.querySelector("#reportAuthTitle");
+const reportAuthSummary = document.querySelector("#reportAuthSummary");
+const reportLoginForm = document.querySelector("#reportLoginForm");
+const reportLoginEmailInput = document.querySelector("#reportLoginEmailInput");
+const reportLoginPasswordInput = document.querySelector("#reportLoginPasswordInput");
+const reportLoginButton = document.querySelector("#reportLoginButton");
+const reportCreateOpenButton = document.querySelector("#reportCreateOpenButton");
+const createAccountModal = document.querySelector("#createAccountModal");
+const createAccountForm = document.querySelector("#createAccountForm");
+const createAccountCloseButton = document.querySelector("#createAccountCloseButton");
+const createAccountStatus = document.querySelector("#createAccountStatus");
+const createEmailInput = document.querySelector("#createEmailInput");
+const createPasswordInput = document.querySelector("#createPasswordInput");
+const createPasswordConfirmInput = document.querySelector("#createPasswordConfirmInput");
+const createFirstNameInput = document.querySelector("#createFirstNameInput");
+const createLastNameInput = document.querySelector("#createLastNameInput");
+const createCompanyInput = document.querySelector("#createCompanyInput");
+const createCompanySizeInput = document.querySelector("#createCompanySizeInput");
+const createTradeInput = document.querySelector("#createTradeInput");
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -203,7 +226,9 @@ if (auditForm) {
 }
 
 hydrateCheckoutReturn();
+hydrateAuthFlows();
 hydrateAccountPage();
+void refreshAuthState();
 
 function handlePaymentClick() {
   if (!auditForm) {
@@ -235,67 +260,72 @@ async function validateReportIntake() {
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
-      auditStatus.textContent = "Create your account with email and password, then enter the contractor website and market before checkout.";
+      auditStatus.textContent = "Enter the contractor website and market before checkout.";
     }
     return false;
   }
 
-  const email = emailInput?.value.trim();
-  const password = passwordInput?.value;
-
-  if (email && password) {
-    try {
-      setCheckoutPreparing(true);
-      await ensureSupabaseAccount(email, password, auditStatus);
-      localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
-      saveAccountProfile(email);
-      if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure checkout...";
-    } catch (error) {
-      if (auditStatus) {
-        auditStatus.textContent = error.message || "Could not create or sign in to the account before checkout.";
-      }
-      return false;
-    } finally {
-      setCheckoutPreparing(false);
-    }
+  const session = await getCurrentSession();
+  if (!session?.user) {
+    if (auditStatus) auditStatus.textContent = "Log in or create an account before buying a report.";
+    reportLoginEmailInput?.focus();
+    return false;
   }
 
+  if (emailInput) emailInput.value = session.user.email || "";
+  try {
+    localStorage.setItem(ACCOUNT_EMAIL_KEY, session.user.email || "");
+    saveAccountProfile(session.user.email, session.user.user_metadata);
+  } catch {
+    // Continue to checkout even if browser storage is unavailable.
+  }
+
+  if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure checkout...";
   return true;
 }
 
-async function ensureSupabaseAccount(email, password, statusElement) {
+async function getCurrentSession() {
+  if (!builderRankSupabase) return null;
+
+  const { data } = await builderRankSupabase.auth.getSession();
+  return data?.session || null;
+}
+
+async function signInSupabaseAccount(email, password, statusElement) {
   if (!builderRankSupabase) {
-    saveAccountProfile(email);
+    throw new Error("Account login is unavailable because Supabase did not load.");
+  }
+
+  if (statusElement) statusElement.textContent = "Signing you in...";
+  const { data, error } = await builderRankSupabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+
+  saveAccountProfile(data.user.email, data.user.user_metadata);
+  return data.user;
+}
+
+async function createSupabaseAccount(profile, password, statusElement) {
+  if (!builderRankSupabase) {
+    saveAccountProfile(profile.email, profile);
     return { mode: "local" };
   }
 
-  const normalizedEmail = email.toLowerCase();
-  const { data: sessionData } = await builderRankSupabase.auth.getSession();
-  const sessionUser = sessionData?.session?.user;
-
-  if (sessionUser?.email?.toLowerCase() === normalizedEmail) {
-    saveAccountProfile(email);
-    return { mode: "signed-in", user: sessionUser };
-  }
-
-  if (statusElement) statusElement.textContent = "Creating your account workspace...";
+  if (statusElement) statusElement.textContent = "Creating your account...";
 
   const signUpResult = await builderRankSupabase.auth.signUp({
-    email,
+    email: profile.email,
     password,
     options: {
-      data: {
-        product: "Builder Rank",
-      },
+      data: profile,
     },
   });
 
   if (signUpResult.error) {
     const message = signUpResult.error.message || "";
     if (/already|registered|exists/i.test(message)) {
-      const signInResult = await builderRankSupabase.auth.signInWithPassword({ email, password });
+      const signInResult = await builderRankSupabase.auth.signInWithPassword({ email: profile.email, password });
       if (signInResult.error) throw signInResult.error;
-      saveAccountProfile(email);
+      saveAccountProfile(signInResult.data.user.email, signInResult.data.user.user_metadata);
       return { mode: "signed-in", user: signInResult.data.user };
     }
 
@@ -303,7 +333,7 @@ async function ensureSupabaseAccount(email, password, statusElement) {
   }
 
   if (signUpResult.data?.session) {
-    saveAccountProfile(email);
+    saveAccountProfile(signUpResult.data.user.email, signUpResult.data.user.user_metadata);
     return { mode: "signed-in", user: signUpResult.data.user };
   }
 
@@ -322,11 +352,11 @@ function setCheckoutPreparing(isPreparing) {
 }
 
 function savePendingReport() {
-  if (!emailInput && !accountEmailInput && !websiteInput && !marketInput) return;
+  if (!emailInput && !websiteInput && !marketInput) return;
 
   const pendingReport = {
-    email: emailInput?.value || accountEmailInput?.value || readAccountEmail() || "",
-    accountCreated: Boolean(passwordInput?.value || accountPasswordInput?.value || readAccountProfile()?.accountCreated),
+    email: emailInput?.value || readAccountEmail() || "",
+    accountCreated: Boolean(readAccountProfile()?.accountCreated),
     website: websiteInput?.value || "",
     market: marketInput?.value || "",
     savedAt: new Date().toISOString(),
@@ -361,23 +391,13 @@ function hydrateCheckoutReturn() {
   }
 
   if (!isCheckoutReturn) {
-    if (passwordInput) {
-      passwordInput.required = true;
-      passwordInput.disabled = false;
-      passwordInput.placeholder = "8+ characters";
-    }
     if (auditSubmitButton) auditSubmitButton.textContent = "Continue to Checkout";
     if (auditStatus) {
-      auditStatus.textContent = "Create your account workspace and complete all fields before checkout.";
+      auditStatus.textContent = "Log in or create an account, then complete the report fields before checkout.";
     }
     return;
   }
 
-  if (passwordInput) {
-    passwordInput.required = false;
-    passwordInput.disabled = true;
-    passwordInput.placeholder = "Account already created";
-  }
   if (auditSubmitButton) auditSubmitButton.textContent = "Generate Report Card";
   if (checkoutNotice) checkoutNotice.hidden = false;
   if (auditStatus) {
@@ -393,45 +413,175 @@ function hydrateAccountPage() {
   if (!reportHistoryList) return;
 
   const savedEmail = readAccountEmail();
-  if (accountEmailInput && savedEmail) accountEmailInput.value = savedEmail;
+  if (accountLoginEmailInput && savedEmail) accountLoginEmailInput.value = savedEmail;
 
-  accountEmailButton?.addEventListener("click", async () => {
-    const email = accountEmailInput?.value.trim();
-    const password = accountPasswordInput?.value;
+  void renderReportHistory();
+}
 
-    if (!email) {
-      if (accountStatus) accountStatus.textContent = "Enter an email to create the account workspace.";
-      accountEmailInput?.reportValidity();
+function hydrateAuthFlows() {
+  accountLoginButton?.addEventListener("click", async () => {
+    await handleLogin(accountLoginEmailInput, accountLoginPasswordInput, accountStatus, accountLoginButton);
+  });
+
+  reportLoginButton?.addEventListener("click", async () => {
+    await handleLogin(reportLoginEmailInput, reportLoginPasswordInput, auditStatus, reportLoginButton);
+  });
+
+  accountCreateOpenButton?.addEventListener("click", () => openCreateAccountModal(accountLoginEmailInput?.value));
+  reportCreateOpenButton?.addEventListener("click", () => openCreateAccountModal(reportLoginEmailInput?.value));
+  createAccountCloseButton?.addEventListener("click", closeCreateAccountModal);
+  createAccountModal?.addEventListener("click", (event) => {
+    if (event.target === createAccountModal) closeCreateAccountModal();
+  });
+
+  createAccountForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!createAccountForm.checkValidity()) {
+      createAccountForm.reportValidity();
       return;
     }
 
-    if (!password || password.length < 8) {
-      if (accountStatus) accountStatus.textContent = "Create a password with at least 8 characters.";
-      accountPasswordInput?.reportValidity();
+    if (createPasswordInput.value !== createPasswordConfirmInput.value) {
+      createPasswordConfirmInput.setCustomValidity("Passwords must match.");
+      createPasswordConfirmInput.reportValidity();
+      createPasswordConfirmInput.setCustomValidity("");
+      if (createAccountStatus) createAccountStatus.textContent = "Passwords must match.";
       return;
     }
+
+    const profile = {
+      product: "Builder Rank",
+      email: createEmailInput.value.trim(),
+      first_name: createFirstNameInput.value.trim(),
+      last_name: createLastNameInput.value.trim(),
+      company_name: createCompanyInput.value.trim(),
+      company_size: createCompanySizeInput.value,
+      trade: createTradeInput.value.trim(),
+    };
+    const submitButton = createAccountForm.querySelector("button[type='submit']");
 
     try {
-      accountEmailButton.disabled = true;
-      accountEmailButton.textContent = "Creating...";
-      if (accountStatus) accountStatus.textContent = "Creating your account workspace...";
-      await ensureSupabaseAccount(email, password, accountStatus);
-      localStorage.setItem(ACCOUNT_EMAIL_KEY, email);
-      saveAccountProfile(email);
-      accountPasswordInput.value = "";
-      if (accountStatus) accountStatus.textContent = `Account created and signed in for ${email}.`;
-      await renderReportHistory();
+      submitButton.disabled = true;
+      submitButton.textContent = "Creating...";
+      await createSupabaseAccount(profile, createPasswordInput.value, createAccountStatus);
+      closeCreateAccountModal();
+      if (accountStatus) accountStatus.textContent = `Signed in as ${profile.email}.`;
+      if (auditStatus) auditStatus.textContent = "Account ready. Complete the report fields before checkout.";
+      await refreshAuthState();
     } catch (error) {
-      if (accountStatus) {
-        accountStatus.textContent = error.message || "Could not create or sign in to the account.";
-      }
+      if (createAccountStatus) createAccountStatus.textContent = error.message || "Could not create the account.";
     } finally {
-      accountEmailButton.disabled = false;
-      accountEmailButton.textContent = "Create Account";
+      submitButton.disabled = false;
+      submitButton.textContent = "Create Account";
     }
   });
 
-  void renderReportHistory();
+  accountSignOutButton?.addEventListener("click", async () => {
+    await builderRankSupabase?.auth.signOut();
+    localStorage.removeItem(ACCOUNT_EMAIL_KEY);
+    if (accountStatus) accountStatus.textContent = "Logged out.";
+    await refreshAuthState();
+  });
+}
+
+async function handleLogin(emailElement, passwordElement, statusElement, buttonElement) {
+  const email = emailElement?.value.trim();
+  const password = passwordElement?.value;
+
+  if (!email) {
+    statusElement.textContent = "Enter your email to log in.";
+    emailElement?.reportValidity();
+    return;
+  }
+
+  if (!password || password.length < 8) {
+    statusElement.textContent = "Enter your password.";
+    passwordElement?.reportValidity();
+    return;
+  }
+
+  try {
+    buttonElement.disabled = true;
+    buttonElement.textContent = "Logging In...";
+    const user = await signInSupabaseAccount(email, password, statusElement);
+    passwordElement.value = "";
+    statusElement.textContent = `Signed in as ${user.email}.`;
+    await refreshAuthState();
+  } catch (error) {
+    statusElement.textContent = error.message || "Could not log in with that email and password.";
+  } finally {
+    buttonElement.disabled = false;
+    buttonElement.textContent = "Log In";
+  }
+}
+
+function openCreateAccountModal(prefillEmail = "") {
+  if (!createAccountModal) return;
+  createAccountModal.hidden = false;
+  if (createEmailInput && prefillEmail) createEmailInput.value = prefillEmail;
+  if (createAccountStatus) createAccountStatus.textContent = "";
+  createEmailInput?.focus();
+}
+
+function closeCreateAccountModal() {
+  if (!createAccountModal) return;
+  createAccountModal.hidden = true;
+  createAccountForm?.reset();
+}
+
+async function refreshAuthState() {
+  const session = await getCurrentSession();
+  const user = session?.user;
+  const profile = user?.user_metadata || {};
+  const savedEmail = user?.email || readAccountEmail();
+
+  if (emailInput && user?.email) emailInput.value = user.email;
+  if (accountLoginEmailInput && savedEmail) accountLoginEmailInput.value = savedEmail;
+  if (reportLoginEmailInput && savedEmail) reportLoginEmailInput.value = savedEmail;
+
+  if (user) {
+    saveAccountProfile(user.email, profile);
+    if (reportAuthPanel) reportAuthPanel.classList.add("signed-in");
+    if (reportLoginForm) reportLoginForm.hidden = true;
+    if (accountLoginForm) accountLoginForm.hidden = true;
+    if (reportAuthTitle) reportAuthTitle.textContent = `Signed in as ${user.email}`;
+    if (reportAuthSummary) {
+      reportAuthSummary.textContent = profile.company_name
+        ? `${profile.company_name}${profile.trade ? ` · ${profile.trade}` : ""}`
+        : "Your reports will save to this account.";
+    }
+    if (accountLoginButton) accountLoginButton.disabled = true;
+    if (accountSignOutButton) accountSignOutButton.hidden = false;
+    renderProfileSummary(user, profile);
+  } else {
+    if (reportAuthPanel) reportAuthPanel.classList.remove("signed-in");
+    if (reportLoginForm) reportLoginForm.hidden = false;
+    if (accountLoginForm) accountLoginForm.hidden = false;
+    if (reportAuthTitle) reportAuthTitle.textContent = "Log in before buying a report";
+    if (reportAuthSummary) reportAuthSummary.textContent = "Use the same login any time you come back to view purchased reports.";
+    if (accountLoginButton) accountLoginButton.disabled = false;
+    if (accountSignOutButton) accountSignOutButton.hidden = true;
+    if (accountProfileSummary) {
+      accountProfileSummary.hidden = true;
+      accountProfileSummary.innerHTML = "";
+    }
+  }
+
+  await renderReportHistory();
+}
+
+function renderProfileSummary(user, profile) {
+  if (!accountProfileSummary) return;
+
+  const name = [profile.first_name, profile.last_name].filter(Boolean).join(" ");
+  accountProfileSummary.hidden = false;
+  accountProfileSummary.innerHTML = `
+    <strong>${escapeHtml(name || user.email)}</strong>
+    <span>${escapeHtml(user.email || "")}</span>
+    ${profile.company_name ? `<span>${escapeHtml(profile.company_name)}</span>` : ""}
+    ${profile.company_size || profile.trade ? `<span>${escapeHtml([profile.company_size, profile.trade].filter(Boolean).join(" · "))}</span>` : ""}
+  `;
 }
 
 function readAccountEmail() {
@@ -450,11 +600,13 @@ function readAccountProfile() {
   }
 }
 
-function saveAccountProfile(email) {
+function saveAccountProfile(email, metadata = {}) {
   if (!email) return;
 
   const existing = readAccountProfile();
   const profile = {
+    ...existing,
+    ...metadata,
     email,
     accountCreated: true,
     createdAt: existing?.createdAt || new Date().toISOString(),
