@@ -11,6 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script async defer src="https://js-na2.hs-scripts.com/246390543.js"></script>
   </head>
   <body>
     <main class="app-shell">
@@ -72,6 +73,10 @@
               <span>Primary market</span>
               <input id="marketInput" placeholder="Denver, CO" required />
             </label>
+            <label class="phone-field">
+              <span>Phone</span>
+              <input id="phoneInput" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567" required />
+            </label>
             <button id="auditSubmitButton" type="submit">Continue to Checkout</button>
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
@@ -86,6 +91,7 @@
             <div class="save-buttons">
               <button id="pdfButton" type="button">Save PDF</button>
               <button id="jsonButton" type="button">Export JSON</button>
+              <button id="emailReportButton" type="button">Email Report</button>
             </div>
           </div>
         </div>
@@ -186,13 +192,13 @@
             </div>
             <div class="phase">
               <span>Phase 2</span>
-              <strong>Saved accounts</strong>
-              <p>Customer login, paid report history, email delivery, and saved exports.</p>
+              <strong>Account history</strong>
+              <p>Customer login, paid report history, password reset, and saved exports.</p>
             </div>
             <div class="phase">
               <span>Phase 3</span>
-              <strong>LLM traffic dashboard</strong>
-              <p>Track AI referrals, quoted services, contact conversions, and visibility by market.</p>
+              <strong>Email delivery and dashboard</strong>
+              <p>Email completed reports, reconcile purchases, and track visibility by market.</p>
             </div>
           </div>
         </article>
@@ -228,6 +234,10 @@
           <label>
             <span>Last name</span>
             <input id="createLastNameInput" autocomplete="family-name" required />
+          </label>
+          <label>
+            <span>Phone</span>
+            <input id="createPhoneInput" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567" required />
           </label>
           <label>
             <span>Company name</span>

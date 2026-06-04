@@ -84,7 +84,7 @@ This project is Vercel-ready:
 - Static files are served from the project root.
 - The production audit endpoint lives at `/api/audit`.
 - API keys must be configured in Vercel Project Settings, not committed to GitHub.
-- Stripe should redirect successful payments to `https://builderrank.vercel.app/?checkout=success#report-workspace`
+- Stripe should redirect successful payments to `https://builderrank.io/run-report?checkout=success#report-workspace`
   so the site restores the saved website and market inputs after checkout.
 
 Add these Vercel Environment Variables for Production and Preview:
@@ -96,7 +96,98 @@ GEMINI_API_KEY
 OPENAI_MODEL
 ANTHROPIC_MODEL
 GEMINI_MODEL
+SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+STRIPE_WEBHOOK_SECRET
+RESEND_API_KEY
+REPORT_EMAIL_FROM
+REPORT_EMAIL_BCC
+HUBSPOT_ACCESS_TOKEN
 ```
+
+Supabase Auth and saved report history are configured in the browser client. The current production project is:
+
+```text
+SUPABASE_PROJECT_REF=hosepwwflfpqgemfcafj
+SUPABASE_URL=https://hosepwwflfpqgemfcafj.supabase.co
+```
+
+Supabase Auth should use `https://builderrank.io` as the Site URL and allow password reset redirects to:
+
+```text
+https://builderrank.io/account?reset=password
+```
+
+Run `supabase-setup.sql` in the Supabase SQL Editor to confirm report row-level security, add
+`checkout_reference` support, and create the private `purchases` table used by Stripe webhooks.
+
+## Stripe reconciliation
+
+Checkout links are generated with:
+
+- `prefilled_email`: the signed-in Builder Rank account email.
+- `client_reference_id`: a generated `br_...` checkout reference saved with the pending report.
+- `utm_source=builder_rank_app` and `utm_medium=checkout`.
+
+Phone number is validated, normalized, collected in Builder Rank account creation, and required in the
+report workspace before checkout. Stripe Payment Links do not use that local field as a URL prefill, but
+the Stripe webhook stores `customer_details.phone` as `customer_phone` if phone collection is enabled in
+Stripe.
+
+Configure the Stripe webhook endpoint:
+
+```text
+https://builderrank.io/api/stripe-webhook
+```
+
+Listen for:
+
+```text
+checkout.session.completed
+```
+
+Then set `STRIPE_WEBHOOK_SECRET` in Vercel from Stripe's webhook signing secret.
+
+## Report email delivery
+
+The report workspace includes an `Email Report` button. It requires:
+
+```text
+RESEND_API_KEY
+REPORT_EMAIL_FROM
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+`REPORT_EMAIL_BCC` is optional. The email sends a report summary and attaches the JSON export.
+
+## HubSpot sync
+
+Builder Rank can sync account creation/login to HubSpot contacts and Stripe purchases to HubSpot deals.
+Create a HubSpot Service Key named `Builder Rank Integration`, add it to Vercel as:
+
+```text
+HUBSPOT_ACCESS_TOKEN
+```
+
+Recommended HubSpot Service Key scopes:
+
+```text
+crm.objects.contacts.read
+crm.objects.contacts.write
+crm.objects.companies.read
+crm.objects.companies.write
+crm.objects.deals.read
+crm.objects.deals.write
+crm.schemas.contacts.read
+crm.schemas.contacts.write
+crm.schemas.companies.read
+crm.schemas.companies.write
+crm.schemas.deals.read
+crm.schemas.deals.write
+```
+
+The sync creates/updates contacts by email, creates/updates companies by company name, creates purchase deals,
+and creates Builder Rank custom properties when the schema scopes are available.
 
 Recommended model values:
 

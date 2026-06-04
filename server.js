@@ -3,6 +3,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
+import emailReportHandler from "./api/email-report.js";
+import hubSpotAccountHandler from "./api/hubspot-account.js";
+import stripeWebhookHandler from "./api/stripe-webhook.js";
 
 loadEnvFile();
 
@@ -32,6 +35,21 @@ const server = createServer(async (request, response) => {
       const body = await readJsonBody(request);
       const audit = await runAudit(body.website, body.market);
       sendJson(response, 200, audit);
+      return;
+    }
+
+    if (url.pathname === "/api/email-report") {
+      await callApiHandler(emailReportHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/hubspot-account") {
+      await callApiHandler(hubSpotAccountHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/stripe-webhook") {
+      await callApiHandler(stripeWebhookHandler, request, response);
       return;
     }
 
@@ -984,6 +1002,15 @@ function readJsonBody(request) {
 function sendJson(response, status, payload) {
   response.writeHead(status, { "content-type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(payload));
+}
+
+async function callApiHandler(handler, request, response) {
+  response.status = (statusCode) => ({
+    json: (payload) => sendJson(response, statusCode, payload),
+  });
+  response.json = (payload) => sendJson(response, 200, payload);
+
+  await handler(request, response);
 }
 
 function normalizeWebsiteUrl(value) {

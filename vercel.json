@@ -19,6 +19,18 @@
       "dest": "/api/audit.js"
     },
     {
+      "src": "/api/email-report",
+      "dest": "/api/email-report.js"
+    },
+    {
+      "src": "/api/hubspot-account",
+      "dest": "/api/hubspot-account.js"
+    },
+    {
+      "src": "/api/stripe-webhook",
+      "dest": "/api/stripe-webhook.js"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
     },

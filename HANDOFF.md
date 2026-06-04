@@ -1,17 +1,20 @@
 # Builder Rank Handoff
 
-Last saved: 2026-05-29
+Last saved: 2026-06-04
 
 ## Current state
 
-- Live site: https://builderrank.vercel.app
+- Live site: https://builderrank.io
+- Fallback Vercel URL: https://builderrank.vercel.app
 - GitHub repo: https://github.com/builderrank/builderrank
 - Stripe Payment Link: https://buy.stripe.com/5kQeVd0Gdb1UaRu7AQ8bS00
 - Stripe after-payment setting is configured to skip the Stripe confirmation page and redirect customers to:
 
 ```text
-https://builderrank.vercel.app/?checkout=success#report-workspace
+https://builderrank.io/run-report?checkout=success#report-workspace
 ```
+- Supabase Auth is connected for customer accounts.
+- Supabase `reports` table saves completed reports for authenticated users.
 
 ## Latest local changes
 
@@ -23,14 +26,26 @@ https://builderrank.vercel.app/?checkout=success#report-workspace
   - `/account`
 - Vercel routing now maps those clean paths to their HTML pages.
 - The report workspace moved to `/run-report`.
-- The account page is a placeholder customer portal for the next phase: login, purchased report history, and saved exports.
+- The account page includes customer login, account creation, password reset, profile summary, sign out, and purchased report history.
 - `assets/client.js` is now safe to load on non-report pages.
 - If Stripe still redirects to `/?checkout=success#report-workspace`, the home page sends the customer forward to `/run-report?checkout=success#report-workspace`.
-- Buy buttons save the entered website and market in browser storage before sending customers to Stripe.
+- Run Report requires login before checkout.
+- Phone number is collected and validated during account creation and again before checkout/report purchase for existing accounts without a saved phone.
+- Buy buttons send customers to the report workspace unless the report form is ready for checkout.
+- Report checkout saves the entered website and market in browser storage before sending customers to Stripe.
+- Pending checkout and saved report history include the captured phone number when available.
 - Returning from Stripe with `?checkout=success#report-workspace` restores the saved website and market.
 - The report workspace shows a `Payment received` notice and `Run Paid Report` button.
 - The paid report button disables while an audit is already running.
-- README documents the Stripe redirect URL.
+- Completed reports save to Supabase when the user is authenticated, with browser history as a fallback.
+- Stripe checkout URLs include `prefilled_email`, `client_reference_id`, and checkout UTM parameters for reconciliation.
+- `/api/stripe-webhook` records `checkout.session.completed` events to the private Supabase `purchases` table when Stripe and Supabase service-role environment variables are configured.
+- The report workspace includes an `Email Report` action that sends a summary email with JSON attachment when Resend and Supabase service-role environment variables are configured.
+- `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
+- `/api/stripe-webhook` also creates HubSpot purchase deals when `HUBSPOT_ACCESS_TOKEN` is configured.
+- `supabase-setup.sql` documents the production `reports` RLS policies, `checkout_reference` column, and private `purchases` table.
+- `supabase-setup.sql` includes `phone` on `reports` and `customer_phone` on `purchases` for HubSpot/customer follow-up sync.
+- README documents the current Stripe redirect URL, Supabase environment variables, Stripe webhook, and report email setup.
 
 ## Verification
 
@@ -39,17 +54,19 @@ https://builderrank.vercel.app/?checkout=success#report-workspace
 - The old Stripe return URL `/?checkout=success#report-workspace` redirects locally to `/run-report?checkout=success#report-workspace`.
 - A paid-return simulation restored the saved report details.
 - `Run Paid Report` successfully submitted a real audit against `http://localhost:4174/sample-contractor.html`.
-- Stripe edit screen was reopened and showed the redirect URL above in the after-payment redirect field.
+- On 2026-06-04, local route checks passed at `http://localhost:4176` for `/`, `/pricing`, `/run-report`, and `/account`.
+- On 2026-06-04, local `Email Report` returned the expected not-configured response when Resend env vars were absent.
+- On 2026-06-04, local Stripe webhook ignored a non-checkout event successfully.
+- On 2026-06-04, local sample audit returned `89` / `A-` and all three model analyses completed.
+- On 2026-06-04, an unauthenticated Supabase REST select against `reports` returned no report rows.
+- Stripe edit screen was updated to show the `/run-report` redirect URL above in the after-payment redirect field.
 
 ## Next steps
 
-- Deploy the multi-page customer journey to GitHub/Vercel.
-- Update Stripe after-payment redirect to:
-
-```text
-https://builderrank.vercel.app/run-report?checkout=success#report-workspace
-```
-
-- Choose auth/database stack for real accounts and saved reports.
-- Add a pre-payment or post-payment intake step for website, market, and customer email.
-- Store completed reports server-side and show them on `/account`.
+- Verify a complete production purchase with a real Stripe checkout return.
+- Run `supabase-setup.sql` in Supabase SQL Editor, then verify signed-in users only see their own reports.
+- Add Vercel env vars for `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, and `REPORT_EMAIL_FROM`.
+- Finish the HubSpot Service Key currently open in Chrome by selecting the CRM object/schema scopes listed in README, then add the key to Vercel as `HUBSPOT_ACCESS_TOKEN`.
+- Configure Stripe webhook URL `https://builderrank.io/api/stripe-webhook` for `checkout.session.completed`.
+- Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
+- Send a report email in production after Resend is configured.
