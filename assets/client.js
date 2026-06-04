@@ -102,6 +102,7 @@ const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
 const websiteInput = document.querySelector("#websiteInput");
 const marketInput = document.querySelector("#marketInput");
+const phoneInput = document.querySelector("#phoneInput");
 const overallScore = document.querySelector("#overallScore");
 const scoreArc = document.querySelector("#scoreArc");
 const reportTitle = document.querySelector("#reportTitle");
@@ -119,6 +120,7 @@ const modelAnalysisList = document.querySelector("#modelAnalysisList");
 const auditSubmitButton = document.querySelector("#auditSubmitButton");
 const pdfButton = document.querySelector("#pdfButton");
 const jsonButton = document.querySelector("#jsonButton");
+const emailReportButton = document.querySelector("#emailReportButton");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
 const returnedReportButton = document.querySelector("#returnedReportButton");
@@ -151,6 +153,7 @@ const createPasswordInput = document.querySelector("#createPasswordInput");
 const createPasswordConfirmInput = document.querySelector("#createPasswordConfirmInput");
 const createFirstNameInput = document.querySelector("#createFirstNameInput");
 const createLastNameInput = document.querySelector("#createLastNameInput");
+const createPhoneInput = document.querySelector("#createPhoneInput");
 const createCompanyInput = document.querySelector("#createCompanyInput");
 const createCompanySizeInput = document.querySelector("#createCompanySizeInput");
 const createTradeInput = document.querySelector("#createTradeInput");
@@ -230,6 +233,10 @@ if (auditForm) {
     downloadFile(reportFilename("json"), JSON.stringify(payload, null, 2), "application/json");
   });
 
+  emailReportButton?.addEventListener("click", () => {
+    void emailCurrentReport();
+  });
+
   returnedReportButton?.addEventListener("click", () => {
     auditForm.requestSubmit();
   });
@@ -260,8 +267,8 @@ async function beginCheckout() {
   if (!(await validateReportIntake())) return;
 
   if (BUILDER_RANK_PAYMENT_URL) {
-    savePendingReport();
-    window.location.href = BUILDER_RANK_PAYMENT_URL;
+    const pendingReport = savePendingReport();
+    window.location.href = buildCheckoutUrl(pendingReport);
     return;
   }
 
@@ -269,6 +276,9 @@ async function beginCheckout() {
 }
 
 async function validateReportIntake() {
+  const session = await getCurrentSession();
+  if (phoneInput && !phoneInput.value) phoneInput.value = getProfilePhone(session?.user?.user_metadata) || "";
+
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
@@ -277,7 +287,6 @@ async function validateReportIntake() {
     return false;
   }
 
-  const session = await getCurrentSession();
   if (!session?.user) {
     if (auditStatus) auditStatus.textContent = "Log in or create an account before buying a report.";
     reportLoginEmailInput?.focus();
@@ -285,6 +294,12 @@ async function validateReportIntake() {
   }
 
   if (emailInput) emailInput.value = session.user.email || "";
+  if (!validateEmailField(emailInput, "Use a valid email address before checkout.")) {
+    return false;
+  }
+  if (!validatePhoneField(phoneInput, "Use a valid 10-digit phone number before checkout.")) {
+    return false;
+  }
   try {
     localStorage.setItem(ACCOUNT_EMAIL_KEY, session.user.email || "");
     saveAccountProfile(session.user.email, session.user.user_metadata);
@@ -313,6 +328,7 @@ async function signInSupabaseAccount(email, password, statusElement) {
   if (error) throw error;
 
   saveAccountProfile(data.user.email, data.user.user_metadata);
+  void syncHubSpotAccount(data.user.user_metadata);
   return data.user;
 }
 
@@ -364,13 +380,19 @@ function setCheckoutPreparing(isPreparing) {
 }
 
 function savePendingReport() {
-  if (!emailInput && !websiteInput && !marketInput) return;
+  if (!emailInput && !websiteInput && !marketInput && !phoneInput) return null;
+
+  const existing = readPendingReport();
+  const checkoutReference = existing?.checkoutReference || createCheckoutReference();
+  const phone = normalizePhone(phoneInput?.value || getProfilePhone(readAccountProfile()));
 
   const pendingReport = {
     email: emailInput?.value || readAccountEmail() || "",
     accountCreated: Boolean(readAccountProfile()?.accountCreated),
     website: websiteInput?.value || "",
     market: marketInput?.value || "",
+    phone,
+    checkoutReference,
     savedAt: new Date().toISOString(),
   };
 
@@ -380,6 +402,27 @@ function savePendingReport() {
   } catch {
     // Checkout should still continue if storage is unavailable.
   }
+
+  return pendingReport;
+}
+
+function buildCheckoutUrl(pendingReport) {
+  const checkoutUrl = new URL(BUILDER_RANK_PAYMENT_URL);
+  const email = pendingReport?.email || readAccountEmail();
+
+  if (email) checkoutUrl.searchParams.set("prefilled_email", email);
+  if (pendingReport?.checkoutReference) {
+    checkoutUrl.searchParams.set("client_reference_id", pendingReport.checkoutReference);
+  }
+  checkoutUrl.searchParams.set("utm_source", "builder_rank_app");
+  checkoutUrl.searchParams.set("utm_medium", "checkout");
+
+  return checkoutUrl.toString();
+}
+
+function createCheckoutReference() {
+  const randomValue = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `br_${randomValue}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
 }
 
 function hydrateCheckoutReturn() {
@@ -466,8 +509,18 @@ function hydrateAuthFlows() {
   createAccountForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
+    clearFieldValidity(createEmailInput, createPhoneInput);
+
     if (!createAccountForm.checkValidity()) {
       createAccountForm.reportValidity();
+      return;
+    }
+
+    if (!validateEmailField(createEmailInput, "Use a valid email address to create your account.")) {
+      return;
+    }
+
+    if (!validatePhoneField(createPhoneInput, "Use a valid 10-digit phone number to create your account.")) {
       return;
     }
 
@@ -481,9 +534,10 @@ function hydrateAuthFlows() {
 
     const profile = {
       product: "Builder Rank",
-      email: createEmailInput.value.trim(),
+      email: normalizeEmail(createEmailInput.value),
       first_name: createFirstNameInput.value.trim(),
       last_name: createLastNameInput.value.trim(),
+      phone: normalizePhone(createPhoneInput.value),
       company_name: createCompanyInput.value.trim(),
       company_size: createCompanySizeInput.value,
       trade: createTradeInput.value.trim(),
@@ -498,6 +552,7 @@ function hydrateAuthFlows() {
       if (accountStatus) accountStatus.textContent = `Signed in as ${profile.email}.`;
       if (auditStatus) auditStatus.textContent = "Account ready. Complete the report fields before checkout.";
       await refreshAuthState();
+      void syncHubSpotAccount(profile);
     } catch (error) {
       if (createAccountStatus) createAccountStatus.textContent = error.message || "Could not create the account.";
     } finally {
@@ -520,9 +575,8 @@ async function handleLogin(emailElement, passwordElement, statusElement, buttonE
   const email = emailElement?.value.trim();
   const password = passwordElement?.value;
 
-  if (!email) {
-    statusElement.textContent = "Enter your email to log in.";
-    emailElement?.reportValidity();
+  if (!validateEmailField(emailElement, "Enter a valid email to log in.")) {
+    if (statusElement) statusElement.textContent = "Enter a valid email to log in.";
     return;
   }
 
@@ -586,8 +640,12 @@ async function handlePasswordResetRequest() {
     return;
   }
 
+  if (!validateEmailField(resetEmailInput, "Use a valid email address for the reset link.")) {
+    return;
+  }
+
   const submitButton = resetPasswordForm.querySelector("button[type='submit']");
-  const email = resetEmailInput.value.trim();
+  const email = normalizeEmail(resetEmailInput.value);
 
   try {
     submitButton.disabled = true;
@@ -667,6 +725,7 @@ async function refreshAuthState() {
   const savedEmail = user?.email || readAccountEmail();
 
   if (emailInput && user?.email) emailInput.value = user.email;
+  if (phoneInput && !phoneInput.value) phoneInput.value = getProfilePhone(profile) || readPendingReport()?.phone || "";
   if (accountLoginEmailInput && savedEmail) accountLoginEmailInput.value = savedEmail;
   if (reportLoginEmailInput && savedEmail) reportLoginEmailInput.value = savedEmail;
 
@@ -717,6 +776,7 @@ function renderProfileSummary(user, profile) {
   accountProfileSummary.innerHTML = `
     <strong>${escapeHtml(name || user.email)}</strong>
     <span>${escapeHtml(user.email || "")}</span>
+    ${getProfilePhone(profile) ? `<span>${escapeHtml(getProfilePhone(profile))}</span>` : ""}
     ${profile.company_name ? `<span>${escapeHtml(profile.company_name)}</span>` : ""}
     ${profile.company_size || profile.trade ? `<span>${escapeHtml([profile.company_size, profile.trade].filter(Boolean).join(" · "))}</span>` : ""}
   `;
@@ -764,15 +824,18 @@ function readReportHistory() {
 }
 
 async function saveCompletedReport(report) {
+  const pendingReport = readPendingReport();
   const score = typeof report.score === "number" ? report.score : scoreAudit();
   const completedReport = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    email: emailInput?.value || readPendingReport()?.email || readAccountEmail() || "",
+    email: emailInput?.value || pendingReport?.email || readAccountEmail() || "",
+    phone: normalizePhone(phoneInput?.value || pendingReport?.phone || getProfilePhone(readAccountProfile())),
     company: report.company || getHostname(report.website),
     website: report.website,
     market: report.market,
     score,
     grade: report.grade || gradeForScore(score),
+    checkoutReference: pendingReport?.checkoutReference || "",
     createdAt: new Date().toISOString(),
   };
 
@@ -788,15 +851,25 @@ async function saveCompletedReport(report) {
   if (builderRankSupabase) {
     const { data: sessionData } = await builderRankSupabase.auth.getSession();
     if (sessionData?.session) {
-      const { error } = await builderRankSupabase.from("reports").insert({
+      const reportRow = {
         email: completedReport.email,
+        phone: completedReport.phone,
         company: completedReport.company,
         website: completedReport.website,
         market: completedReport.market,
         score: completedReport.score,
         grade: completedReport.grade,
+        checkout_reference: completedReport.checkoutReference,
         report,
-      });
+      };
+      let { error } = await builderRankSupabase.from("reports").insert(reportRow);
+
+      if (error && /phone|checkout_reference|schema cache|column/i.test(error.message || "")) {
+        delete reportRow.phone;
+        delete reportRow.checkout_reference;
+        const retry = await builderRankSupabase.from("reports").insert(reportRow);
+        error = retry.error;
+      }
 
       if (error) {
         console.warn("Could not save Supabase report", error);
@@ -818,10 +891,19 @@ async function renderReportHistory() {
   if (builderRankSupabase) {
     const { data: sessionData } = await builderRankSupabase.auth.getSession();
     if (sessionData?.session) {
-      const { data, error } = await builderRankSupabase
+      let { data, error } = await builderRankSupabase
         .from("reports")
-        .select("id,email,company,website,market,score,grade,created_at")
+        .select("id,email,phone,company,website,market,score,grade,checkout_reference,created_at")
         .order("created_at", { ascending: false });
+
+      if (error && /checkout_reference|schema cache|column/i.test(error.message || "")) {
+        const retry = await builderRankSupabase
+          .from("reports")
+          .select("id,email,company,website,market,score,grade,created_at")
+          .order("created_at", { ascending: false });
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) {
         console.warn("Could not load Supabase reports", error);
@@ -829,11 +911,13 @@ async function renderReportHistory() {
         history = data.map((item) => ({
           id: item.id,
           email: item.email,
+          phone: item.phone,
           company: item.company,
           website: item.website,
           market: item.market,
           score: item.score,
           grade: item.grade,
+          checkoutReference: item.checkout_reference,
           createdAt: item.created_at,
         }));
         source = "cloud";
@@ -868,6 +952,62 @@ async function renderReportHistory() {
   }
 }
 
+async function emailCurrentReport() {
+  if (!emailReportButton) return;
+
+  const session = await getCurrentSession();
+  if (!session?.access_token) {
+    auditStatus.textContent = "Log in before emailing a report.";
+    return;
+  }
+
+  try {
+    emailReportButton.disabled = true;
+    emailReportButton.textContent = "Emailing...";
+    const response = await fetch("/api/email-report", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${session.access_token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email: session.user?.email || readAccountEmail(),
+        report: audit,
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.detail || payload.error || "Could not email the report.");
+    }
+
+    auditStatus.textContent = `Report emailed to ${session.user.email}.`;
+  } catch (error) {
+    auditStatus.textContent = error.message;
+  } finally {
+    emailReportButton.disabled = false;
+    emailReportButton.textContent = "Email Report";
+  }
+}
+
+async function syncHubSpotAccount(profile = {}) {
+  const session = await getCurrentSession();
+  if (!session?.access_token) return;
+
+  try {
+    await fetch("/api/hubspot-account", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${session.access_token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ profile }),
+    });
+  } catch (error) {
+    console.warn("Could not sync HubSpot account", error);
+  }
+}
+
 function renderHistoryCard(report) {
   const created = report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "Saved report";
   const scoreLabel = report.score === undefined ? "Score pending" : `${report.score} AI Health Score`;
@@ -876,10 +1016,77 @@ function renderHistoryCard(report) {
     <article class="history-card">
       <strong>${escapeHtml(report.company || "Contractor report")}</strong>
       <p>${escapeHtml(report.market || "Market not set")} · ${escapeHtml(scoreLabel)} · ${escapeHtml(report.grade || "Ungraded")}</p>
-      <span>${escapeHtml(report.website || "")}${report.email ? ` · ${escapeHtml(report.email)}` : ""} · ${escapeHtml(created)}</span>
+      <span>${escapeHtml(report.website || "")}${report.email ? ` · ${escapeHtml(report.email)}` : ""}${report.phone ? ` · ${escapeHtml(report.phone)}` : ""} · ${escapeHtml(created)}</span>
       <a href="/run-report">Run another report</a>
     </article>
   `;
+}
+
+function getProfilePhone(profile = {}) {
+  return normalizePhone(profile.phone || profile.phone_number || profile.mobile_phone || "");
+}
+
+function validateEmailField(field, message = "Use a valid email address.") {
+  if (!field) return true;
+
+  const email = normalizeEmail(field.value);
+  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+  field.setCustomValidity(isValid ? "" : message);
+
+  if (!isValid) {
+    field.reportValidity();
+    return false;
+  }
+
+  field.value = email;
+  return true;
+}
+
+function validatePhoneField(field, message = "Use a valid 10-digit phone number.") {
+  if (!field) return true;
+
+  const phone = normalizePhone(field.value);
+  const isValid = isValidPhone(phone);
+  field.setCustomValidity(isValid ? "" : message);
+
+  if (!isValid) {
+    field.reportValidity();
+    return false;
+  }
+
+  field.value = formatPhone(phone);
+  return true;
+}
+
+function clearFieldValidity(...fields) {
+  fields.filter(Boolean).forEach((field) => field.setCustomValidity(""));
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizePhone(value) {
+  return formatPhone(String(value || "").trim());
+}
+
+function isValidPhone(value) {
+  const digits = digitsOnly(value);
+  if (digits.length === 10) return !/^(\d)\1{9}$/.test(digits);
+  if (digits.length === 11 && digits.startsWith("1")) return !/^1(\d)\1{9}$/.test(digits);
+  return false;
+}
+
+function formatPhone(value) {
+  const digits = digitsOnly(value);
+  const nationalDigits = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+
+  if (nationalDigits.length !== 10) return String(value || "").trim();
+  return `(${nationalDigits.slice(0, 3)}) ${nationalDigits.slice(3, 6)}-${nationalDigits.slice(6)}`;
+}
+
+function digitsOnly(value) {
+  return String(value || "").replace(/\D/g, "");
 }
 
 function readPendingReport() {
