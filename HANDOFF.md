@@ -24,11 +24,13 @@ https://builderrank.io/run-report?checkout=success#report-workspace
   - Endpoint URL: `https://builderrank.io/api/stripe-webhook`
   - Event: `checkout.session.completed`
 - `STRIPE_WEBHOOK_SECRET` is configured in Vercel Production and Preview.
-- Resend domain setup is in progress:
+- Resend is configured for report email:
   - Domain: `builderrank.io`
   - Resend DNS records were auto-added through Vercel and public DNS resolves for `resend._domainkey.builderrank.io`, `send.builderrank.io` MX, and `send.builderrank.io` TXT.
-  - Resend event log showed `DNS verified` on 2026-06-05, but overall domain status was still `Pending`.
-  - Before the final real payment test, re-check Resend, create/copy `RESEND_API_KEY` to Vercel, and confirm automatic report email delivery.
+  - Resend showed `Domain verified · builderrank.io` on 2026-06-05.
+  - `RESEND_API_KEY` is configured in Vercel Production and Preview as a sensitive environment variable.
+  - The active Resend API key is named `Builder Rank Vercel emails`, has Sending access, and is restricted to `builderrank.io`.
+  - An earlier unused test key was deleted.
 
 ## Latest local changes
 
@@ -89,11 +91,11 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - On 2026-06-04, authoritative Vercel DNS showed Google Workspace MX, SPF, DKIM, and DMARC records.
 - On 2026-06-04, Google Workspace showed Gmail activated for `builderrank.io`.
 - On 2026-06-04, HubSpot showed `kaleb@builderrank.io` enabled as a G Suite inbox.
-- On 2026-06-05, Resend sending DNS records resolved publicly, and Resend showed `DNS verified` with final domain verification still pending.
+- On 2026-06-05, Resend sending DNS records resolved publicly, Resend showed `Domain verified`, `RESEND_API_KEY` was added to Vercel, and production was redeployed.
+- On 2026-06-05, live `/api/email-report` changed from the expected not-configured response to the expected unauthenticated response, confirming Resend env configuration is active.
 
 ## Next steps
 
-- Before running the final real payment test, re-check Resend status, add `RESEND_API_KEY` to Vercel, and verify automatic PDF email delivery.
 - Verify a complete production purchase with a real Stripe checkout return.
 - Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
-- Run a paid report in production after Resend is configured and confirm the automatic PDF email arrives.
+- Run a paid report in production and confirm the automatic PDF email arrives.
