@@ -88,6 +88,7 @@ function renderEmailHtml(report) {
   const score = report.score ?? "Pending";
   const grade = report.grade || "Ungraded";
   const fixes = Array.isArray(report.fixes) ? report.fixes.slice(0, 5) : [];
+  const followUpMessage = modelFollowUpMessage(report);
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;max-width:640px">
@@ -98,12 +99,14 @@ function renderEmailHtml(report) {
       <p><strong>AI Health Score:</strong> ${escapeHtml(score)} · <strong>Grade:</strong> ${escapeHtml(grade)}</p>
       <p>${escapeHtml(report.summary || "Your report JSON export is attached.")}</p>
       ${fixes.length ? `<h2>Highest-impact fixes</h2><ul>${fixes.map(renderFix).join("")}</ul>` : ""}
+      ${followUpMessage ? `<h2>Model follow-up</h2><p>${escapeHtml(followUpMessage)}</p>` : ""}
       <p>If you have questions about the results or want help prioritizing the fixes, reply to this email.</p>
     </div>
   `;
 }
 
 function renderEmailText(report) {
+  const followUpMessage = modelFollowUpMessage(report);
   const fixes = Array.isArray(report.fixes)
     ? report.fixes.slice(0, 5).map((fix) => `- ${fix.priority}: ${fix.title}`).join("\n")
     : "";
@@ -118,6 +121,7 @@ function renderEmailText(report) {
     `Grade: ${report.grade || "Ungraded"}`,
     report.summary || "",
     fixes ? `Highest-impact fixes:\n${fixes}` : "",
+    followUpMessage ? `Model follow-up:\n${followUpMessage}` : "",
     "If you have questions about the results or want help prioritizing the fixes, reply to this email.",
   ]
     .filter(Boolean)
@@ -160,6 +164,8 @@ function renderReportPdfBase64(report) {
     "Customer intent",
     ...formatPdfList(report.intents),
     "",
+    ...formatPdfModelFollowUp(report),
+    "",
     "Reply to this email if you have questions or want help prioritizing the fixes.",
   ];
 
@@ -179,6 +185,22 @@ function formatPdfFixes(fixes) {
 function formatPdfList(items) {
   if (!Array.isArray(items) || !items.length) return ["No items were generated."];
   return items.slice(0, 8).map((item) => `- ${item}`);
+}
+
+function formatPdfModelFollowUp(report) {
+  const message = modelFollowUpMessage(report);
+  return message ? ["Model follow-up", message] : [];
+}
+
+function modelFollowUpMessage(report) {
+  const incompleteModels = Array.isArray(report.modelAnalyses)
+    ? report.modelAnalyses.filter((analysis) => analysis.status !== "complete")
+    : [];
+
+  if (!incompleteModels.length) return "";
+
+  const labels = incompleteModels.map((analysis) => analysis.label || analysis.provider || "An AI model").join(", ");
+  return `${labels} did not report on this run. Builder Rank will review the missing model response and follow up with the customer if additional context is needed.`;
 }
 
 function buildSimplePdf(lines) {
