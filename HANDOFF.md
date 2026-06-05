@@ -49,7 +49,8 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Completed reports save to Supabase when the user is authenticated, with browser history as a fallback.
 - Stripe checkout URLs include `prefilled_email`, `client_reference_id`, and checkout UTM parameters for reconciliation.
 - `/api/stripe-webhook` records `checkout.session.completed` events to the private Supabase `purchases` table when Stripe and Supabase service-role environment variables are configured.
-- The report workspace includes an `Email Report` action that sends a summary email with JSON attachment when Resend and Supabase service-role environment variables are configured.
+- The report workspace automatically emails the signed-in customer after a paid report is generated when Resend and Supabase service-role environment variables are configured.
+- Report email includes a thank-you note, basic PDF attachment, and JSON export. The `Email Report` action remains available for manual resend.
 - Report email defaults now use `Builder Rank <kaleb@builderrank.io>` with replies routed to `kaleb@builderrank.io`.
 - Pricing and checkout copy now describe the one-time $49 Stripe purchase, report return flow, and support email.
 - `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
@@ -85,4 +86,4 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Verify a complete production purchase with a real Stripe checkout return.
 - Verify `builderrank.io` in Resend, then add `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, and `REPORT_EMAIL_REPLY_TO` in Vercel when report email delivery is ready.
 - Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
-- Send a report email in production after Resend is configured.
+- Run a paid report in production after Resend is configured and confirm the automatic PDF email arrives.

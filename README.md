@@ -151,7 +151,9 @@ Then set `STRIPE_WEBHOOK_SECRET` in Vercel from Stripe's webhook signing secret.
 
 ## Report email delivery
 
-The report workspace includes an `Email Report` button. It requires:
+After a paid report is generated, Builder Rank automatically sends the signed-in customer a thank-you
+email with a basic PDF report attachment and the JSON export. The report workspace also keeps an
+`Email Report` button for manual resend. Email delivery requires:
 
 ```text
 RESEND_API_KEY
@@ -162,8 +164,7 @@ SUPABASE_SERVICE_ROLE_KEY
 
 Use `REPORT_EMAIL_FROM=Builder Rank <kaleb@builderrank.io>` after `builderrank.io` is verified in
 Resend. Use `REPORT_EMAIL_REPLY_TO=kaleb@builderrank.io` so customer replies land in the Google
-Workspace inbox. `REPORT_EMAIL_BCC` is optional. The email sends a report summary and attaches the
-JSON export.
+Workspace inbox. `REPORT_EMAIL_BCC` is optional.
 
 ## HubSpot sync
 
