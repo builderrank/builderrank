@@ -211,6 +211,7 @@ if (auditForm) {
         ? `Real audit complete for ${payload.website}. Saved to your account.`
         : `Real audit complete for ${payload.website}. Saved in this browser.`;
       render();
+      void emailCurrentReport({ automatic: true });
     } catch (error) {
       auditStatus.textContent = `Could not complete the audit: ${error.message}`;
     } finally {
@@ -234,7 +235,7 @@ if (auditForm) {
   });
 
   emailReportButton?.addEventListener("click", () => {
-    void emailCurrentReport();
+    void emailCurrentReport({ automatic: false });
   });
 
   returnedReportButton?.addEventListener("click", () => {
@@ -952,18 +953,18 @@ async function renderReportHistory() {
   }
 }
 
-async function emailCurrentReport() {
+async function emailCurrentReport({ automatic = false } = {}) {
   if (!emailReportButton) return;
 
   const session = await getCurrentSession();
   if (!session?.access_token) {
-    auditStatus.textContent = "Log in before emailing a report.";
+    if (!automatic) auditStatus.textContent = "Log in before emailing a report.";
     return;
   }
 
   try {
     emailReportButton.disabled = true;
-    emailReportButton.textContent = "Emailing...";
+    emailReportButton.textContent = automatic ? "Sending..." : "Emailing...";
     const response = await fetch("/api/email-report", {
       method: "POST",
       headers: {
@@ -981,9 +982,15 @@ async function emailCurrentReport() {
       throw new Error(payload.detail || payload.error || "Could not email the report.");
     }
 
-    auditStatus.textContent = `Report emailed to ${session.user.email}.`;
+    auditStatus.textContent = automatic
+      ? `Report complete and emailed to ${session.user.email}.`
+      : `Report emailed to ${session.user.email}.`;
   } catch (error) {
-    auditStatus.textContent = `${error.message} You can still save the PDF or export JSON.`;
+    if (!automatic) {
+      auditStatus.textContent = `${error.message} You can still save the PDF or export JSON.`;
+    } else {
+      console.warn("Could not auto-email report", error);
+    }
   } finally {
     emailReportButton.disabled = false;
     emailReportButton.textContent = "Email Report";
