@@ -1,6 +1,6 @@
 # Builder Rank Handoff
 
-Last saved: 2026-06-04
+Last saved: 2026-06-05
 
 ## Current state
 
@@ -15,6 +15,15 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 ```
 - Supabase Auth is connected for customer accounts.
 - Supabase `reports` table saves completed reports for authenticated users.
+- Google Workspace Gmail is active for `kaleb@builderrank.io`.
+- HubSpot portal ID: `246390543`.
+- HubSpot personal email connection is enabled for `kaleb@builderrank.io`.
+- HubSpot tracking is installed on the live Builder Rank pages.
+- Stripe webhook destination is active:
+  - Destination ID: `we_1Tee1zGxlRL6ZAPVGqCYBEWg`
+  - Endpoint URL: `https://builderrank.io/api/stripe-webhook`
+  - Event: `checkout.session.completed`
+- `STRIPE_WEBHOOK_SECRET` is configured in Vercel Production and Preview.
 
 ## Latest local changes
 
@@ -41,8 +50,11 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Stripe checkout URLs include `prefilled_email`, `client_reference_id`, and checkout UTM parameters for reconciliation.
 - `/api/stripe-webhook` records `checkout.session.completed` events to the private Supabase `purchases` table when Stripe and Supabase service-role environment variables are configured.
 - The report workspace includes an `Email Report` action that sends a summary email with JSON attachment when Resend and Supabase service-role environment variables are configured.
+- Report email defaults now use `Builder Rank <kaleb@builderrank.io>` with replies routed to `kaleb@builderrank.io`.
+- Pricing and checkout copy now describe the one-time $49 Stripe purchase, report return flow, and support email.
 - `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
 - `/api/stripe-webhook` also creates HubSpot purchase deals when `HUBSPOT_ACCESS_TOKEN` is configured.
+- HubSpot tracking script `https://js-na2.hs-scripts.com/246390543.js` is included on the public HTML pages.
 - `supabase-setup.sql` documents the production `reports` RLS policies, `checkout_reference` column, and private `purchases` table.
 - `supabase-setup.sql` includes `phone` on `reports` and `customer_phone` on `purchases` for HubSpot/customer follow-up sync.
 - README documents the current Stripe redirect URL, Supabase environment variables, Stripe webhook, and report email setup.
@@ -60,13 +72,17 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - On 2026-06-04, local sample audit returned `89` / `A-` and all three model analyses completed.
 - On 2026-06-04, an unauthenticated Supabase REST select against `reports` returned no report rows.
 - Stripe edit screen was updated to show the `/run-report` redirect URL above in the after-payment redirect field.
+- On 2026-06-04, `builderrank.io` served the HubSpot tracking script.
+- On 2026-06-04, live `/api/hubspot-account` returned the expected unauthenticated API response.
+- On 2026-06-04, live `/api/stripe-webhook` responded as a deployed API route.
+- On 2026-06-05, live `/api/stripe-webhook` rejected unsigned requests with the expected missing Stripe signature response after `STRIPE_WEBHOOK_SECRET` was added.
+- On 2026-06-04, authoritative Vercel DNS showed Google Workspace MX, SPF, DKIM, and DMARC records.
+- On 2026-06-04, Google Workspace showed Gmail activated for `builderrank.io`.
+- On 2026-06-04, HubSpot showed `kaleb@builderrank.io` enabled as a G Suite inbox.
 
 ## Next steps
 
 - Verify a complete production purchase with a real Stripe checkout return.
-- Run `supabase-setup.sql` in Supabase SQL Editor, then verify signed-in users only see their own reports.
-- Add Vercel env vars for `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, and `REPORT_EMAIL_FROM`.
-- Finish the HubSpot Service Key currently open in Chrome by selecting the CRM object/schema scopes listed in README, then add the key to Vercel as `HUBSPOT_ACCESS_TOKEN`.
-- Configure Stripe webhook URL `https://builderrank.io/api/stripe-webhook` for `checkout.session.completed`.
+- Verify `builderrank.io` in Resend, then add `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, and `REPORT_EMAIL_REPLY_TO` in Vercel when report email delivery is ready.
 - Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
 - Send a report email in production after Resend is configured.

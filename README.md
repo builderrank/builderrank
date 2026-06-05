@@ -101,6 +101,7 @@ SUPABASE_SERVICE_ROLE_KEY
 STRIPE_WEBHOOK_SECRET
 RESEND_API_KEY
 REPORT_EMAIL_FROM
+REPORT_EMAIL_REPLY_TO
 REPORT_EMAIL_BCC
 HUBSPOT_ACCESS_TOKEN
 ```
@@ -155,10 +156,14 @@ The report workspace includes an `Email Report` button. It requires:
 ```text
 RESEND_API_KEY
 REPORT_EMAIL_FROM
+REPORT_EMAIL_REPLY_TO
 SUPABASE_SERVICE_ROLE_KEY
 ```
 
-`REPORT_EMAIL_BCC` is optional. The email sends a report summary and attaches the JSON export.
+Use `REPORT_EMAIL_FROM=Builder Rank <kaleb@builderrank.io>` after `builderrank.io` is verified in
+Resend. Use `REPORT_EMAIL_REPLY_TO=kaleb@builderrank.io` so customer replies land in the Google
+Workspace inbox. `REPORT_EMAIL_BCC` is optional. The email sends a report summary and attaches the
+JSON export.
 
 ## HubSpot sync
 

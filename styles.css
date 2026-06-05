@@ -556,6 +556,12 @@ button {
   line-height: 1.55;
 }
 
+.pricing-card small {
+  color: rgba(247, 249, 251, 0.58);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .pricing-section {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
