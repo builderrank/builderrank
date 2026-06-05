@@ -307,7 +307,7 @@ async function validateReportIntake() {
     // Continue to checkout even if browser storage is unavailable.
   }
 
-  if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure checkout...";
+  if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure Stripe checkout for the one-time $49 report...";
   return true;
 }
 
@@ -375,7 +375,7 @@ function setCheckoutPreparing(isPreparing) {
   auditSubmitButton.textContent = isPreparing
     ? "Creating Account..."
     : checkoutConfirmed
-      ? "Generate Report Card"
+      ? "Generate Paid Report"
       : "Continue to Checkout";
 }
 
@@ -453,12 +453,12 @@ function hydrateCheckoutReturn() {
     return;
   }
 
-  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Report Card";
+  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Paid Report";
   if (checkoutNotice) checkoutNotice.hidden = false;
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
-      ? `Payment confirmed. Ready to run the paid report for ${pendingReport.website}.`
-      : "Payment confirmed. Enter the contractor details to run the paid report.";
+      ? `Payment confirmed. Ready to run the paid Builder Rank report for ${pendingReport.website}.`
+      : "Payment confirmed. Enter the contractor details to run the paid Builder Rank report.";
   }
 
   document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -983,7 +983,7 @@ async function emailCurrentReport() {
 
     auditStatus.textContent = `Report emailed to ${session.user.email}.`;
   } catch (error) {
-    auditStatus.textContent = error.message;
+    auditStatus.textContent = `${error.message} You can still save the PDF or export JSON.`;
   } finally {
     emailReportButton.disabled = false;
     emailReportButton.textContent = "Email Report";
@@ -1328,7 +1328,7 @@ function setLoading(isLoading) {
   const button = auditForm.querySelector("button");
   button.disabled = isLoading;
   if (returnedReportButton) returnedReportButton.disabled = isLoading;
-  button.textContent = isLoading ? "Running Audit..." : "Generate Report Card";
+  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Paid Report" : "Continue to Checkout";
   auditStatus.textContent = isLoading
     ? "Crawling the website, checking schema, reading text, and scoring LLM readability..."
     : auditStatus.textContent;
