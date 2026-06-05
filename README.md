@@ -166,6 +166,27 @@ Use `REPORT_EMAIL_FROM=Builder Rank <kaleb@builderrank.io>` after `builderrank.i
 Resend. Use `REPORT_EMAIL_REPLY_TO=kaleb@builderrank.io` so customer replies land in the Google
 Workspace inbox. `REPORT_EMAIL_BCC` is optional.
 
+If ChatGPT, Claude, or Gemini does not return a completed analysis, the report and emailed copy tell
+the customer that Builder Rank will review the model issue and follow up if additional context is needed.
+
+## Support and legal
+
+Customer support is available at:
+
+```text
+Kaleb@builderrank.io
+720-701-3156
+```
+
+Public pages:
+
+```text
+/support
+/legal
+/privacy
+/terms
+```
+
 ## HubSpot sync
 
 Builder Rank can sync account creation/login to HubSpot contacts and Stripe purchases to HubSpot deals.

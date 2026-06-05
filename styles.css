@@ -64,12 +64,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 .site-nav a {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 900;
   text-decoration: none;
   text-transform: uppercase;
@@ -275,6 +275,53 @@ button {
 
 .content-band .button-link {
   flex: 0 0 auto;
+}
+
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.support-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.support-panel h2 {
+  overflow-wrap: anywhere;
+}
+
+.support-panel p,
+.legal-block p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.support-panel .button-link {
+  width: fit-content;
+  margin-top: 4px;
+}
+
+.legal-section {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.legal-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(14, 14, 14, 0.92);
+  box-shadow: var(--shadow);
+  padding: clamp(18px, 3vw, 26px);
+}
+
+.legal-block h2 {
+  margin-bottom: 10px;
 }
 
 .account-shell {
@@ -1100,6 +1147,25 @@ button:disabled {
   color: var(--red);
 }
 
+.model-followup-notice {
+  border: 1px solid rgba(255, 159, 47, 0.5);
+  border-radius: 8px;
+  background: rgba(255, 159, 47, 0.1);
+  padding: 14px;
+}
+
+.model-followup-notice strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--amber);
+}
+
+.model-followup-notice p {
+  margin: 0;
+  color: #dfdfdf;
+  line-height: 1.48;
+}
+
 .model-score-line {
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
@@ -1237,6 +1303,7 @@ li {
   .page-grid,
   .journey-grid,
   .account-shell,
+  .support-grid,
   .sample-hero {
     grid-template-columns: 1fr;
   }

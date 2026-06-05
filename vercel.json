@@ -55,6 +55,22 @@
       "dest": "/account.html"
     },
     {
+      "src": "/support/?",
+      "dest": "/support.html"
+    },
+    {
+      "src": "/legal/?",
+      "dest": "/legal.html"
+    },
+    {
+      "src": "/privacy/?",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/terms/?",
+      "dest": "/terms.html"
+    },
+    {
       "src": "/llms.txt",
       "dest": "/llms.txt"
     },

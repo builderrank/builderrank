@@ -24,6 +24,11 @@ https://builderrank.io/run-report?checkout=success#report-workspace
   - Endpoint URL: `https://builderrank.io/api/stripe-webhook`
   - Event: `checkout.session.completed`
 - `STRIPE_WEBHOOK_SECRET` is configured in Vercel Production and Preview.
+- Resend domain setup is in progress:
+  - Domain: `builderrank.io`
+  - Resend DNS records were auto-added through Vercel and public DNS resolves for `resend._domainkey.builderrank.io`, `send.builderrank.io` MX, and `send.builderrank.io` TXT.
+  - Resend event log showed `DNS verified` on 2026-06-05, but overall domain status was still `Pending`.
+  - Before the final real payment test, re-check Resend, create/copy `RESEND_API_KEY` to Vercel, and confirm automatic report email delivery.
 
 ## Latest local changes
 
@@ -33,6 +38,8 @@ https://builderrank.io/run-report?checkout=success#report-workspace
   - `/pricing`
   - `/run-report`
   - `/account`
+  - `/support`
+  - `/legal`
 - Vercel routing now maps those clean paths to their HTML pages.
 - The report workspace moved to `/run-report`.
 - The account page includes customer login, account creation, password reset, profile summary, sign out, and purchased report history.
@@ -52,6 +59,8 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - The report workspace automatically emails the signed-in customer after a paid report is generated when Resend and Supabase service-role environment variables are configured.
 - Report email includes a thank-you note, basic PDF attachment, and JSON export. The `Email Report` action remains available for manual resend.
 - Report email defaults now use `Builder Rank <kaleb@builderrank.io>` with replies routed to `kaleb@builderrank.io`.
+- Basic Support and Legal pages are available with `Kaleb@builderrank.io` and `720-701-3156`.
+- If ChatGPT, Claude, or Gemini does not report on a paid customer report, the on-screen report and emailed copy say Builder Rank will review and follow up.
 - Pricing and checkout copy now describe the one-time $49 Stripe purchase, report return flow, and support email.
 - `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
 - `/api/stripe-webhook` also creates HubSpot purchase deals when `HUBSPOT_ACCESS_TOKEN` is configured.
@@ -80,10 +89,11 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - On 2026-06-04, authoritative Vercel DNS showed Google Workspace MX, SPF, DKIM, and DMARC records.
 - On 2026-06-04, Google Workspace showed Gmail activated for `builderrank.io`.
 - On 2026-06-04, HubSpot showed `kaleb@builderrank.io` enabled as a G Suite inbox.
+- On 2026-06-05, Resend sending DNS records resolved publicly, and Resend showed `DNS verified` with final domain verification still pending.
 
 ## Next steps
 
+- Before running the final real payment test, re-check Resend status, add `RESEND_API_KEY` to Vercel, and verify automatic PDF email delivery.
 - Verify a complete production purchase with a real Stripe checkout return.
-- Verify `builderrank.io` in Resend, then add `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, and `REPORT_EMAIL_REPLY_TO` in Vercel when report email delivery is ready.
 - Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
 - Run a paid report in production after Resend is configured and confirm the automatic PDF email arrives.

@@ -183,7 +183,7 @@ async function analyzeWithModels(auditContext) {
           model: provider.model,
           status: "skipped",
           score: null,
-          summary: `Set ${providerEnvName(provider.key)} to run a real ${provider.label} analysis.`,
+          summary: `${provider.label} did not report on this run. Builder Rank will review the missing model response and follow up with the customer if additional context is needed.`,
           recommendations: [],
         };
       }
@@ -209,7 +209,7 @@ async function analyzeWithModels(auditContext) {
           model: provider.model,
           status: "error",
           score: null,
-          summary: `${provider.label} API error: ${error.message}`,
+          summary: `${provider.label} did not report on this run. Builder Rank will review the model issue and follow up with the customer if additional context is needed.`,
           recommendations: [],
         };
       }
@@ -961,6 +961,10 @@ async function serveStatic(pathname, response) {
     "/pricing": "/pricing.html",
     "/run-report": "/run-report.html",
     "/account": "/account.html",
+    "/support": "/support.html",
+    "/legal": "/legal.html",
+    "/privacy": "/privacy.html",
+    "/terms": "/terms.html",
   };
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const cleanPath = routeFiles[normalizedPath] || pathname;
