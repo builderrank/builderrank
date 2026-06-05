@@ -8,7 +8,8 @@ import {
 } from "./_shared.js";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <reports@builderrank.app>";
+const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <kaleb@builderrank.io>";
+const REPORT_EMAIL_REPLY_TO = process.env.REPORT_EMAIL_REPLY_TO || "kaleb@builderrank.io";
 const REPORT_EMAIL_BCC = process.env.REPORT_EMAIL_BCC || "";
 
 export default async function handler(request, response) {
@@ -38,6 +39,7 @@ export default async function handler(request, response) {
     const payload = {
       from: REPORT_EMAIL_FROM,
       to: [to],
+      reply_to: REPORT_EMAIL_REPLY_TO,
       subject: `Builder Rank report: ${company}`,
       html: renderEmailHtml(report),
       text: renderEmailText(report),
