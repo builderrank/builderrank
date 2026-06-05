@@ -1294,6 +1294,10 @@ function renderEvidence(evidence) {
 function renderModelAnalyses(modelAnalyses) {
   if (!modelAnalyses?.length) {
     return `
+      <div class="model-followup-notice">
+        <strong>Model follow-up</strong>
+        <p>If ChatGPT, Claude, or Gemini does not report on a paid customer report, Builder Rank will review the issue and follow up.</p>
+      </div>
       <div class="model-analysis-card">
         <div class="model-analysis-topline">
           <strong>Local heuristic mode</strong>
@@ -1304,7 +1308,17 @@ function renderModelAnalyses(modelAnalyses) {
     `;
   }
 
-  return modelAnalyses.map(renderModelAnalysis).join("");
+  const incompleteModels = modelAnalyses.filter((analysis) => analysis.status !== "complete");
+  const followUpNotice = incompleteModels.length
+    ? `
+      <div class="model-followup-notice">
+        <strong>Model follow-up</strong>
+        <p>${escapeHtml(incompleteModels.map((analysis) => analysis.label).join(", "))} did not report on this run. Builder Rank will review the missing model response and follow up with the customer if additional context is needed.</p>
+      </div>
+    `
+    : "";
+
+  return `${followUpNotice}${modelAnalyses.map(renderModelAnalysis).join("")}`;
 }
 
 function renderModelAnalysis(analysis) {
