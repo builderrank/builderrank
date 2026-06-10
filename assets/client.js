@@ -222,7 +222,7 @@ if (auditForm) {
         ? `Real audit complete for ${payload.website}. Saved to your account.`
         : `Real audit complete for ${payload.website}. Saved in this browser.`;
       render();
-      void emailCurrentReport({ automatic: true });
+      await emailCurrentReport({ automatic: true, report: payload });
     } catch (error) {
       auditStatus.textContent = `Could not complete the audit: ${error.message}`;
     } finally {
@@ -977,18 +977,26 @@ async function renderReportHistory() {
   }
 }
 
-async function emailCurrentReport({ automatic = false } = {}) {
-  if (!emailReportButton) return;
+async function emailCurrentReport({ automatic = false, report = audit } = {}) {
+  if (!emailReportButton) return { ok: false, error: "Email controls are unavailable." };
 
   const session = await getCurrentSession();
   if (!session?.access_token) {
-    if (!automatic) auditStatus.textContent = "Log in before emailing a report.";
-    return;
+    const message = "Log in before emailing a report.";
+    if (auditStatus) auditStatus.textContent = automatic
+      ? `Report complete, but the email was not sent. ${message}`
+      : message;
+    return { ok: false, error: message };
   }
 
   try {
     emailReportButton.disabled = true;
     emailReportButton.textContent = automatic ? "Sending..." : "Emailing...";
+    if (auditStatus) {
+      auditStatus.textContent = automatic
+        ? `Report complete. Emailing the PDF report to ${session.user.email}...`
+        : `Emailing the report to ${session.user.email}...`;
+    }
     const response = await fetch("/api/email-report", {
       method: "POST",
       headers: {
@@ -997,7 +1005,7 @@ async function emailCurrentReport({ automatic = false } = {}) {
       },
       body: JSON.stringify({
         email: session.user?.email || readAccountEmail(),
-        report: audit,
+        report,
       }),
     });
     const payload = await response.json().catch(() => ({}));
@@ -1009,12 +1017,14 @@ async function emailCurrentReport({ automatic = false } = {}) {
     auditStatus.textContent = automatic
       ? `Report complete and emailed to ${session.user.email}.`
       : `Report emailed to ${session.user.email}.`;
+    return { ok: true, id: payload.id };
   } catch (error) {
-    if (!automatic) {
-      auditStatus.textContent = `${error.message} You can still save the PDF or export JSON.`;
-    } else {
-      console.warn("Could not auto-email report", error);
-    }
+    const message = `${error.message} You can still save the PDF or export JSON, then click Email Report to try again.`;
+    if (auditStatus) auditStatus.textContent = automatic
+      ? `Report complete, but the automatic email was not sent. ${message}`
+      : message;
+    console.warn("Could not email report", error);
+    return { ok: false, error: error.message };
   } finally {
     emailReportButton.disabled = false;
     emailReportButton.textContent = "Email Report";
