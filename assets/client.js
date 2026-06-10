@@ -7,6 +7,7 @@ const PENDING_REPORT_KEY = "builderRankPendingReport";
 const REPORT_HISTORY_KEY = "builderRankReportHistory";
 const ACCOUNT_EMAIL_KEY = "builderRankAccountEmail";
 const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
+const PROMO_CODE_KEY = "builderRankPromoCode";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
 const builderRankSupabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
@@ -122,6 +123,7 @@ const pdfButton = document.querySelector("#pdfButton");
 const jsonButton = document.querySelector("#jsonButton");
 const emailReportButton = document.querySelector("#emailReportButton");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
+const promoCodeInputs = document.querySelectorAll("[data-promo-code-input]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
 const returnedReportButton = document.querySelector("#returnedReportButton");
 const accountLoginEmailInput = document.querySelector("#accountLoginEmailInput");
@@ -174,6 +176,15 @@ document.querySelectorAll("[data-builder-logo]").forEach((image) => {
 
 paymentButtons.forEach((button) => {
   button.addEventListener("click", handlePaymentClick);
+});
+
+promoCodeInputs.forEach((input) => {
+  input.value = getStoredPromoCode();
+  input.addEventListener("input", () => {
+    input.value = normalizePromoCode(input.value);
+    persistPromoCode(input.value);
+    syncPromoCodeInputs(input.value);
+  });
 });
 
 if (auditForm) {
@@ -252,7 +263,8 @@ void refreshAuthState();
 
 function handlePaymentClick() {
   if (!auditForm) {
-    window.location.href = "/run-report";
+    const promoCode = getEnteredPromoCode();
+    window.location.href = promoCode ? `/run-report?promo=${encodeURIComponent(promoCode)}` : "/run-report";
     return;
   }
 
@@ -393,6 +405,7 @@ function savePendingReport() {
     website: websiteInput?.value || "",
     market: marketInput?.value || "",
     phone,
+    promoCode: getEnteredPromoCode(),
     checkoutReference,
     savedAt: new Date().toISOString(),
   };
@@ -415,6 +428,10 @@ function buildCheckoutUrl(pendingReport) {
   if (pendingReport?.checkoutReference) {
     checkoutUrl.searchParams.set("client_reference_id", pendingReport.checkoutReference);
   }
+  if (pendingReport?.promoCode) {
+    checkoutUrl.searchParams.set("prefilled_promo_code", pendingReport.promoCode);
+    checkoutUrl.searchParams.set("utm_campaign", `promo_${pendingReport.promoCode.toLowerCase()}`);
+  }
   checkoutUrl.searchParams.set("utm_source", "builder_rank_app");
   checkoutUrl.searchParams.set("utm_medium", "checkout");
 
@@ -429,9 +446,15 @@ function createCheckoutReference() {
 function hydrateCheckoutReturn() {
   const params = new URLSearchParams(window.location.search);
   const checkoutValue = params.get("checkout") || params.get("paid") || params.get("payment");
+  const promoCode = normalizePromoCode(params.get("promo") || params.get("promo_code") || "");
   const isCheckoutReturn = checkoutValue && CHECKOUT_SUCCESS_VALUES.has(checkoutValue.toLowerCase());
   const pendingReport = readPendingReport();
   checkoutConfirmed = Boolean(isCheckoutReturn);
+
+  if (promoCode) {
+    persistPromoCode(promoCode);
+    syncPromoCodeInputs(promoCode);
+  }
 
   if (isCheckoutReturn && !auditForm) {
     window.location.href = "/run-report?checkout=success#report-workspace";
@@ -444,6 +467,7 @@ function hydrateCheckoutReturn() {
     if (emailInput) emailInput.value = pendingReport.email || emailInput.value;
     if (websiteInput) websiteInput.value = pendingReport.website || websiteInput.value;
     if (marketInput) marketInput.value = pendingReport.market || marketInput.value;
+    if (pendingReport.promoCode) syncPromoCodeInputs(pendingReport.promoCode);
   }
 
   if (!isCheckoutReturn) {
@@ -1071,6 +1095,46 @@ function clearFieldValidity(...fields) {
 
 function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizePromoCode(value) {
+  return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 40);
+}
+
+function getStoredPromoCode() {
+  try {
+    return normalizePromoCode(localStorage.getItem(PROMO_CODE_KEY) || readPendingReport()?.promoCode || "");
+  } catch {
+    return "";
+  }
+}
+
+function getEnteredPromoCode() {
+  const value = [...promoCodeInputs].map((input) => input.value).find(Boolean) || getStoredPromoCode();
+  const promoCode = normalizePromoCode(value);
+  persistPromoCode(promoCode);
+  syncPromoCodeInputs(promoCode);
+  return promoCode;
+}
+
+function persistPromoCode(value) {
+  try {
+    const promoCode = normalizePromoCode(value);
+    if (promoCode) {
+      localStorage.setItem(PROMO_CODE_KEY, promoCode);
+    } else {
+      localStorage.removeItem(PROMO_CODE_KEY);
+    }
+  } catch {
+    // Promo codes are optional.
+  }
+}
+
+function syncPromoCodeInputs(value) {
+  const promoCode = normalizePromoCode(value);
+  promoCodeInputs.forEach((input) => {
+    if (input.value !== promoCode) input.value = promoCode;
+  });
 }
 
 function normalizePhone(value) {
