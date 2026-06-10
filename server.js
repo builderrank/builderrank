@@ -958,6 +958,7 @@ async function serveStatic(pathname, response) {
   const routeFiles = {
     "/": "/index.html",
     "/why-geo": "/why-geo.html",
+    "/about": "/about.html",
     "/pricing": "/pricing.html",
     "/run-report": "/run-report.html",
     "/account": "/account.html",

@@ -43,6 +43,10 @@
       "dest": "/why-geo.html"
     },
     {
+      "src": "/about/?",
+      "dest": "/about.html"
+    },
+    {
       "src": "/pricing/?",
       "dest": "/pricing.html"
     },
