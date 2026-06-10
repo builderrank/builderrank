@@ -182,6 +182,11 @@ button {
   text-decoration: none;
 }
 
+.marketing-actions .button-link {
+  border-color: transparent;
+  color: #080808;
+}
+
 .button-link {
   display: inline-grid;
   min-height: 48px;
