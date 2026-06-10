@@ -127,8 +127,12 @@ Run `supabase-setup.sql` in the Supabase SQL Editor to confirm report row-level 
 Checkout links are generated with:
 
 - `prefilled_email`: the signed-in Builder Rank account email.
+- `prefilled_promo_code`: the optional customer-entered promo code, when present.
 - `client_reference_id`: a generated `br_...` checkout reference saved with the pending report.
 - `utm_source=builder_rank_app` and `utm_medium=checkout`.
+
+Promotion codes must be enabled on the Stripe Payment Link, and the actual customer-facing codes must
+exist in Stripe, for the promo field to apply a discount.
 
 Phone number is validated, normalized, collected in Builder Rank account creation, and required in the
 report workspace before checkout. Stripe Payment Links do not use that local field as a URL prefill, but

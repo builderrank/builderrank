@@ -722,7 +722,8 @@ h3 {
 .password-field,
 .url-field,
 .city-field,
-.phone-field {
+.phone-field,
+.promo-field {
   display: grid;
   gap: 8px;
 }
@@ -734,7 +735,8 @@ h3 {
 }
 
 .city-field,
-.phone-field {
+.phone-field,
+.promo-field {
   grid-column: span 1;
 }
 
@@ -746,7 +748,8 @@ h3 {
 .password-field span,
 .url-field span,
 .city-field span,
-.phone-field span {
+.phone-field span,
+.promo-field span {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 900;
@@ -1317,6 +1320,8 @@ li {
   .password-field,
   .url-field,
   .city-field,
+  .phone-field,
+  .promo-field,
   #auditSubmitButton {
     grid-column: 1;
   }

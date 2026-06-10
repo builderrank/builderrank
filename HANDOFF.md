@@ -51,6 +51,8 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Phone number is collected and validated during account creation and again before checkout/report purchase for existing accounts without a saved phone.
 - Buy buttons send customers to the report workspace unless the report form is ready for checkout.
 - Report checkout saves the entered website and market in browser storage before sending customers to Stripe.
+- Pricing and Run Report include an optional promo code field. The code is saved with pending checkout and sent to Stripe as `prefilled_promo_code`.
+- Stripe Payment Link promotion codes must be enabled, and actual customer-facing promotion codes must exist in Stripe, before discounts apply.
 - Pending checkout and saved report history include the captured phone number when available.
 - Returning from Stripe with `?checkout=success#report-workspace` restores the saved website and market.
 - The report workspace shows a `Payment received` notice and `Run Paid Report` button.
@@ -97,5 +99,6 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 ## Next steps
 
 - Verify a complete production purchase with a real Stripe checkout return.
+- Enable promotion codes on the Stripe Payment Link and create any tester promo codes before sending the outreach link.
 - Send a real production checkout through Stripe and confirm the matching `client_reference_id` appears in Supabase `purchases`.
 - Run a paid report in production and confirm the automatic PDF email arrives.
