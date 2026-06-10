@@ -47,14 +47,12 @@ export default async function handler(request, response) {
         {
           filename: `${slug}-builder-rank.pdf`,
           content: renderReportPdfBase64(report),
-          content_type: "application/pdf",
         },
         {
           filename: `${slug}-builder-rank.json`,
           content: Buffer.from(JSON.stringify({ exportedAt: new Date().toISOString(), report }, null, 2)).toString(
             "base64",
           ),
-          content_type: "application/json",
         },
       ],
     };
@@ -72,6 +70,11 @@ export default async function handler(request, response) {
     const data = await resendResponse.json().catch(() => ({}));
 
     if (!resendResponse.ok) {
+      console.warn("Resend report email failed", {
+        status: resendResponse.status,
+        message: data?.message,
+        name: data?.name,
+      });
       throw new Error(data?.message || "Could not send report email.");
     }
 
