@@ -8,7 +8,97 @@ const REPORT_HISTORY_KEY = "builderRankReportHistory";
 const ACCOUNT_EMAIL_KEY = "builderRankAccountEmail";
 const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const PROMO_CODE_KEY = "builderRankPromoCode";
+const AUTO_RUN_CHECKOUT_KEY = "builderRankAutoRunCheckout";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
+const MARKET_ALIASES = {
+  denver: "Denver, CO",
+  "denver co": "Denver, CO",
+  "denver colorado": "Denver, CO",
+  "colorado springs": "Colorado Springs, CO",
+  "colorado springs co": "Colorado Springs, CO",
+  "colorado springs colorado": "Colorado Springs, CO",
+  "colorado sprgs": "Colorado Springs, CO",
+  "colorado spgs": "Colorado Springs, CO",
+  "co springs": "Colorado Springs, CO",
+  "colo springs": "Colorado Springs, CO",
+  cos: "Colorado Springs, CO",
+  boulder: "Boulder, CO",
+  "boulder co": "Boulder, CO",
+  "fort collins": "Fort Collins, CO",
+  "fort collins co": "Fort Collins, CO",
+  "castle rock": "Castle Rock, CO",
+  "castle rock co": "Castle Rock, CO",
+  parker: "Parker, CO",
+  "parker co": "Parker, CO",
+  aurora: "Aurora, CO",
+  "aurora co": "Aurora, CO",
+  lakewood: "Lakewood, CO",
+  "lakewood co": "Lakewood, CO",
+  arvada: "Arvada, CO",
+  "arvada co": "Arvada, CO",
+  littleton: "Littleton, CO",
+  "littleton co": "Littleton, CO",
+};
+const STATE_ABBREVIATIONS = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS",
+  "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
+  "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV",
+  "WI", "WY", "DC",
+]);
+const STATE_NAME_TO_ABBREVIATION = {
+  alabama: "AL",
+  alaska: "AK",
+  arizona: "AZ",
+  arkansas: "AR",
+  california: "CA",
+  colorado: "CO",
+  connecticut: "CT",
+  delaware: "DE",
+  florida: "FL",
+  georgia: "GA",
+  hawaii: "HI",
+  idaho: "ID",
+  illinois: "IL",
+  indiana: "IN",
+  iowa: "IA",
+  kansas: "KS",
+  kentucky: "KY",
+  louisiana: "LA",
+  maine: "ME",
+  maryland: "MD",
+  massachusetts: "MA",
+  michigan: "MI",
+  minnesota: "MN",
+  mississippi: "MS",
+  missouri: "MO",
+  montana: "MT",
+  nebraska: "NE",
+  nevada: "NV",
+  "new hampshire": "NH",
+  "new jersey": "NJ",
+  "new mexico": "NM",
+  "new york": "NY",
+  "north carolina": "NC",
+  "north dakota": "ND",
+  ohio: "OH",
+  oklahoma: "OK",
+  oregon: "OR",
+  pennsylvania: "PA",
+  "rhode island": "RI",
+  "south carolina": "SC",
+  "south dakota": "SD",
+  tennessee: "TN",
+  texas: "TX",
+  utah: "UT",
+  vermont: "VT",
+  virginia: "VA",
+  washington: "WA",
+  "west virginia": "WV",
+  wisconsin: "WI",
+  wyoming: "WY",
+  dc: "DC",
+  "district of columbia": "DC",
+};
 const builderRankSupabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     autoRefreshToken: true,
@@ -169,6 +259,11 @@ const updatePasswordForm = document.querySelector("#updatePasswordForm");
 const updatePasswordStatus = document.querySelector("#updatePasswordStatus");
 const newPasswordInput = document.querySelector("#newPasswordInput");
 const newPasswordConfirmInput = document.querySelector("#newPasswordConfirmInput");
+const marketSuggestions = document.querySelector("#marketSuggestions");
+
+let usMarkets = [];
+let usMarketByKey = new Map();
+let usMarketCityCounts = new Map();
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -184,7 +279,25 @@ promoCodeInputs.forEach((input) => {
     input.value = normalizePromoCode(input.value);
     persistPromoCode(input.value);
     syncPromoCodeInputs(input.value);
+    savePendingReportDraft();
   });
+});
+
+[websiteInput, marketInput, phoneInput].filter(Boolean).forEach((input) => {
+  input.addEventListener("input", savePendingReportDraft);
+});
+
+marketInput?.addEventListener("input", () => {
+  updateMarketSuggestions(marketInput.value);
+});
+
+marketInput?.addEventListener("focus", () => {
+  updateMarketSuggestions(marketInput.value);
+});
+
+marketInput?.addEventListener("blur", () => {
+  validateMarketField(marketInput, { report: false });
+  savePendingReportDraft();
 });
 
 if (auditForm) {
@@ -196,6 +309,12 @@ if (auditForm) {
       return;
     }
 
+    if (!validateMarketField(marketInput) || !validatePhoneField(phoneInput, "Use a valid 10-digit phone number before running the report.")) {
+      resetCheckoutNotice();
+      return;
+    }
+
+    savePendingReportDraft();
     setLoading(true);
 
     try {
@@ -206,7 +325,7 @@ if (auditForm) {
         },
         body: JSON.stringify({
           website: websiteInput.value,
-          market: marketInput.value,
+          market: normalizeMarket(marketInput.value),
         }),
       });
 
@@ -222,9 +341,12 @@ if (auditForm) {
         ? `Real audit complete for ${payload.website}. Saved to your account.`
         : `Real audit complete for ${payload.website}. Saved in this browser.`;
       render();
+      resetCheckoutNotice();
+      if (checkoutNotice) checkoutNotice.hidden = true;
       await emailCurrentReport({ automatic: true, report: payload });
     } catch (error) {
       auditStatus.textContent = `Could not complete the audit: ${error.message}`;
+      resetCheckoutNotice();
     } finally {
       setLoading(false);
     }
@@ -256,6 +378,7 @@ if (auditForm) {
   render();
 }
 
+void loadUSMarkets();
 hydrateCheckoutReturn();
 hydrateAuthFlows();
 hydrateAccountPage();
@@ -280,7 +403,7 @@ async function beginCheckout() {
   if (!(await validateReportIntake())) return;
 
   if (BUILDER_RANK_PAYMENT_URL) {
-    const pendingReport = savePendingReport();
+    const pendingReport = savePendingReport({ checkoutReference: createCheckoutReference() });
     window.location.href = buildCheckoutUrl(pendingReport);
     return;
   }
@@ -311,6 +434,9 @@ async function validateReportIntake() {
     return false;
   }
   if (!validatePhoneField(phoneInput, "Use a valid 10-digit phone number before checkout.")) {
+    return false;
+  }
+  if (!validateMarketField(marketInput)) {
     return false;
   }
   try {
@@ -392,18 +518,16 @@ function setCheckoutPreparing(isPreparing) {
       : "Continue to Checkout";
 }
 
-function savePendingReport() {
+function savePendingReport({ checkoutReference = readPendingReport()?.checkoutReference || "" } = {}) {
   if (!emailInput && !websiteInput && !marketInput && !phoneInput) return null;
 
-  const existing = readPendingReport();
-  const checkoutReference = existing?.checkoutReference || createCheckoutReference();
   const phone = normalizePhone(phoneInput?.value || getProfilePhone(readAccountProfile()));
 
   const pendingReport = {
     email: emailInput?.value || readAccountEmail() || "",
     accountCreated: Boolean(readAccountProfile()?.accountCreated),
     website: websiteInput?.value || "",
-    market: marketInput?.value || "",
+    market: normalizeMarket(marketInput?.value || ""),
     phone,
     promoCode: getEnteredPromoCode(),
     checkoutReference,
@@ -418,6 +542,27 @@ function savePendingReport() {
   }
 
   return pendingReport;
+}
+
+function savePendingReportDraft() {
+  if (!auditForm) return;
+
+  try {
+    const existing = readPendingReport();
+    const draft = {
+      ...existing,
+      email: emailInput?.value || readAccountEmail() || existing?.email || "",
+      accountCreated: Boolean(readAccountProfile()?.accountCreated || existing?.accountCreated),
+      website: websiteInput?.value || "",
+      market: marketInput?.value || "",
+      phone: phoneInput?.value || existing?.phone || "",
+      promoCode: getEnteredPromoCode(),
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(PENDING_REPORT_KEY, JSON.stringify(draft));
+  } catch {
+    // Checkout can still proceed if browser storage is unavailable.
+  }
 }
 
 function buildCheckoutUrl(pendingReport) {
@@ -466,7 +611,8 @@ function hydrateCheckoutReturn() {
   if (pendingReport && isCheckoutReturn) {
     if (emailInput) emailInput.value = pendingReport.email || emailInput.value;
     if (websiteInput) websiteInput.value = pendingReport.website || websiteInput.value;
-    if (marketInput) marketInput.value = pendingReport.market || marketInput.value;
+    if (marketInput) marketInput.value = normalizeMarket(pendingReport.market) || marketInput.value;
+    if (phoneInput) phoneInput.value = normalizePhone(pendingReport.phone) || phoneInput.value;
     if (pendingReport.promoCode) syncPromoCodeInputs(pendingReport.promoCode);
   }
 
@@ -480,13 +626,127 @@ function hydrateCheckoutReturn() {
 
   if (auditSubmitButton) auditSubmitButton.textContent = "Generate Paid Report";
   if (checkoutNotice) checkoutNotice.hidden = false;
+  document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  if (shouldAutoRunCheckoutReport(pendingReport)) {
+    markCheckoutAutoRun(pendingReport);
+    if (checkoutNotice) {
+      checkoutNotice.classList.add("is-generating");
+      checkoutNotice.querySelector("strong").textContent = "Payment received";
+      checkoutNotice.querySelector("p").textContent = "Hang tight. We are generating your Builder Rank report now.";
+    }
+    if (auditStatus) {
+      auditStatus.textContent = `Payment confirmed. Generating the paid Builder Rank report for ${pendingReport.website}...`;
+    }
+    window.setTimeout(() => auditForm?.requestSubmit(), 250);
+    return;
+  }
+
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
       ? `Payment confirmed. Ready to run the paid Builder Rank report for ${pendingReport.website}.`
       : "Payment confirmed. Enter the contractor details to run the paid Builder Rank report.";
   }
+}
 
-  document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+function shouldAutoRunCheckoutReport(pendingReport) {
+  if (!checkoutConfirmed || !auditForm || !pendingReport?.website || !pendingReport?.market) return false;
+
+  try {
+    const autoRunKey = pendingReport.checkoutReference || `${pendingReport.website}|${pendingReport.market}`;
+    return sessionStorage.getItem(AUTO_RUN_CHECKOUT_KEY) !== autoRunKey;
+  } catch {
+    return true;
+  }
+}
+
+function markCheckoutAutoRun(pendingReport) {
+  try {
+    const autoRunKey = pendingReport.checkoutReference || `${pendingReport.website}|${pendingReport.market}`;
+    sessionStorage.setItem(AUTO_RUN_CHECKOUT_KEY, autoRunKey);
+  } catch {
+    // Auto-run still works if session storage is unavailable.
+  }
+}
+
+function resetCheckoutNotice() {
+  if (!checkoutNotice) return;
+
+  checkoutNotice.classList.remove("is-generating");
+  checkoutNotice.querySelector("strong").textContent = "Payment received";
+  checkoutNotice.querySelector("p").textContent = "Run the paid report now. When it finishes, we will email a thank-you note and PDF copy.";
+}
+
+async function loadUSMarkets() {
+  if (!marketInput) return;
+
+  try {
+    const response = await fetch("/assets/us-markets.json");
+    if (!response.ok) throw new Error("Could not load US markets.");
+    const markets = await response.json();
+    if (!Array.isArray(markets)) throw new Error("US markets file is invalid.");
+
+    usMarkets = markets;
+    usMarketByKey = new Map(markets.map((market) => [market.key, market]));
+    usMarketCityCounts = markets.reduce((counts, market) => {
+      const cityKey = searchKey(market.city);
+      counts.set(cityKey, (counts.get(cityKey) || 0) + 1);
+      return counts;
+    }, new Map());
+    updateMarketSuggestions(marketInput.value);
+  } catch (error) {
+    console.warn("Could not load US markets", error);
+  }
+}
+
+function updateMarketSuggestions(value) {
+  if (!marketSuggestions || !usMarkets.length) return;
+
+  const query = searchKey(value);
+  const suggestions = suggestUSMarkets(query).slice(0, 10);
+  marketSuggestions.innerHTML = suggestions
+    .map((market) => `<option value="${escapeHtml(market.label)}"></option>`)
+    .join("");
+}
+
+function suggestUSMarkets(query) {
+  if (!query) return preferredUSMarkets();
+
+  const words = query.split(" ").filter(Boolean);
+  return usMarkets
+    .map((market) => {
+      const cityKey = searchKey(market.city);
+      let score = 0;
+
+      if (market.key === query || cityKey === query) score += 100;
+      if (market.key.startsWith(query) || cityKey.startsWith(query)) score += 80;
+      if (words.every((word) => market.key.includes(word))) score += 45;
+      if (market.key.includes(query)) score += 20;
+      if (MARKET_ALIASES[query] === market.label) score += 120;
+
+      return { market, score };
+    })
+    .filter((result) => result.score > 0)
+    .sort((a, b) => b.score - a.score || a.market.label.localeCompare(b.market.label))
+    .map((result) => result.market);
+}
+
+function preferredUSMarkets() {
+  const preferredLabels = [
+    "Denver, CO",
+    "Colorado Springs, CO",
+    "Phoenix, AZ",
+    "Dallas, TX",
+    "Houston, TX",
+    "Austin, TX",
+    "Atlanta, GA",
+    "Charlotte, NC",
+    "Nashville, TN",
+    "Tampa, FL",
+  ];
+  return preferredLabels
+    .map((label) => usMarketByKey.get(searchKey(label)))
+    .filter(Boolean);
 }
 
 function hydrateAccountPage() {
@@ -1099,6 +1359,24 @@ function validatePhoneField(field, message = "Use a valid 10-digit phone number.
   return true;
 }
 
+function validateMarketField(field, { report = true } = {}) {
+  if (!field) return true;
+
+  const normalizedMarket = normalizeMarket(field.value);
+  const isValid = isValidMarket(normalizedMarket);
+  const message = "Use a real city and state, like Colorado Springs, CO.";
+  field.setCustomValidity(isValid ? "" : message);
+
+  if (!isValid) {
+    if (report) field.reportValidity();
+    if (auditStatus) auditStatus.textContent = message;
+    return false;
+  }
+
+  field.value = normalizedMarket;
+  return true;
+}
+
 function clearFieldValidity(...fields) {
   fields.filter(Boolean).forEach((field) => field.setCustomValidity(""));
 }
@@ -1109,6 +1387,88 @@ function normalizeEmail(value) {
 
 function normalizePromoCode(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 40);
+}
+
+function normalizeMarket(value) {
+  const rawMarket = String(value || "").trim().replace(/\s+/g, " ");
+  if (!rawMarket) return "";
+
+  const aliasKey = searchKey(rawMarket);
+  if (MARKET_ALIASES[aliasKey]) return MARKET_ALIASES[aliasKey];
+  const exactMarket = usMarketByKey.get(aliasKey);
+  if (exactMarket) return exactMarket.label;
+
+  const commaMatch = rawMarket.match(/^(.+?),\s*([A-Za-z .]+)$/);
+  if (commaMatch) {
+    const city = titleCaseMarketCity(commaMatch[1]);
+    const state = normalizeState(commaMatch[2]);
+    return state ? findUSMarket(city, state)?.label || `${city}, ${state}` : rawMarket;
+  }
+
+  const trailingStateMatch = rawMarket.match(/^(.+?)\s+([A-Za-z]{2}|[A-Za-z ]{4,})$/);
+  if (trailingStateMatch) {
+    const city = titleCaseMarketCity(trailingStateMatch[1]);
+    const state = normalizeState(trailingStateMatch[2]);
+    return state ? findUSMarket(city, state)?.label || `${city}, ${state}` : rawMarket;
+  }
+
+  const cityKey = searchKey(rawMarket);
+  if (usMarkets.length && usMarketCityCounts.get(cityKey) === 1) {
+    return usMarkets.find((market) => searchKey(market.city) === cityKey)?.label || rawMarket;
+  }
+
+  return rawMarket;
+}
+
+function isValidMarket(value) {
+  const market = normalizeMarket(value);
+  if (usMarketByKey.size) return usMarketByKey.has(searchKey(market));
+
+  const match = market.match(/^([A-Za-z][A-Za-z .'-]{1,60}),\s*([A-Z]{2})$/);
+  if (!match) return false;
+
+  const city = match[1].trim();
+  const state = match[2].trim();
+  return city.length >= 2 && STATE_ABBREVIATIONS.has(state);
+}
+
+function findUSMarket(city, state) {
+  if (!city || !state) return null;
+  return usMarketByKey.get(searchKey(`${city}, ${state}`)) || null;
+}
+
+function normalizeState(value) {
+  const cleaned = String(value || "").trim().replace(/\./g, "");
+  const upper = cleaned.toUpperCase();
+  if (STATE_ABBREVIATIONS.has(upper)) return upper;
+
+  return STATE_NAME_TO_ABBREVIATION[cleaned.toLowerCase()] || "";
+}
+
+function titleCaseMarketCity(value) {
+  const smallWords = new Set(["of", "the", "and"]);
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word, index) => {
+      if (index > 0 && smallWords.has(word)) return word;
+      return word
+        .split("-")
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join("-");
+    })
+    .join(" ");
+}
+
+function searchKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function getStoredPromoCode() {
