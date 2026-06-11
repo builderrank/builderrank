@@ -197,9 +197,9 @@ async function analyzeWithModels(auditContext) {
           model: provider.model,
           status: "complete",
           score: extractScore(result.score),
-          summary: stringifyModelText(result.summary || `${provider.label} completed the audit.`).slice(0, 420),
+          summary: modelSummaryText(result, provider.label),
           recommendations: Array.isArray(result.recommendations)
-            ? result.recommendations.map((item) => stringifyModelText(item).slice(0, 180)).slice(0, 4)
+            ? result.recommendations.map((item) => stringifyModelText(item).slice(0, 260)).slice(0, 4)
             : [],
         };
       } catch (error) {
@@ -316,7 +316,7 @@ async function callGemini(provider, auditContext) {
 }
 
 function modelSystemPrompt(providerName) {
-  return `You are ${providerName} acting as Builder Rank, an LLM visibility auditor for general contractor websites. Grade whether an AI assistant could confidently understand, trust, cite, and recommend the contractor for local remodel and construction searches. Return only valid JSON matching the requested schema.`;
+  return `You are ${providerName} acting as Builder Rank, an LLM visibility auditor for general contractor websites. Grade whether an AI assistant could confidently understand, trust, cite, and recommend the contractor for local remodel and construction searches. Return only valid JSON matching the requested schema. Be specific, evidence-backed, and useful to a contractor owner.`;
 }
 
 function modelUserPrompt({ company, website, market, categories, fixes, evidence, text }) {
@@ -338,7 +338,7 @@ function modelUserPrompt({ company, website, market, categories, fixes, evidence
       currentFixes: fixes,
       readableWebsiteText: text.slice(0, 16000),
       scoringInstructions:
-        "Return a score from 0-100. Reward clear entity details, contractor-specific services, service-area language, license/trust proof, answerable FAQ/cost/timeline content, reviews, project proof, schema, and llms.txt. Penalize vague, thin, unverified, or hard-to-crawl content.",
+        "Return a score from 0-100. Write a 2-3 sentence summary that names the strongest signal, the biggest gap, and how likely an AI assistant is to recommend this contractor. Each recommendation should be concrete and mention the exact page/content/signal to improve when possible. Reward clear entity details, contractor-specific services, service-area language, license/trust proof, answerable FAQ/cost/timeline content, reviews, project proof, schema, and llms.txt. Penalize vague, thin, unverified, or hard-to-crawl content.",
     },
     null,
     2,
@@ -357,16 +357,29 @@ function modelJsonSchema() {
       },
       summary: {
         type: "string",
+        minLength: 140,
+        maxLength: 700,
+      },
+      evidence: {
+        type: "string",
+        description: "One sentence naming the strongest website evidence used in the score.",
+      },
+      gap: {
+        type: "string",
+        description: "One sentence naming the biggest missing or weak signal.",
       },
       recommendations: {
         type: "array",
         items: {
           type: "string",
+          minLength: 45,
+          maxLength: 280,
         },
+        minItems: 3,
         maxItems: 4,
       },
     },
-    required: ["score", "summary", "recommendations"],
+    required: ["score", "summary", "evidence", "gap", "recommendations"],
   };
 }
 
@@ -380,6 +393,12 @@ function geminiResponseSchema() {
       summary: {
         type: "string",
       },
+      evidence: {
+        type: "string",
+      },
+      gap: {
+        type: "string",
+      },
       recommendations: {
         type: "array",
         items: {
@@ -387,7 +406,7 @@ function geminiResponseSchema() {
         },
       },
     },
-    required: ["score", "summary", "recommendations"],
+    required: ["score", "summary", "evidence", "gap", "recommendations"],
   };
 }
 
@@ -843,6 +862,18 @@ function normalizeModelResult(result, providerLabel) {
     summary: stringifyModelText(summary),
     recommendations: Array.isArray(recommendations) ? recommendations : [recommendations].filter(Boolean),
   };
+}
+
+function modelSummaryText(result, providerLabel) {
+  const parts = [
+    result.summary || `${providerLabel} completed the audit.`,
+    result.evidence ? `Strongest signal: ${result.evidence}` : "",
+    result.gap ? `Biggest gap: ${result.gap}` : "",
+  ]
+    .map(stringifyModelText)
+    .filter(Boolean);
+
+  return parts.join(" ").slice(0, 700);
 }
 
 function repairNestedModelResult(result) {
