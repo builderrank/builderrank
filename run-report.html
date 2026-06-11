@@ -74,8 +74,9 @@
             </label>
             <label class="city-field">
               <span>Primary market</span>
-              <input id="marketInput" placeholder="Denver, CO" required />
+              <input id="marketInput" list="marketSuggestions" placeholder="Denver, CO" required />
             </label>
+            <datalist id="marketSuggestions"></datalist>
             <label class="phone-field">
               <span>Phone</span>
               <input id="phoneInput" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567" required />
@@ -88,7 +89,7 @@
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
             <strong>Payment received</strong>
-            <p>Run the paid report now. When it finishes, we will email a thank-you note and PDF copy.</p>
+            <p>Hang tight. We will generate the report, save it to your account, and email a PDF copy.</p>
             <button id="returnedReportButton" type="button">Run Paid Report</button>
           </div>
           <div class="report-actions" aria-label="Save report">
