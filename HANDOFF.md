@@ -16,7 +16,7 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Supabase Auth is connected for customer accounts.
 - Supabase `reports` table saves completed reports for authenticated users.
 - Google Workspace Gmail is active for `kaleb@builderrank.io`.
-- HubSpot portal ID: `246390543`.
+- HubSpot portal ID: `246471522`.
 - HubSpot personal email connection is enabled for `kaleb@builderrank.io`.
 - HubSpot tracking is installed on the live Builder Rank pages.
 - Stripe webhook destination is active:
@@ -68,7 +68,7 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - Pricing and checkout copy now describe the one-time $49 Stripe purchase, report return flow, and support email.
 - `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
 - `/api/stripe-webhook` also creates HubSpot purchase deals when `HUBSPOT_ACCESS_TOKEN` is configured.
-- HubSpot tracking script `https://js-na2.hs-scripts.com/246390543.js` is included on the public HTML pages.
+- HubSpot tracking script `https://js-na2.hs-scripts.com/246471522.js` is included on the public HTML pages.
 - `supabase-setup.sql` documents the production `reports` RLS policies, `checkout_reference` column, and private `purchases` table.
 - `supabase-setup.sql` includes `phone` on `reports` and `customer_phone` on `purchases` for HubSpot/customer follow-up sync.
 - README documents the current Stripe redirect URL, Supabase environment variables, Stripe webhook, and report email setup.
