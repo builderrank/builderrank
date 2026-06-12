@@ -1,6 +1,6 @@
 import { safeString } from "./_shared.js";
 
-const HUBSPOT_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_SERVICE_KEY;
+const HUBSPOT_TOKEN = process.env.HUBSPOT_SERVICE_KEY || process.env.HUBSPOT_ACCESS_TOKEN;
 const HUBSPOT_BASE_URL = "https://api.hubapi.com";
 
 const customProperties = {
