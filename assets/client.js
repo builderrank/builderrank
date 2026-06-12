@@ -1160,6 +1160,7 @@ async function saveCompletedReport(report) {
         console.warn("Could not save Supabase report", error);
       } else {
         cloudSaved = true;
+        void syncHubSpotReport(completedReport);
       }
     }
   }
@@ -1306,6 +1307,24 @@ async function syncHubSpotAccount(profile = {}) {
     });
   } catch (error) {
     console.warn("Could not sync HubSpot account", error);
+  }
+}
+
+async function syncHubSpotReport(report = {}) {
+  const session = await getCurrentSession();
+  if (!session?.access_token) return;
+
+  try {
+    await fetch("/api/hubspot-report", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${session.access_token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ report }),
+    });
+  } catch (error) {
+    console.warn("Could not sync HubSpot report", error);
   }
 }
 
