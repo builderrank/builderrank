@@ -27,6 +27,10 @@
       "dest": "/api/hubspot-account.js"
     },
     {
+      "src": "/api/hubspot-report",
+      "dest": "/api/hubspot-report.js"
+    },
+    {
       "src": "/api/stripe-webhook",
       "dest": "/api/stripe-webhook.js"
     },
