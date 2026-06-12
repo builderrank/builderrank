@@ -318,9 +318,15 @@ if (auditForm) {
     setLoading(true);
 
     try {
+      const session = await getCurrentSession();
+      if (!session?.access_token) {
+        throw new Error("Log in before running a paid report.");
+      }
+
       const response = await fetch("/api/audit", {
         method: "POST",
         headers: {
+          authorization: `Bearer ${session.access_token}`,
           "content-type": "application/json",
         },
         body: JSON.stringify({
