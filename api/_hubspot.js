@@ -111,6 +111,31 @@ export async function syncHubSpotPurchase(purchase = {}) {
   };
 }
 
+export async function syncHubSpotReport(report = {}) {
+  if (!hubSpotConfigured()) return { skipped: true, reason: "HubSpot is not configured." };
+
+  await ensureHubSpotProperties();
+
+  const email = safeString(report.email);
+  const phone = safeString(report.phone);
+  const contact = email ? await upsertContact({ email, phone, companyName: report.company }) : null;
+  const deal = await createDeal({
+    email,
+    phone,
+    amount: report.amount,
+    website: report.website,
+    market: report.market,
+    checkoutReference: report.checkout_reference || report.checkoutReference,
+    score: report.score,
+    paymentStatus: report.payment_status || report.paymentStatus,
+  });
+
+  return {
+    contactId: contact?.id || null,
+    dealId: deal?.id || null,
+  };
+}
+
 async function ensureHubSpotProperties() {
   for (const [objectType, properties] of Object.entries(customProperties)) {
     for (const property of properties) {
@@ -193,14 +218,6 @@ async function upsertCompany(company) {
 
 async function createDeal(purchase) {
   const checkoutReference = safeString(purchase.checkoutReference);
-  if (checkoutReference) {
-    const existing = await findObjectByProperty("deals", "builder_rank_checkout_reference", checkoutReference, [
-      "dealname",
-      "builder_rank_checkout_reference",
-    ]);
-    if (existing?.id) return existing;
-  }
-
   const properties = stripEmpty({
     dealname: `Builder Rank Report${purchase.email ? ` - ${purchase.email}` : ""}`,
     amount: purchase.amount,
@@ -212,6 +229,19 @@ async function createDeal(purchase) {
     builder_rank_score: purchase.score,
     description: purchase.paymentStatus ? `Stripe payment status: ${purchase.paymentStatus}` : "",
   });
+
+  if (checkoutReference) {
+    const existing = await findObjectByProperty("deals", "builder_rank_checkout_reference", checkoutReference, [
+      "dealname",
+      "builder_rank_checkout_reference",
+    ]);
+    if (existing?.id) {
+      return hubSpotFetch(`/crm/v3/objects/deals/${existing.id}`, {
+        method: "PATCH",
+        body: { properties },
+      });
+    }
+  }
 
   return hubSpotFetch("/crm/v3/objects/deals", {
     method: "POST",
