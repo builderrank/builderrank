@@ -25,6 +25,8 @@ const mimeTypes = {
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
   ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
+  ".xml": "application/xml; charset=utf-8",
 };
 
 const server = createServer(async (request, response) => {
@@ -53,7 +55,17 @@ const server = createServer(async (request, response) => {
       return;
     }
 
-    if (request.method !== "GET") {
+    if (url.pathname === "/api/health") {
+      sendJson(response, 200, { ok: true, service: "builder-rank", checkedAt: new Date().toISOString() });
+      return;
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      sendJson(response, 404, { error: "API route not found" });
+      return;
+    }
+
+    if (!["GET", "HEAD"].includes(request.method)) {
       sendJson(response, 405, { error: "Method not allowed" });
       return;
     }
@@ -997,6 +1009,8 @@ async function serveStatic(pathname, response) {
     "/legal": "/legal.html",
     "/privacy": "/privacy.html",
     "/terms": "/terms.html",
+    "/robots.txt": "/robots.txt",
+    "/sitemap.xml": "/sitemap.xml",
   };
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const cleanPath = routeFiles[normalizedPath] || pathname;

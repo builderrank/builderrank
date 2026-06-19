@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { insertSupabaseRow, readRawBody, safeString, sendJson } from "./_shared.js";
 import { syncHubSpotPurchase } from "./_hubspot.js";
 
@@ -41,9 +42,26 @@ export default async function handler(request, response) {
       raw_event: event,
     };
 
-    await insertSupabaseRow("purchases", purchase);
-    const hubSpot = await syncHubSpotPurchase(purchase);
-    sendJson(response, 200, { received: true, hubSpot });
+    let duplicate = false;
+    try {
+      await insertSupabaseRow("purchases", purchase);
+    } catch (error) {
+      if (!isDuplicatePurchaseError(error)) throw error;
+      duplicate = true;
+    }
+
+    let hubSpot = null;
+    try {
+      hubSpot = await syncHubSpotPurchase(purchase);
+    } catch (error) {
+      hubSpot = {
+        skipped: true,
+        reason: "HubSpot sync failed after Stripe purchase receipt was accepted.",
+        detail: error.message,
+      };
+    }
+
+    sendJson(response, 200, { received: true, duplicate, hubSpot });
   } catch (error) {
     sendJson(response, error.statusCode || 400, {
       error: "Stripe webhook failed",
@@ -66,15 +84,7 @@ async function verifyStripeSignature(rawBody, signatureHeader, secret) {
   if (!timestamp || !expectedSignature) throw new Error("Invalid Stripe signature header.");
 
   const payload = `${timestamp}.${rawBody}`;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
-  const computed = [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const computed = createHmac("sha256", secret).update(payload, "utf8").digest("hex");
 
   if (!constantTimeEqual(computed, expectedSignature)) {
     throw new Error("Invalid Stripe signature.");
@@ -82,11 +92,15 @@ async function verifyStripeSignature(rawBody, signatureHeader, secret) {
 }
 
 function constantTimeEqual(left, right) {
-  if (left.length !== right.length) return false;
+  const leftBuffer = Buffer.from(left, "hex");
+  const rightBuffer = Buffer.from(right, "hex");
+  if (leftBuffer.length !== rightBuffer.length) return false;
 
-  let mismatch = 0;
-  for (let index = 0; index < left.length; index += 1) {
-    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-  return mismatch === 0;
+  return timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function isDuplicatePurchaseError(error) {
+  const details = error.details || {};
+  const message = `${error.message || ""} ${details.message || ""} ${details.code || ""}`;
+  return /duplicate key|already exists|23505/i.test(message);
 }
