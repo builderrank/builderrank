@@ -71,6 +71,27 @@ export async function insertSupabaseRow(table, payload) {
   return data;
 }
 
+export async function selectSupabaseRows(table, query = {}) {
+  requireSupabaseServiceRole();
+
+  const params = new URLSearchParams(query);
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, {
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    const message = data?.message || data?.hint || `Could not read ${table} rows.`;
+    throw Object.assign(new Error(message), { statusCode: response.status, details: data });
+  }
+
+  return Array.isArray(data) ? data : [];
+}
+
 export function extractBearerToken(request) {
   const authorization = request.headers.authorization || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);

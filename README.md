@@ -139,6 +139,10 @@ report workspace before checkout. Stripe Payment Links do not use that local fie
 the Stripe webhook stores `customer_details.phone` as `customer_phone` if phone collection is enabled in
 Stripe.
 
+`/api/audit` requires the signed-in user to submit a `checkoutReference` that matches a paid row in
+the private Supabase `purchases` table. If Stripe's webhook is still processing, the customer should
+wait a few seconds and click `Generate Paid Report` again.
+
 Configure the Stripe webhook endpoint:
 
 ```text

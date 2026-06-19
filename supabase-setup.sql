@@ -49,6 +49,9 @@ with check (user_id = auth.uid());
 
 create index if not exists reports_user_created_idx on public.reports (user_id, created_at desc);
 create index if not exists reports_checkout_reference_idx on public.reports (checkout_reference);
+create unique index if not exists reports_user_checkout_reference_uidx
+  on public.reports (user_id, checkout_reference)
+  where checkout_reference is not null and checkout_reference <> '';
 
 create table if not exists public.purchases (
   id uuid primary key default gen_random_uuid(),
@@ -76,4 +79,7 @@ using (false)
 with check (false);
 
 create index if not exists purchases_checkout_reference_idx on public.purchases (checkout_reference);
+create unique index if not exists purchases_checkout_reference_uidx
+  on public.purchases (checkout_reference)
+  where checkout_reference is not null and checkout_reference <> '';
 create index if not exists purchases_customer_email_idx on public.purchases (customer_email);

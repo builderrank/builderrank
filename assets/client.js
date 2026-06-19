@@ -318,6 +318,11 @@ if (auditForm) {
     setLoading(true);
 
     try {
+      const pendingReport = readPendingReport();
+      if (!pendingReport?.checkoutReference) {
+        throw new Error("Payment confirmation is missing. Return from Stripe checkout before running the report.");
+      }
+
       const session = await getCurrentSession();
       if (!session?.access_token) {
         throw new Error("Log in before running a paid report.");
@@ -332,6 +337,7 @@ if (auditForm) {
         body: JSON.stringify({
           website: websiteInput.value,
           market: normalizeMarket(marketInput.value),
+          checkoutReference: pendingReport.checkoutReference,
         }),
       });
 
@@ -1127,12 +1133,14 @@ async function saveCompletedReport(report) {
     score,
     grade: report.grade || gradeForScore(score),
     checkoutReference: pendingReport?.checkoutReference || "",
+    amount: 49,
+    paymentStatus: "paid",
     createdAt: new Date().toISOString(),
   };
 
   try {
     if (completedReport.email) localStorage.setItem(ACCOUNT_EMAIL_KEY, completedReport.email);
-    const history = readReportHistory().filter((item) => item.website !== completedReport.website);
+    const history = readReportHistory().filter((item) => !isSameSavedReport(item, completedReport));
     localStorage.setItem(REPORT_HISTORY_KEY, JSON.stringify([completedReport, ...history].slice(0, 12)));
   } catch {
     // The generated report still works if browser storage is unavailable.
@@ -1143,6 +1151,7 @@ async function saveCompletedReport(report) {
     const { data: sessionData } = await builderRankSupabase.auth.getSession();
     if (sessionData?.session) {
       const reportRow = {
+        user_id: sessionData.session.user.id,
         email: completedReport.email,
         phone: completedReport.phone,
         company: completedReport.company,
@@ -1153,12 +1162,19 @@ async function saveCompletedReport(report) {
         checkout_reference: completedReport.checkoutReference,
         report,
       };
-      let { error } = await builderRankSupabase.from("reports").insert(reportRow);
+      const existingReportId = await findSavedReportId(completedReport.checkoutReference);
+      let result = existingReportId
+        ? await builderRankSupabase.from("reports").update(reportRow).eq("id", existingReportId)
+        : await builderRankSupabase.from("reports").insert(reportRow);
+      let { error } = result;
 
-      if (error && /phone|checkout_reference|schema cache|column/i.test(error.message || "")) {
+      if (error && /user_id|phone|checkout_reference|schema cache|column/i.test(error.message || "")) {
+        delete reportRow.user_id;
         delete reportRow.phone;
         delete reportRow.checkout_reference;
-        const retry = await builderRankSupabase.from("reports").insert(reportRow);
+        const retry = existingReportId
+          ? await builderRankSupabase.from("reports").update(reportRow).eq("id", existingReportId)
+          : await builderRankSupabase.from("reports").insert(reportRow);
         error = retry.error;
       }
 
@@ -1171,7 +1187,35 @@ async function saveCompletedReport(report) {
     }
   }
 
+  clearPendingReport();
+  checkoutConfirmed = false;
   return { cloudSaved };
+}
+
+function isSameSavedReport(left, right) {
+  if (left.checkoutReference && right.checkoutReference) {
+    return left.checkoutReference === right.checkoutReference;
+  }
+
+  return left.website === right.website && normalizeMarket(left.market) === normalizeMarket(right.market);
+}
+
+async function findSavedReportId(checkoutReference) {
+  if (!builderRankSupabase || !checkoutReference) return "";
+
+  const { data, error } = await builderRankSupabase
+    .from("reports")
+    .select("id")
+    .eq("checkout_reference", checkoutReference)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Could not check for an existing report", error);
+    return "";
+  }
+
+  return data?.id || "";
 }
 
 async function renderReportHistory() {
@@ -1560,6 +1604,14 @@ function readPendingReport() {
     return JSON.parse(localStorage.getItem(PENDING_REPORT_KEY));
   } catch {
     return null;
+  }
+}
+
+function clearPendingReport() {
+  try {
+    localStorage.removeItem(PENDING_REPORT_KEY);
+  } catch {
+    // A completed report should still render if browser storage is unavailable.
   }
 }
 
