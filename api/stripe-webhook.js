@@ -50,15 +50,17 @@ export default async function handler(request, response) {
       duplicate = true;
     }
 
-    let hubSpot = null;
-    try {
-      hubSpot = await syncHubSpotPurchase(purchase);
-    } catch (error) {
-      hubSpot = {
-        skipped: true,
-        reason: "HubSpot sync failed after Stripe purchase receipt was accepted.",
-        detail: error.message,
-      };
+    let hubSpot = { skipped: true, reason: "Duplicate Stripe purchase already accepted." };
+    if (!duplicate) {
+      try {
+        hubSpot = await syncHubSpotPurchase(purchase);
+      } catch (error) {
+        hubSpot = {
+          skipped: true,
+          reason: "HubSpot sync failed after Stripe purchase receipt was accepted.",
+          detail: error.message,
+        };
+      }
     }
 
     sendJson(response, 200, { received: true, duplicate, hubSpot });
