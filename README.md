@@ -141,7 +141,9 @@ Stripe.
 
 `/api/audit` requires the signed-in user to submit a `checkoutReference` that matches a paid row in
 the private Supabase `purchases` table. If Stripe's webhook is still processing, the customer should
-wait a few seconds and click `Generate Paid Report` again.
+wait a few seconds and click `Generate Paid Report` again. The report page also polls
+`/api/payment-status` after Stripe redirects back so normal webhook delays do not feel like a broken
+checkout.
 
 Configure the Stripe webhook endpoint:
 

@@ -10,6 +10,8 @@ const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const PROMO_CODE_KEY = "builderRankPromoCode";
 const AUTO_RUN_CHECKOUT_KEY = "builderRankAutoRunCheckout";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
+const PAYMENT_CONFIRMATION_ATTEMPTS = 8;
+const PAYMENT_CONFIRMATION_DELAY_MS = 1500;
 const MARKET_ALIASES = {
   denver: "Denver, CO",
   "denver co": "Denver, CO",
@@ -327,6 +329,8 @@ if (auditForm) {
       if (!session?.access_token) {
         throw new Error("Log in before running a paid report.");
       }
+
+      await waitForPaymentConfirmation(session.access_token, pendingReport.checkoutReference);
 
       const response = await fetch("/api/audit", {
         method: "POST",
@@ -679,6 +683,59 @@ function markCheckoutAutoRun(pendingReport) {
   } catch {
     // Auto-run still works if session storage is unavailable.
   }
+}
+
+async function waitForPaymentConfirmation(accessToken, checkoutReference) {
+  if (!checkoutReference) {
+    throw new Error("Payment confirmation is missing. Return from Stripe checkout before running the report.");
+  }
+
+  for (let attempt = 1; attempt <= PAYMENT_CONFIRMATION_ATTEMPTS; attempt += 1) {
+    const status = await checkPaymentStatus(accessToken, checkoutReference);
+
+    if (status.paid) return status;
+    if (status.error && !status.pending) throw new Error(status.error);
+
+    if (auditStatus) {
+      auditStatus.textContent = attempt === 1
+        ? "Payment received. Confirming Stripe webhook delivery before generating the report..."
+        : "Still confirming payment with Stripe. This usually takes only a few seconds...";
+    }
+
+    await delay(PAYMENT_CONFIRMATION_DELAY_MS);
+  }
+
+  throw new Error("Payment confirmation is still processing. Wait a few seconds, then click Generate Paid Report again.");
+}
+
+async function checkPaymentStatus(accessToken, checkoutReference) {
+  const response = await fetch("/api/payment-status", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ checkoutReference }),
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (response.status === 202) return { ...payload, pending: true, paid: false };
+  if (!response.ok) {
+    return {
+      ...payload,
+      paid: false,
+      pending: false,
+      error: payload.detail || payload.error || "Could not confirm payment.",
+    };
+  }
+
+  return payload;
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 function resetCheckoutNotice() {

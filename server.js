@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import emailReportHandler from "./api/email-report.js";
 import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
+import paymentStatusHandler from "./api/payment-status.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
 
 loadEnvFile();
@@ -43,6 +44,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/email-report") {
       await callApiHandler(emailReportHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/payment-status") {
+      await callApiHandler(paymentStatusHandler, request, response);
       return;
     }
 

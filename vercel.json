@@ -52,6 +52,10 @@
       "dest": "/api/email-report.js"
     },
     {
+      "src": "/api/payment-status",
+      "dest": "/api/payment-status.js"
+    },
+    {
       "src": "/api/hubspot-account",
       "dest": "/api/hubspot-account.js"
     },
