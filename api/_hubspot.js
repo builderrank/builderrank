@@ -222,7 +222,7 @@ async function createDeal(purchase) {
     dealname: `Builder Rank Report${purchase.email ? ` - ${purchase.email}` : ""}`,
     amount: purchase.amount,
     pipeline: "default",
-    dealstage: "appointmentscheduled",
+    dealstage: "closedwon",
     builder_rank_website: purchase.website,
     builder_rank_market: purchase.market,
     builder_rank_checkout_reference: checkoutReference,
