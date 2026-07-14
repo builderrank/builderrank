@@ -7,6 +7,7 @@ const requiredFiles = [
   "admin-beta.html",
   "marketing-platform.html",
   "tracker.js",
+  "api/index.js",
   "api/beta-intake.js",
   "api/admin-workspaces.js",
   "api/bootstrap-workspace.js",
@@ -56,6 +57,7 @@ check("package script customer:handoff", packageJson?.scripts?.["customer:handof
 check("package script customer:dry-run", packageJson?.scripts?.["customer:dry-run"] === "node scripts/beta-launch-dry-run.mjs");
 
 const vercel = read("vercel.json");
+const apiRouter = read("api/index.js");
 const sitemap = read("sitemap.xml");
 [
   "/api/beta-intake",
@@ -67,11 +69,17 @@ const sitemap = read("sitemap.xml");
   "/api/track",
   "/api/tracking-health",
   "/api/update-recommendation",
+].forEach((pattern) => check(`api router route ${pattern}`, apiRouter.includes(pattern)));
+[
+  '"src": "api/index.js"',
+  '"/api/(.*)"',
+  '"/api/index.js?path=$1"',
   "/dashboard/?",
   "/admin-beta/?",
   "/marketing-platform/?",
   "/tracker.js",
 ].forEach((pattern) => check(`vercel route ${pattern}`, vercel.includes(pattern)));
+check("vercel builds a single API router function", vercel.includes('"src": "api/index.js"') && !vercel.includes('"src": "api/**/*.js"'));
 check("sitemap keeps app routes out of public index", sitemap.includes("https://builderrank.io/marketing-platform") && !sitemap.includes("https://builderrank.io/dashboard") && !sitemap.includes("https://builderrank.io/admin-beta"));
 
 const server = read("server.js");
