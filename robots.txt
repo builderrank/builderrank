@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin-beta
+Disallow: /admin-beta/
 
 Sitemap: https://builderrank.io/sitemap.xml

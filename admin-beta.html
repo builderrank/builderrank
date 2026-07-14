@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Beta Admin | Builder Rank</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="brand-header">
+        <a class="brand-lockup" href="/" aria-label="Builder Rank home">
+          <img src="/assets/builder-rank-logo.png" data-builder-logo alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/account">Account</a>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/marketing-platform">Marketing Platform</a>
+        </nav>
+      </header>
+
+      <section class="admin-beta-shell">
+        <div class="admin-beta-head">
+          <p class="eyebrow">Internal Beta Admin</p>
+          <h1>Set up and monitor a customer workspace.</h1>
+          <p>Enter the admin token for this browser session, then bootstrap the workspace, import weekly AI checks, or inspect Site Signal health.</p>
+        </div>
+
+        <form id="adminTokenForm" class="admin-beta-token-form">
+          <label>
+            <span>Admin token</span>
+            <input id="adminTokenInput" type="password" autocomplete="off" placeholder="ADMIN_API_TOKEN" required />
+          </label>
+          <button type="submit">Use Token</button>
+          <p id="adminTokenStatus" class="account-status" role="status"></p>
+        </form>
+
+        <div class="admin-beta-grid">
+          <section class="admin-beta-panel wide-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Customers</p>
+                <h2>Workspace summary</h2>
+              </div>
+              <button id="adminWorkspaceRefresh" type="button">Refresh</button>
+            </div>
+            <div class="responsive-table">
+              <table>
+                <thead>
+                  <tr><th>Workspace</th><th>Contact</th><th>Site ID</th><th>Status</th><th>Last event</th><th>AI data</th><th>Readiness</th><th>Setup</th></tr>
+                </thead>
+                <tbody id="adminWorkspaceRows">
+                  <tr><td colspan="8">Enter the admin token, then refresh workspaces.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <pre id="adminWorkspaceResult" class="admin-beta-result"></pre>
+          </section>
+
+          <section class="admin-beta-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Workspace</p>
+                <h2>Bootstrap customer</h2>
+              </div>
+              <span>Creates starter data</span>
+            </div>
+            <form id="adminBootstrapForm" class="admin-beta-form">
+              <label><span>Company</span><input name="company" required placeholder="Front Range Remodels" /></label>
+              <label><span>Website</span><input name="website" type="url" required placeholder="https://example.com" /></label>
+              <label><span>Market</span><input name="market" required placeholder="Denver, CO" /></label>
+              <label><span>Primary trade</span><input name="primaryTrade" required placeholder="Bathroom remodeling" /></label>
+              <label><span>Owner / contact</span><input name="ownerName" placeholder="Jordan Smith" /></label>
+              <label><span>Email</span><input name="email" type="email" placeholder="owner@example.com" /></label>
+              <label><span>Phone</span><input name="phone" type="tel" placeholder="(303) 555-0147" /></label>
+              <label><span>Install method</span><input name="installMethod" placeholder="WordPress plugin" /></label>
+              <label><span>Site ID</span><input name="siteId" placeholder="br_customer_site_id" /></label>
+              <label class="wide-field"><span>Job types</span><textarea name="jobTypes" placeholder="Bathroom remodeling&#10;Kitchen remodeling"></textarea></label>
+              <label class="wide-field"><span>Competitors</span><textarea name="competitors" placeholder="Mile High Bath Co.&#10;Summit Remodel Group"></textarea></label>
+              <label class="wide-field"><span>Operator notes</span><textarea name="notes" placeholder="Customer wants more bathroom projects. Marketing contact can install through WordPress."></textarea></label>
+              <button type="submit">Bootstrap Workspace</button>
+            </form>
+            <pre id="adminBootstrapResult" class="admin-beta-result"></pre>
+          </section>
+
+          <section class="admin-beta-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">AI visibility</p>
+                <h2>Import weekly run</h2>
+              </div>
+              <span>Manual batch</span>
+            </div>
+            <form id="adminImportForm" class="admin-beta-form">
+              <label><span>Site ID</span><input name="siteId" required placeholder="br_customer_site_id" /></label>
+              <label><span>Platform</span><input name="platform" required placeholder="ChatGPT" /></label>
+              <label><span>Model</span><input name="model" placeholder="gpt-5.2" /></label>
+              <label><span>Job type</span><input name="jobType" placeholder="Bathroom remodeling" /></label>
+              <label><span>Run date</span><input name="runAt" type="date" /></label>
+              <label><span>Rank</span><input name="rankPosition" inputmode="numeric" placeholder="2" /></label>
+              <label><span>Confidence</span><input name="confidence" inputmode="decimal" placeholder="85" /></label>
+              <label><span>Sentiment</span><input name="sentiment" placeholder="positive" /></label>
+              <label><span>Persona</span><input name="persona" placeholder="Homeowner ready to hire" /></label>
+              <label><span>Intent</span><input name="intent" placeholder="hire_local_contractor" /></label>
+              <label class="wide-field"><span>Prompt</span><textarea name="prompt" required placeholder="best bathroom remodeler in Denver"></textarea></label>
+              <label class="wide-field"><span>Answer summary</span><textarea name="answerText" placeholder="Paste or summarize the AI answer."></textarea></label>
+              <label class="wide-field"><span>Mention text</span><textarea name="mentionText" placeholder="Text around the customer mention."></textarea></label>
+              <label class="wide-field"><span>Sources</span><textarea name="sources" placeholder="front-range-remodels.com|https://front-range-remodels.com/bathroom-remodeling|direct_site|cited&#10;google.com|https://google.com/search?q=business|gbp|not_cited"></textarea></label>
+              <label class="checkbox-field"><input name="mentioned" type="checkbox" checked /> <span>Mentioned customer</span></label>
+              <button type="submit">Import AI Run</button>
+            </form>
+            <pre id="adminImportResult" class="admin-beta-result"></pre>
+          </section>
+
+          <section class="admin-beta-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Tracking</p>
+                <h2>Site Signal health</h2>
+              </div>
+              <span>Stale check</span>
+            </div>
+            <form id="adminTrackingHealthForm" class="admin-beta-form compact">
+              <label><span>Stale after hours</span><input name="staleHours" inputmode="numeric" value="24" /></label>
+              <label class="checkbox-field"><input name="notify" type="checkbox" /> <span>Email alert if attention needed</span></label>
+              <button type="submit">Check Tracking Health</button>
+            </form>
+            <pre id="adminTrackingHealthResult" class="admin-beta-result"></pre>
+          </section>
+
+          <section class="admin-beta-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Install QA</p>
+                <h2>Test Site Signal</h2>
+              </div>
+              <span>Live ingestion</span>
+            </div>
+            <form id="adminTrackTestForm" class="admin-beta-form compact">
+              <label><span>Site ID</span><input name="siteId" required placeholder="br_customer_site_id" /></label>
+              <label>
+                <span>Event</span>
+                <select name="eventType">
+                  <option value="page_view">Page view</option>
+                  <option value="lead_click">Quote CTA</option>
+                  <option value="phone_click">Phone click</option>
+                  <option value="email_click">Email click</option>
+                  <option value="form_submit">Form submit</option>
+                </select>
+              </label>
+              <label><span>Customer page URL</span><input name="pageUrl" type="url" required placeholder="https://customer-site.com/builder-rank-test" /></label>
+              <label><span>CTA / form detail</span><input name="eventDetail" placeholder="Builder Rank install test CTA" /></label>
+              <button type="submit">Send Test Event</button>
+            </form>
+            <pre id="adminTrackTestResult" class="admin-beta-result"></pre>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="/assets/admin-beta.js"></script>
+  </body>
+</html>

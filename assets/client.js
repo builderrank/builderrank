@@ -229,6 +229,12 @@ const accountProfileSummary = document.querySelector("#accountProfileSummary");
 const accountStatus = document.querySelector("#accountStatus");
 const reportHistoryList = document.querySelector("#reportHistoryList");
 const reportCountBadge = document.querySelector("#reportCountBadge");
+const accountReportMetric = document.querySelector("#accountReportMetric");
+const accountSiteSignalPanel = document.querySelector("#accountSiteSignalPanel");
+const accountSiteSignalTitle = document.querySelector("#accountSiteSignalTitle");
+const accountSiteSignalSummary = document.querySelector("#accountSiteSignalSummary");
+const accountSiteSignalSnippet = document.querySelector("#accountSiteSignalSnippet");
+const accountDashboardSetupLink = document.querySelector("#accountDashboardSetupLink");
 const reportAuthPanel = document.querySelector("#reportAuthPanel");
 const reportAuthTitle = document.querySelector("#reportAuthTitle");
 const reportAuthSummary = document.querySelector("#reportAuthSummary");
@@ -256,6 +262,15 @@ const resetPasswordForm = document.querySelector("#resetPasswordForm");
 const resetPasswordCloseButton = document.querySelector("#resetPasswordCloseButton");
 const resetPasswordStatus = document.querySelector("#resetPasswordStatus");
 const resetEmailInput = document.querySelector("#resetEmailInput");
+const betaIntakeForm = document.querySelector("#betaIntakeForm");
+const betaIntakeStatus = document.querySelector("#betaIntakeStatus");
+const betaEmailInput = document.querySelector("#betaEmailInput");
+const betaCompanyInput = document.querySelector("#betaCompanyInput");
+const betaWebsiteInput = document.querySelector("#betaWebsiteInput");
+const betaJobTypeInput = document.querySelector("#betaJobTypeInput");
+const betaMarketInput = document.querySelector("#betaMarketInput");
+const betaTrackingStatusInput = document.querySelector("#betaTrackingStatusInput");
+const betaCompetitorsInput = document.querySelector("#betaCompetitorsInput");
 const updatePasswordModal = document.querySelector("#updatePasswordModal");
 const updatePasswordForm = document.querySelector("#updatePasswordForm");
 const updatePasswordStatus = document.querySelector("#updatePasswordStatus");
@@ -266,6 +281,7 @@ const marketSuggestions = document.querySelector("#marketSuggestions");
 let usMarkets = [];
 let usMarketByKey = new Map();
 let usMarketCityCounts = new Map();
+let accountReportHistoryCache = [];
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -398,6 +414,7 @@ void loadUSMarkets();
 hydrateCheckoutReturn();
 hydrateAuthFlows();
 hydrateAccountPage();
+hydrateBetaIntakeForm();
 void refreshAuthState();
 
 function handlePaymentClick() {
@@ -827,6 +844,60 @@ function hydrateAccountPage() {
   void renderReportHistory();
 }
 
+function hydrateBetaIntakeForm() {
+  if (!betaIntakeForm) return;
+
+  const savedProfile = readAccountProfile();
+  const savedEmail = readAccountEmail();
+  if (betaEmailInput && savedEmail) betaEmailInput.value = savedEmail;
+  if (betaCompanyInput && savedProfile?.company_name) betaCompanyInput.value = savedProfile.company_name;
+  if (betaMarketInput) betaMarketInput.value = readPendingReport()?.market || "";
+  if (betaWebsiteInput) betaWebsiteInput.value = readPendingReport()?.website || "";
+
+  betaIntakeForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!betaIntakeForm.checkValidity()) {
+      betaIntakeForm.reportValidity();
+      return;
+    }
+
+    const submitButton = betaIntakeForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    submitButton.textContent = "Requesting...";
+    betaIntakeStatus.textContent = "Saving the beta brief...";
+
+    try {
+      const response = await fetch("/api/beta-intake", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: betaEmailInput.value,
+          company: betaCompanyInput.value,
+          website: betaWebsiteInput.value,
+          jobType: betaJobTypeInput.value,
+          market: betaMarketInput.value,
+          trackingStatus: betaTrackingStatusInput.value,
+          competitors: betaCompetitorsInput.value,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.detail || payload.error || "Could not save the beta request.");
+      }
+
+      betaIntakeStatus.textContent = "Beta request received. Builder Rank has the job type, market, competitors, and tracking status.";
+      betaIntakeForm.reset();
+    } catch (error) {
+      betaIntakeStatus.textContent = `Could not save the beta request: ${error.message}`;
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Request Beta Access";
+    }
+  });
+}
+
 function hydrateAuthFlows() {
   accountLoginButton?.addEventListener("click", async () => {
     await handleLogin(accountLoginEmailInput, accountLoginPasswordInput, accountStatus, accountLoginButton);
@@ -1117,9 +1188,11 @@ async function refreshAuthState() {
       accountProfileSummary.hidden = true;
       accountProfileSummary.innerHTML = "";
     }
+    renderAccountSiteSignalStatus({ mode: "signed-out" });
   }
 
   await renderReportHistory();
+  if (user) await refreshAccountSiteSignalStatus(session.access_token);
 }
 
 function renderProfileSummary(user, profile) {
@@ -1134,6 +1207,101 @@ function renderProfileSummary(user, profile) {
     ${profile.company_name ? `<span>${escapeHtml(profile.company_name)}</span>` : ""}
     ${profile.company_size || profile.trade ? `<span>${escapeHtml([profile.company_size, profile.trade].filter(Boolean).join(" · "))}</span>` : ""}
   `;
+}
+
+async function refreshAccountSiteSignalStatus(accessToken) {
+  if (!accountSiteSignalPanel || !accessToken) return;
+
+  renderAccountSiteSignalStatus({ mode: "loading" });
+
+  try {
+    const response = await fetch("/api/dashboard-data", {
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.detail || payload.error || "Could not load Site Signal status.");
+    }
+
+    renderAccountSiteSignalStatus(payload);
+  } catch (error) {
+    renderAccountSiteSignalStatus({ mode: "error", reason: error.message });
+  }
+}
+
+function renderAccountSiteSignalStatus(payload) {
+  if (!accountSiteSignalPanel) return;
+
+  const mode = payload?.mode || "demo";
+  const business = payload?.business || {};
+  const summary = payload?.summary || {};
+  const reportCandidate = accountWorkspaceCandidateFromReports();
+  const siteId = business.site_id || "br_customer_site_id";
+  const snippet = `<script src="https://builderrank.io/tracker.js" data-site-id="${siteId}" async></script>`;
+
+  accountSiteSignalPanel.dataset.status = mode;
+  if (accountSiteSignalSnippet) accountSiteSignalSnippet.textContent = snippet;
+  if (accountDashboardSetupLink) {
+    accountDashboardSetupLink.href = business.site_id ? `/dashboard?siteId=${encodeURIComponent(business.site_id)}` : "/dashboard";
+    accountDashboardSetupLink.textContent = "Open dashboard setup";
+  }
+
+  if (mode === "live") {
+    setAccountSiteSignalCopy(
+      "Site Signal live",
+      `${business.name || "This workspace"} is connected. ${summary.trackedSessions || 0} tracked sessions and ${summary.quoteEvents || 0} quote events in the last 30 days.`,
+    );
+    setAccountDashboardSetupLabel("Open live dashboard");
+    return;
+  }
+
+  if (mode === "empty") {
+    setAccountSiteSignalCopy(
+      "Install and connect Site Signal",
+      business.site_id
+        ? `Workspace found for ${business.name || "this customer"}. Install the snippet with Site ID ${business.site_id}, then open dashboard setup to connect it.`
+        : reportCandidate
+          ? `${reportCandidate.company || reportCandidate.websiteLabel} has a saved report for ${reportCandidate.websiteLabel}. Ask Builder Rank support to bootstrap this website, then connect the provided Site Signal ID.`
+          : "Workspace found, but no Site Signal ID is assigned yet. Ask Builder Rank support to bootstrap the workspace.",
+    );
+    setAccountDashboardSetupLabel(business.site_id ? "Connect in dashboard" : "Open dashboard");
+    return;
+  }
+
+  if (mode === "loading") {
+    setAccountSiteSignalCopy("Checking Site Signal", "Looking for a connected Builder Rank customer workspace...");
+    return;
+  }
+
+  if (mode === "signed-out") {
+    setAccountSiteSignalCopy("Sign in to connect tracking", "Create or log in to your Builder Rank account before connecting the website tracking snippet.");
+    if (accountSiteSignalSnippet) accountSiteSignalSnippet.textContent = `<script src="https://builderrank.io/tracker.js" data-site-id="br_customer_site_id" async></script>`;
+    setAccountDashboardSetupLabel("Sign in first");
+    return;
+  }
+
+  if (mode === "error") {
+    setAccountSiteSignalCopy("Could not check Site Signal", payload.reason || "Open the dashboard setup page to retry.");
+    return;
+  }
+
+  setAccountSiteSignalCopy(
+    reportCandidate ? "Connect saved report to dashboard" : "Demo dashboard available",
+    reportCandidate
+      ? `${reportCandidate.company || reportCandidate.websiteLabel} has report history for ${reportCandidate.websiteLabel}. Builder Rank can bootstrap this website, install Site Signal, and turn the report into a live dashboard.`
+      : payload?.reason || "Production workspace data will appear here after Supabase, account ownership, and Site Signal are configured.",
+  );
+  if (reportCandidate) setAccountDashboardSetupLabel("Open dashboard setup");
+}
+
+function setAccountSiteSignalCopy(title, summary) {
+  if (accountSiteSignalTitle) accountSiteSignalTitle.textContent = title;
+  if (accountSiteSignalSummary) accountSiteSignalSummary.textContent = summary;
+}
+
+function setAccountDashboardSetupLabel(label) {
+  if (accountDashboardSetupLink) accountDashboardSetupLink.textContent = label;
 }
 
 function readAccountEmail() {
@@ -1207,6 +1375,7 @@ async function saveCompletedReport(report) {
   if (builderRankSupabase) {
     const { data: sessionData } = await builderRankSupabase.auth.getSession();
     if (sessionData?.session) {
+      const connectedBusinessId = await findConnectedBusinessIdForWebsite(completedReport.website);
       const reportRow = {
         user_id: sessionData.session.user.id,
         email: completedReport.email,
@@ -1219,14 +1388,16 @@ async function saveCompletedReport(report) {
         checkout_reference: completedReport.checkoutReference,
         report,
       };
+      if (connectedBusinessId) reportRow.business_id = connectedBusinessId;
       const existingReportId = await findSavedReportId(completedReport.checkoutReference);
       let result = existingReportId
         ? await builderRankSupabase.from("reports").update(reportRow).eq("id", existingReportId)
         : await builderRankSupabase.from("reports").insert(reportRow);
       let { error } = result;
 
-      if (error && /user_id|phone|checkout_reference|schema cache|column/i.test(error.message || "")) {
+      if (error && /user_id|business_id|phone|checkout_reference|schema cache|column/i.test(error.message || "")) {
         delete reportRow.user_id;
+        delete reportRow.business_id;
         delete reportRow.phone;
         delete reportRow.checkout_reference;
         const retry = existingReportId
@@ -1255,6 +1426,30 @@ function isSameSavedReport(left, right) {
   }
 
   return left.website === right.website && normalizeMarket(left.market) === normalizeMarket(right.market);
+}
+
+async function findConnectedBusinessIdForWebsite(website) {
+  if (!builderRankSupabase || !website) return "";
+
+  try {
+    const { data, error } = await builderRankSupabase
+      .from("br_businesses")
+      .select("id,website_url")
+      .limit(50);
+
+    if (error) {
+      if (/schema cache|relation|permission|br_businesses/i.test(error.message || "")) return "";
+      console.warn("Could not match report to connected workspace", error);
+      return "";
+    }
+
+    const targetWebsite = normalizeWebsiteForMatch(website);
+    const match = (data || []).find((business) => normalizeWebsiteForMatch(business.website_url) === targetWebsite);
+    return match?.id || "";
+  } catch (error) {
+    console.warn("Could not match report to connected workspace", error);
+    return "";
+  }
 }
 
 async function findSavedReportId(checkoutReference) {
@@ -1319,7 +1514,9 @@ async function renderReportHistory() {
   }
 
   if (!history.length) history = readReportHistory();
+  accountReportHistoryCache = history;
   if (reportCountBadge) reportCountBadge.textContent = `${history.length} saved`;
+  if (accountReportMetric) accountReportMetric.textContent = history.length;
 
   if (!history.length) {
     reportHistoryList.innerHTML = `
@@ -1334,7 +1531,7 @@ async function renderReportHistory() {
         ? "Signed in. No saved reports yet."
         : "Create or sign in to an account to load saved reports.";
     }
-    return;
+    return history;
   }
 
   reportHistoryList.innerHTML = history.map(renderHistoryCard).join("");
@@ -1342,6 +1539,25 @@ async function renderReportHistory() {
     accountStatus.textContent = source === "cloud"
       ? "Loaded from your Builder Rank account."
       : "Showing reports saved in this browser.";
+  }
+  return history;
+}
+
+function accountWorkspaceCandidateFromReports() {
+  const report = accountReportHistoryCache.find((item) => item?.website);
+  if (!report) return null;
+  return {
+    company: report.company || "",
+    website: report.website || "",
+    websiteLabel: websiteLabelForAccount(report.website),
+  };
+}
+
+function websiteLabelForAccount(value) {
+  try {
+    return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).hostname.replace(/^www\./, "");
+  } catch {
+    return value || "this website";
   }
 }
 
@@ -1702,6 +1918,17 @@ function getHostname(value) {
     return new URL(value).hostname;
   } catch {
     return value.replace(/^https?:\/\//, "").split("/")[0];
+  }
+}
+
+function normalizeWebsiteForMatch(value) {
+  const text = String(value || "").trim().toLowerCase();
+  if (!text) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+    return url.hostname.replace(/^www\./, "") + url.pathname.replace(/\/$/, "");
+  } catch {
+    return text.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
   }
 }
 

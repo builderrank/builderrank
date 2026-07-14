@@ -64,12 +64,48 @@
       "dest": "/api/hubspot-report.js"
     },
     {
+      "src": "/api/import-ai-visibility",
+      "dest": "/api/import-ai-visibility.js"
+    },
+    {
       "src": "/api/stripe-webhook",
       "dest": "/api/stripe-webhook.js"
     },
     {
       "src": "/api/health",
       "dest": "/api/health.js"
+    },
+    {
+      "src": "/api/beta-intake",
+      "dest": "/api/beta-intake.js"
+    },
+    {
+      "src": "/api/admin-workspaces",
+      "dest": "/api/admin-workspaces.js"
+    },
+    {
+      "src": "/api/bootstrap-workspace",
+      "dest": "/api/bootstrap-workspace.js"
+    },
+    {
+      "src": "/api/dashboard-data",
+      "dest": "/api/dashboard-data.js"
+    },
+    {
+      "src": "/api/connect-site",
+      "dest": "/api/connect-site.js"
+    },
+    {
+      "src": "/api/update-recommendation",
+      "dest": "/api/update-recommendation.js"
+    },
+    {
+      "src": "/api/track",
+      "dest": "/api/track.js"
+    },
+    {
+      "src": "/api/tracking-health",
+      "dest": "/api/tracking-health.js"
     },
     {
       "src": "/api/(.*)",
@@ -84,8 +120,24 @@
       "dest": "/styles.css"
     },
     {
+      "src": "/tracker.js",
+      "dest": "/tracker.js"
+    },
+    {
       "src": "/why-geo/?",
       "dest": "/why-geo.html"
+    },
+    {
+      "src": "/marketing-platform/?",
+      "dest": "/marketing-platform.html"
+    },
+    {
+      "src": "/dashboard/?",
+      "dest": "/dashboard.html"
+    },
+    {
+      "src": "/admin-beta/?",
+      "dest": "/admin-beta.html"
     },
     {
       "src": "/about/?",

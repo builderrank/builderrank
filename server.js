@@ -6,8 +6,17 @@ import { pathToFileURL } from "node:url";
 import emailReportHandler from "./api/email-report.js";
 import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
+import importAiVisibilityHandler from "./api/import-ai-visibility.js";
 import paymentStatusHandler from "./api/payment-status.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
+import adminWorkspacesHandler from "./api/admin-workspaces.js";
+import betaIntakeHandler from "./api/beta-intake.js";
+import bootstrapWorkspaceHandler from "./api/bootstrap-workspace.js";
+import connectSiteHandler from "./api/connect-site.js";
+import dashboardDataHandler from "./api/dashboard-data.js";
+import trackHandler from "./api/track.js";
+import trackingHealthHandler from "./api/tracking-health.js";
+import updateRecommendationHandler from "./api/update-recommendation.js";
 
 loadEnvFile();
 
@@ -62,6 +71,11 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (url.pathname === "/api/import-ai-visibility") {
+      await callApiHandler(importAiVisibilityHandler, request, response);
+      return;
+    }
+
     if (url.pathname === "/api/stripe-webhook") {
       await callApiHandler(stripeWebhookHandler, request, response);
       return;
@@ -69,6 +83,46 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/health") {
       sendJson(response, 200, { ok: true, service: "builder-rank", checkedAt: new Date().toISOString() });
+      return;
+    }
+
+    if (url.pathname === "/api/beta-intake") {
+      await callApiHandler(betaIntakeHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/admin-workspaces") {
+      await callApiHandler(adminWorkspacesHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/bootstrap-workspace") {
+      await callApiHandler(bootstrapWorkspaceHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/dashboard-data") {
+      await callApiHandler(dashboardDataHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/connect-site") {
+      await callApiHandler(connectSiteHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/update-recommendation") {
+      await callApiHandler(updateRecommendationHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/track") {
+      await callApiHandler(trackHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/tracking-health") {
+      await callApiHandler(trackingHealthHandler, request, response);
       return;
     }
 
@@ -1013,6 +1067,9 @@ async function serveStatic(pathname, response) {
   const routeFiles = {
     "/": "/index.html",
     "/why-geo": "/why-geo.html",
+    "/marketing-platform": "/marketing-platform.html",
+    "/dashboard": "/dashboard.html",
+    "/admin-beta": "/admin-beta.html",
     "/about": "/about.html",
     "/pricing": "/pricing.html",
     "/run-report": "/run-report.html",
@@ -1023,6 +1080,7 @@ async function serveStatic(pathname, response) {
     "/terms": "/terms.html",
     "/robots.txt": "/robots.txt",
     "/sitemap.xml": "/sitemap.xml",
+    "/tracker.js": "/tracker.js",
   };
   const normalizedPath = pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
   const cleanPath = routeFiles[normalizedPath] || pathname;
@@ -1069,6 +1127,10 @@ function sendJson(response, status, payload) {
 async function callApiHandler(handler, request, response) {
   response.status = (statusCode) => ({
     json: (payload) => sendJson(response, statusCode, payload),
+    end: () => {
+      response.writeHead(statusCode);
+      response.end();
+    },
   });
   response.json = (payload) => sendJson(response, 200, payload);
 

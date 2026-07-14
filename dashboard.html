@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connected Dashboard | Builder Rank</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="connected-dashboard-body">
+    <div class="connected-dashboard">
+      <header class="connected-topbar">
+        <a class="connected-brand" href="/marketing-platform" aria-label="Builder Rank marketing platform">
+          <img src="/assets/builder-rank-logo.png" alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <div class="connected-selectors" aria-label="Customer workspace selectors">
+          <button type="button">
+            <small>Account</small>
+            <strong>Front Range Remodels</strong>
+          </button>
+          <button type="button">
+            <small>Website</small>
+            <strong>front-range-remodels.com</strong>
+          </button>
+          <label>
+            <small>Profit Center</small>
+            <select id="jobTypeSelect">
+              <option value="bathroom">Bathroom remodeling</option>
+              <option value="kitchen">Kitchen remodeling</option>
+              <option value="roofing">Roof replacement</option>
+              <option value="hvac">Emergency HVAC</option>
+              <option value="restoration">Water damage restoration</option>
+            </select>
+          </label>
+        </div>
+        <div class="connected-user">
+          <a href="/support">Help Center</a>
+          <span>KG</span>
+          <strong>Kaleb</strong>
+        </div>
+      </header>
+
+      <aside class="connected-sidebar" aria-label="Builder Rank dashboard navigation">
+        <div class="connected-sidebar-group">
+          <p>Connect AI</p>
+          <button class="connected-nav-button is-active" type="button" data-dashboard-tab="visibility">Visibility Blueprint</button>
+          <button type="button" data-dashboard-tab="competition">Competition</button>
+          <button type="button" data-dashboard-tab="sources">Sources</button>
+          <button type="button" data-dashboard-tab="citations">Citations</button>
+        </div>
+        <div class="connected-sidebar-group">
+          <p>Website Tracking</p>
+          <button type="button" data-dashboard-tab="pixel">Site Signal</button>
+          <button type="button" data-dashboard-tab="leads">Leads & Events</button>
+          <button type="button" data-dashboard-tab="pages">Landing Pages</button>
+        </div>
+        <div class="connected-sidebar-group">
+          <p>Marketing Engine</p>
+          <button type="button" data-dashboard-tab="actions">Punch List</button>
+          <button type="button" data-dashboard-tab="reviews">Reviews & GBP</button>
+          <button type="button" data-dashboard-tab="reports">Reports</button>
+        </div>
+      </aside>
+
+      <main class="connected-main">
+        <div class="connected-page-head">
+          <div>
+            <h1 id="dashboardPageTitle">Visibility</h1>
+            <p id="dashboardPageSummary">How often this contractor appears in AI-generated answers across platforms.</p>
+          </div>
+          <div class="connected-controls">
+            <select id="marketSelect" aria-label="Market">
+              <option>Denver, CO</option>
+              <option>Phoenix, AZ</option>
+              <option>Austin, TX</option>
+              <option>Tampa, FL</option>
+            </select>
+            <select id="dateRangeSelect" aria-label="Date range">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+            </select>
+            <button type="button">All platforms</button>
+          </div>
+        </div>
+
+        <section class="connected-summary-strip" aria-label="Connected marketing summary">
+          <article><span>Site Signal</span><strong id="summaryConnectionMetric">Active</strong><small id="summaryConnectionDetail">Last event: demo mode</small></article>
+          <article><span>Visibility Score</span><strong id="summaryVisibilityMetric">84</strong><small>AI search health</small></article>
+          <article><span>AI Referrals</span><strong id="summaryAiReferralMetric">96</strong><small id="summaryAiReferralWindow">30-day assisted sessions</small></article>
+          <article><span>AI Lead Rate</span><strong id="summaryAiLeadRateMetric">18%</strong><small>Assisted sessions to leads</small></article>
+          <article><span>Quote Events</span><strong id="summaryQuoteMetric">41</strong><small>Calls, forms, estimate clicks</small></article>
+          <article><span>Punch List</span><strong id="summaryActionMetric">0</strong><small id="summaryActionDetail">Approved changes live</small></article>
+        </section>
+
+        <section id="liveDashboardNotice" class="connected-notice" hidden aria-live="polite">
+          <strong>Dashboard is in demo mode</strong>
+          <p>Sign in and connect a Site Signal ID to replace this sample data with the customer workspace.</p>
+        </section>
+
+        <section class="connected-tab-page is-active" data-dashboard-page="visibility">
+          <div class="connected-card-grid two-up">
+            <article class="connected-card chart-card">
+              <div class="card-topline">
+                <h2>Mention Rate</h2>
+                <span id="mentionRateDelta">+12% vs last month</span>
+              </div>
+              <strong id="mentionRate">68%</strong>
+              <div class="line-chart" aria-hidden="true">
+                <svg viewBox="0 0 520 180" role="img">
+                  <path d="M20 118 L170 104 L330 72 L500 82" class="chart-line chatgpt-line"></path>
+                  <path d="M20 96 L170 108 L330 116 L500 68" class="chart-line gemini-line"></path>
+                  <path d="M20 108 L170 94 L330 76 L500 58" class="chart-line claude-line"></path>
+                </svg>
+              </div>
+              <div class="chart-legend"><span>ChatGPT</span><span>Gemini</span><span>Claude</span></div>
+            </article>
+            <article class="connected-card chart-card">
+              <div class="card-topline">
+                <h2>Avg. Position</h2>
+                <span id="averageRank">#2.4</span>
+              </div>
+              <strong id="visibilityScore">84</strong>
+              <div class="line-chart" aria-hidden="true">
+                <svg viewBox="0 0 520 180" role="img">
+                  <path d="M20 124 L170 132 L330 100 L500 104" class="chart-line chatgpt-line"></path>
+                  <path d="M20 94 L170 108 L330 118 L500 88" class="chart-line gemini-line"></path>
+                  <path d="M20 108 L170 98 L330 86 L500 94" class="chart-line claude-line"></path>
+                </svg>
+              </div>
+              <div class="chart-legend"><span>ChatGPT</span><span>Gemini</span><span>Claude</span></div>
+            </article>
+          </div>
+
+          <section class="connected-table-card">
+            <div class="card-topline">
+              <h2 id="visibilityBreakdownTitle">Mention Rate by Job-Type Attribute</h2>
+              <button type="button" data-export-table="attributeMetricRows" data-export-name="builder-rank-visibility">Export</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th id="visibilityBreakdownFirstColumn">Attribute</th><th>All platforms</th><th>ChatGPT</th><th>Gemini</th><th>Claude</th></tr>
+              </thead>
+              <tbody id="attributeMetricRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="competition">
+          <article class="connected-card rank-summary-card">
+            <h2>Overall Mention Rank</h2>
+            <strong id="overallRankMetric">#2</strong>
+            <p>out of 18 contractors mentioned in this search context</p>
+            <span id="competitorBadge">3 competitors tracked</span>
+          </article>
+          <section class="connected-table-card">
+            <div class="card-topline">
+              <h2>Rankings</h2>
+              <div><button type="button">All competitors</button><button type="button">Find competitors</button></div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Rank</th><th>Contractor</th><th>All platforms</th><th>ChatGPT</th><th>Gemini</th><th>Claude</th><th>Avg. position</th></tr>
+              </thead>
+              <tbody id="competitorRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="sources">
+          <article class="connected-card">
+            <div class="card-topline">
+              <h2>Sources Share</h2>
+              <button type="button" data-export-table="sourceRows" data-export-name="builder-rank-sources">Download</button>
+            </div>
+            <div class="source-share-bar" aria-label="AI source share">
+              <span id="directShareBar"></span>
+              <span id="directoryShareBar"></span>
+              <span id="gbpShareBar"></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div id="sourceMixList" class="source-share-legend"></div>
+          </article>
+          <section class="connected-table-card">
+            <div class="card-topline">
+              <h2>All Sources</h2>
+              <input type="search" placeholder="Search sources" />
+            </div>
+            <table>
+              <thead>
+                <tr><th>Domain</th><th>Type</th><th>Share</th><th>Lead Signal</th></tr>
+              </thead>
+              <tbody id="sourceRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="citations">
+          <section class="connected-table-card">
+            <div class="card-topline">
+              <h2>Prompt Citations</h2>
+              <button type="button">Run prompts</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Prompt</th><th>Mentioned</th><th>Rank</th><th>Linked Source</th><th>Recommended Fix</th></tr>
+              </thead>
+              <tbody id="citationRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="pixel">
+          <article class="connected-card connect-site-card">
+            <div>
+              <h2>Connect this website</h2>
+              <p>Install the Site Signal snippet on the customer website, then connect the site ID to the signed-in Builder Rank account.</p>
+              <code id="connectSiteSnippet">&lt;script src="https://builderrank.io/tracker.js" data-site-id="br_front_range" async&gt;&lt;/script&gt;</code>
+            </div>
+            <form id="connectSiteForm" class="connect-site-form">
+              <label>
+                <span>Site ID</span>
+                <input id="connectSiteIdInput" value="br_front_range" placeholder="br_customer_site_id" />
+              </label>
+              <button type="submit">Connect Site</button>
+              <p id="connectSiteStatus" role="status"></p>
+            </form>
+          </article>
+          <div class="connected-card-grid five-up">
+            <article class="connected-kpi"><span>Site Signal</span><strong id="siteSignalStatusMetric">Active</strong><small id="siteSignalLastEventMetric">Last event 2 min ago</small></article>
+            <article class="connected-kpi"><span>Tracked Sessions</span><strong id="trackedSessionsMetric">1,284</strong><small>30 days</small></article>
+            <article class="connected-kpi"><span>AI Referrals</span><strong id="aiReferralMetric">96</strong><small>Confirmed + probable</small></article>
+            <article class="connected-kpi"><span>AI Lead Rate</span><strong id="aiLeadRateMetric">18%</strong><small>AI sessions to leads</small></article>
+            <article class="connected-kpi"><span>Quote Events</span><strong id="quoteEventMetric">41</strong><small>Forms, calls, clicks</small></article>
+          </div>
+          <section class="connected-table-card">
+            <div class="card-topline">
+              <h2>Tracked Website Events</h2>
+              <div><code id="trackedEventsSnippet">&lt;script src="https://builderrank.io/tracker.js" data-site-id="br_front_range" async&gt;&lt;/script&gt;</code><button type="button" data-export-table="eventRows" data-export-name="builder-rank-events">Export CSV</button></div>
+            </div>
+            <table>
+              <thead>
+                <tr><th>Event</th><th>Page</th><th>Source</th><th>Detail</th><th>Count</th><th>Last seen</th></tr>
+              </thead>
+              <tbody id="eventRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="leads">
+          <div class="connected-card-grid three-up">
+            <article class="connected-kpi"><span>Top AI Landing Page</span><strong id="topLandingPageMetric">/bathroom-remodeling-denver</strong><small>31 quote events</small></article>
+            <article class="connected-kpi"><span>Top CTA / Form</span><strong id="bestPromptMetric">walk-in shower estimate</strong><small>Highest tracked lead intent</small></article>
+            <article class="connected-kpi"><span>Highest Intent Source</span><strong id="topSourceMetric">ChatGPT</strong><small>42 assisted sessions</small></article>
+          </div>
+          <section class="connected-card next-best-moves-card">
+            <div class="card-topline"><h2>Next Best Moves</h2><span>Prioritized from live Site Signal and AI data</span></div>
+            <div id="nextBestMoveList" class="next-best-move-list"></div>
+          </section>
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Lead Events by Source</h2><button type="button" data-export-table="leadRows" data-export-name="builder-rank-leads">Export CSV</button></div>
+            <table>
+              <thead>
+                <tr><th>Source</th><th>Sessions</th><th>Calls</th><th>Forms</th><th>Quote Clicks</th><th>Top Intent</th><th>Lead Rate</th></tr>
+              </thead>
+              <tbody id="leadRows"></tbody>
+            </table>
+          </section>
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Job Pipeline by Intent</h2><button type="button" data-export-table="jobIntentRows" data-export-name="builder-rank-job-intents">Export CSV</button></div>
+            <table>
+              <thead>
+                <tr><th>Job Intent</th><th>Sessions</th><th>AI Sessions</th><th>Lead Events</th><th>Calls</th><th>Forms</th><th>Quote Clicks</th><th>Lead Rate</th><th>Top Page</th></tr>
+              </thead>
+              <tbody id="jobIntentRows"></tbody>
+            </table>
+          </section>
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Top CTAs & Forms</h2><button type="button" data-export-table="ctaRows" data-export-name="builder-rank-ctas">Export CSV</button></div>
+            <table>
+              <thead>
+                <tr><th>Detail</th><th>Type</th><th>Page</th><th>Source</th><th>Job Intent</th><th>Events</th><th>Last seen</th></tr>
+              </thead>
+              <tbody id="ctaRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="pages">
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Landing Pages</h2><button type="button">Find gaps</button></div>
+            <table>
+              <thead>
+                <tr><th>Page</th><th>AI Sessions</th><th>Phone Clicks</th><th>Forms</th><th>Conversion</th><th>Top Intent</th><th>Content Gap</th></tr>
+              </thead>
+              <tbody id="pageRows"></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="actions">
+          <div class="connected-card action-readiness-card">
+            <div>
+              <h2>Builder Rank Punch List</h2>
+              <p>Approved website and profile changes that improve how LLMs read the business.</p>
+            </div>
+            <strong><span id="changesLiveMetric">0</span> live changes</strong>
+          </div>
+          <div class="builder-action-list" id="builderActionList"></div>
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Live Change Log</h2><span id="changeLogBadge">0 live</span></div>
+            <div id="deployedChangeList" class="deployed-change-list"><article>No Builder Rank changes have been applied in this demo yet.</article></div>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="reviews">
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Reviews & Google Business Profile Tasks</h2><button type="button">Sync GBP</button></div>
+            <table>
+              <thead>
+                <tr><th>Task</th><th>Service</th><th>Channel</th><th>Impact</th><th>Status</th></tr>
+              </thead>
+              <tbody id="reviewTaskRows">
+                <tr><td>Add bathroom remodel services to GBP</td><td>Bathroom remodeling</td><td>Google Business Profile</td><td><span class="pill teal">High</span></td><td>Ready</td></tr>
+                <tr><td>Request reviews mentioning walk-in showers</td><td>Bathroom remodeling</td><td>Reviews</td><td><span class="pill amber">Medium</span></td><td>Ready</td></tr>
+                <tr><td>Post recent Denver bathroom project</td><td>Bathroom remodeling</td><td>GBP Posts</td><td><span class="pill amber">Medium</span></td><td>Draft</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="reports">
+          <section class="connected-table-card">
+            <div class="card-topline"><h2>Reports</h2><div><a href="/run-report">Run new inspection</a><button type="button" data-export-table="reportRows" data-export-name="builder-rank-reports">Export CSV</button></div></div>
+            <table>
+              <thead>
+                <tr><th>Report</th><th>Market</th><th>Score</th><th>Date</th><th>Status</th></tr>
+              </thead>
+              <tbody id="reportRows">
+                <tr><td>AI Inspection</td><td>Denver, CO</td><td>84</td><td>Jun 30, 2026</td><td><span class="pill teal">Complete</span></td></tr>
+                <tr><td>Website Pixel QA</td><td>Denver, CO</td><td>Active</td><td>Jun 29, 2026</td><td><span class="pill teal">Connected</span></td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/assets/client.js"></script>
+    <script src="/assets/dashboard.js"></script>
+  </body>
+</html>

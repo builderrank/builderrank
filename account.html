@@ -24,6 +24,7 @@
         </a>
         <nav class="site-nav" aria-label="Primary navigation">
           <a href="/why-geo">Why GEO</a>
+          <a href="/marketing-platform">Marketing Platform</a>
           <a href="/about">About</a>
           <a href="/pricing">Pricing</a>
           <a href="/run-report">Run Report</a>
@@ -37,10 +38,10 @@
       <section class="account-shell">
         <div class="login-panel">
           <p class="eyebrow">Customer Account</p>
-          <h1>Log in to your report dashboard.</h1>
+          <h1>Log in to your Builder Rank dashboard.</h1>
           <p>
-            Sign in to view purchased reports, run new audits, and keep report history tied to one
-            Builder Rank workspace.
+            Sign in to view purchased reports, run new audits, and see the connected marketing dashboard
+            for AI visibility, health scores, website activity, and lead attribution.
           </p>
           <div id="accountLoginForm" class="login-form" aria-label="Customer login form">
             <label>
@@ -72,6 +73,66 @@
           <div id="accountStatus" class="account-status" role="status"></div>
           <div id="reportHistoryList" class="history-list"></div>
         </aside>
+      </section>
+
+      <section class="customer-dashboard-shell" aria-label="Connected marketing dashboard">
+        <div class="customer-dashboard-topline">
+          <div>
+            <p class="eyebrow">Connected dashboard</p>
+            <h2>Marketing stats and health scores after authentication</h2>
+          </div>
+          <a class="secondary-button" href="/marketing-platform">View platform details</a>
+        </div>
+        <div class="customer-kpi-grid">
+          <article>
+            <span>AI Health Score</span>
+            <strong>84</strong>
+            <p>Website trust, schema, service clarity, source proof, and model readability.</p>
+          </article>
+          <article>
+            <span>Reports Ran</span>
+            <strong id="accountReportMetric">0</strong>
+            <p>Saved report cards stay attached to the customer workspace.</p>
+          </article>
+          <article>
+            <span>AI Visibility</span>
+            <strong>68%</strong>
+            <p>Business mention rate across tracked job-type prompts.</p>
+          </article>
+          <article>
+            <span>Lead Events</span>
+            <strong>73</strong>
+            <p>Calls, quote clicks, forms, and chat interactions from connected tracking.</p>
+          </article>
+        </div>
+        <div id="accountSiteSignalPanel" class="site-signal-account-panel">
+          <div>
+            <p class="eyebrow">Site Signal</p>
+            <h2 id="accountSiteSignalTitle">Connect website tracking</h2>
+            <p id="accountSiteSignalSummary">Sign in, install the Builder Rank snippet, and connect the Site Signal ID to activate live dashboard data.</p>
+          </div>
+          <div class="site-signal-account-actions">
+            <code id="accountSiteSignalSnippet">&lt;script src="https://builderrank.io/tracker.js" data-site-id="br_customer_site_id" async&gt;&lt;/script&gt;</code>
+            <a id="accountDashboardSetupLink" class="secondary-button" href="/dashboard">Open dashboard setup</a>
+          </div>
+        </div>
+        <div class="customer-dashboard-grid">
+          <article class="panel dashboard-panel">
+            <p class="eyebrow">Report cards</p>
+            <h2>Audit history</h2>
+            <p>Each paid report shows the AI Health Score, ChatGPT/Claude/Gemini analysis, PDF export, JSON export, and prioritized fixes.</p>
+          </article>
+          <article class="panel dashboard-panel">
+            <p class="eyebrow">Marketing stats</p>
+            <h2>Connected website</h2>
+            <p>Once the tracking script is installed, this area shows AI referrals, landing pages, source mix, phone clicks, forms, and quote requests.</p>
+          </article>
+          <article class="panel dashboard-panel">
+            <p class="eyebrow">Growth tasks</p>
+            <h2>Weekly action plan</h2>
+            <p>Builder Rank turns report findings and AI visibility gaps into tasks for content, reviews, GBP, directories, schema, and project proof.</p>
+          </article>
+        </div>
       </section>
     </main>
 

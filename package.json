@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "customer:validate": "node scripts/validate-beta-customer.mjs",
+    "customer:handoff": "node scripts/beta-customer-handoff.mjs",
+    "customer:dry-run": "node scripts/beta-launch-dry-run.mjs",
+    "preflight:beta": "node scripts/beta-preflight.mjs",
+    "production:env-handoff": "node scripts/production-env-handoff.mjs",
+    "production:secrets": "node scripts/generate-production-secrets.mjs",
+    "production:readiness": "node scripts/production-readiness.mjs",
+    "supabase:schema-check": "node scripts/supabase-schema-check.mjs",
+    "smoke:production": "node scripts/production-smoke.mjs"
   }
 }

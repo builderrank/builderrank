@@ -8,8 +8,8 @@ import {
 } from "./_shared.js";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <kaleb@builderrank.io>";
-const REPORT_EMAIL_REPLY_TO = process.env.REPORT_EMAIL_REPLY_TO || "kaleb@builderrank.io";
+const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <support@builderrank.io>";
+const REPORT_EMAIL_REPLY_TO = process.env.REPORT_EMAIL_REPLY_TO || "support@builderrank.io";
 const REPORT_EMAIL_BCC = process.env.REPORT_EMAIL_BCC || "";
 
 export default async function handler(request, response) {

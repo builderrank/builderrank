@@ -1,0 +1,21 @@
+{
+  "company": "Front Range Remodels",
+  "website": "https://front-range-remodels.com",
+  "market": "Denver, CO",
+  "primaryTrade": "Bathroom remodeling",
+  "jobTypes": [
+    "Bathroom remodeling",
+    "Kitchen remodeling",
+    "Basement finishing"
+  ],
+  "competitors": [
+    "Mile High Bath Co.",
+    "Summit Remodel Group",
+    "Urban Tile & Bath"
+  ],
+  "ownerName": "Jordan Smith",
+  "email": "owner@example.com",
+  "phone": "(303) 555-0147",
+  "installMethod": "WordPress plugin",
+  "notes": "Wants more bathroom remodel leads before kitchen and basement jobs."
+}
