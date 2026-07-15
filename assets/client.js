@@ -117,7 +117,7 @@ const baseAudit = {
       key: "entity",
       label: "Entity Check",
       score: 78,
-      description: "Can an LLM verify who this contractor is, where they work, and whether they are real?",
+      description: "Can an LLM verify who this business is, where they work, and whether they are real?",
       checks: [
         { label: "Name, address, phone consistency", status: "pass" },
         { label: "Contractor license visible and labeled", status: "warn" },
@@ -128,7 +128,7 @@ const baseAudit = {
       key: "semantic",
       label: "Semantic Authority",
       score: 66,
-      description: "Does the site answer the specific remodel questions homeowners ask AI tools?",
+      description: "Does the site answer the specific service questions homeowners ask AI tools?",
       checks: [
         { label: "Kitchen and bath service pages", status: "pass" },
         { label: "Localized cost and permit answers", status: "warn" },
@@ -152,7 +152,7 @@ const baseAudit = {
       score: 85,
       description: "Do reviews contain useful service, location, and quality language for AI citations?",
       checks: [
-        { label: "Reviews mention remodel outcomes", status: "pass" },
+        { label: "Reviews mention service outcomes", status: "pass" },
         { label: "Reviews mention cities and neighborhoods", status: "pass" },
         { label: "Review prompts guide customers", status: "warn" },
       ],
@@ -161,8 +161,8 @@ const baseAudit = {
   fixes: [
     {
       priority: "Critical",
-      title: "Add contractor schema to every core page",
-      body: "Generate JSON-LD that names the business, service area, license, rating, phone, and core remodel services.",
+      title: "Add local service schema to every core page",
+      body: "Generate JSON-LD that names the business, service area, license, rating, phone, and core services.",
     },
     {
       priority: "High",
@@ -172,7 +172,7 @@ const baseAudit = {
     {
       priority: "High",
       title: "Create localized answer blocks",
-      body: "Add direct answers for kitchen remodel cost, bathroom remodel timelines, permits, and neighborhoods served.",
+      body: "Add direct answers for service cost, timelines, permits, emergency availability, and neighborhoods served.",
     },
     {
       priority: "Medium",
@@ -451,7 +451,7 @@ async function validateReportIntake() {
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
-      auditStatus.textContent = "Enter the contractor website and market before checkout.";
+      auditStatus.textContent = "Enter the business website and market before checkout.";
     }
     return false;
   }
@@ -678,7 +678,7 @@ function hydrateCheckoutReturn() {
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
       ? `Payment confirmed. Ready to run the paid Builder Rank report for ${pendingReport.website}.`
-      : "Payment confirmed. Enter the contractor details to run the paid Builder Rank report.";
+      : "Payment confirmed. Enter the business details to run the paid Builder Rank report.";
   }
 }
 
@@ -2013,14 +2013,14 @@ function downloadFile(filename, contents, type) {
 
 function summaryForScore(score, market) {
   if (score >= 85) {
-    return `AI can confidently identify this contractor and cite them for localized remodel searches in ${market}. The next opportunity is deeper project proof and conversion tracking.`;
+    return `AI can confidently identify this business and cite it for localized service searches in ${market}. The next opportunity is deeper project proof and conversion tracking.`;
   }
 
   if (score >= 70) {
-    return `AI can identify the business, but it needs stronger license, service-area, and project proof before it confidently recommends this contractor in ${market}.`;
+    return `AI can identify the business, but it needs stronger license, service-area, and project proof before it confidently recommends the company in ${market}.`;
   }
 
-  return `AI tools may struggle to verify this contractor as a trusted local entity in ${market}. The biggest wins are schema, service specificity, and crawl-friendly content.`;
+  return `AI tools may struggle to verify this business as a trusted local entity in ${market}. The biggest wins are schema, service specificity, and crawl-friendly content.`;
 }
 
 function renderCategory(category) {

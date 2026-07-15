@@ -41,9 +41,9 @@
             <img src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <p class="eyebrow">Report Workspace</p>
           </div>
-          <h1>Generate the contractor AI visibility report.</h1>
+          <h1>Generate the contractor or service business AI visibility report.</h1>
           <p class="hero-text">
-            Log in, enter one contractor website and primary market, then complete the one-time $49
+            Log in, enter one business website and primary market, then complete the one-time $49
             Stripe checkout. You will return here to generate, save, export, and automatically email the report.
           </p>
           <div id="reportAuthPanel" class="report-auth-panel">
@@ -73,7 +73,7 @@
             <input id="emailInput" type="hidden" />
             <label class="url-field">
               <span>Contractor website</span>
-              <input id="websiteInput" type="url" placeholder="https://example-contractor.com" required />
+              <input id="websiteInput" type="url" placeholder="https://example-service-business.com" required />
             </label>
             <label class="city-field">
               <span>Primary market</span>
@@ -125,7 +125,7 @@
           </div>
           <p id="scoreSummary">
             AI can identify the business, but it needs stronger license, service-area, and project proof
-            before it confidently recommends this contractor for high-intent remodel searches.
+            before it confidently recommends this business for high-intent service searches.
           </p>
         </aside>
       </section>
@@ -159,7 +159,7 @@
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <div>
               <p class="eyebrow">Customer Intent</p>
-              <h2>Searches AI should connect to this GC</h2>
+              <h2>Searches AI should connect to this business</h2>
             </div>
           </div>
           <div id="intentList" class="intent-list"></div>
@@ -198,7 +198,7 @@
           <div class="phase-list">
             <div class="phase active">
               <span>Step 1</span>
-              <strong>Enter the contractor details</strong>
+              <strong>Enter the business details</strong>
               <p>Provide the website, primary market, phone number, and customer account before checkout.</p>
             </div>
             <div class="phase">
@@ -265,7 +265,7 @@
           </label>
           <label>
             <span>Trade</span>
-            <input id="createTradeInput" placeholder="General contractor, roofer, remodeler..." required />
+            <input id="createTradeInput" placeholder="General contractor, roofer, HVAC, plumber..." required />
           </label>
           <button type="submit">Create Account</button>
         </form>

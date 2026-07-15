@@ -245,9 +245,9 @@ const DASHBOARD_SUPABASE_URL = "https://hosepwwflfpqgemfcafj.supabase.co";
 const DASHBOARD_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Tq-L9aiYVbdtij2JL3oW3Q_FBDNokzQ";
 
 const pageCopy = {
-  visibility: ["Visibility Blueprint", "How often this contractor appears in AI-generated answers across platforms."],
+  visibility: ["Visibility Blueprint", "How often this contractor or service business appears in AI-generated answers across platforms."],
   competition: ["Competition", "See how this business ranks against local competitors based on mention rate and average AI position."],
-  sources: ["Sources", "Websites, directories, GBP profiles, and review pages that AI uses when recommending contractors."],
+  sources: ["Sources", "Websites, directories, GBP profiles, and review pages that AI uses when recommending local service businesses."],
   citations: ["Citations", "Prompt-level evidence showing when the direct website, GBP, or directories were cited."],
   pixel: ["Site Signal", "Connected website tracking from the installed Builder Rank script."],
   leads: ["Leads & Events", "Calls, forms, quote clicks, and probable AI-assisted website sessions."],

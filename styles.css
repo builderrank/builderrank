@@ -214,8 +214,8 @@ button {
 .paragon-hero-copy h1 {
   max-width: 980px;
   margin: 0;
-  font-size: clamp(3rem, 7vw, 6.6rem);
-  line-height: 0.92;
+  font-size: clamp(2.65rem, 6vw, 5.35rem);
+  line-height: 0.96;
 }
 
 .paragon-hero-copy p:not(.eyebrow) {
@@ -339,8 +339,8 @@ button {
 
 .builder-os-score strong {
   color: var(--orange);
-  font-size: clamp(4rem, 8vw, 7rem);
-  line-height: 0.86;
+  font-size: clamp(3.35rem, 7vw, 5.65rem);
+  line-height: 0.92;
 }
 
 .builder-os-score small,
@@ -436,8 +436,8 @@ button {
 .home-final-cta h2 {
   max-width: 900px;
   margin: 0;
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 0.98;
+  font-size: clamp(1.8rem, 4vw, 3.25rem);
+  line-height: 1.04;
 }
 
 .paragon-section-header a,
@@ -637,8 +637,8 @@ button {
 .account-shell h1 {
   max-width: 920px;
   margin-bottom: 18px;
-  font-size: clamp(2.3rem, 5vw, 4.7rem);
-  line-height: 0.98;
+  font-size: clamp(2.05rem, 4.4vw, 3.85rem);
+  line-height: 1.02;
 }
 
 .content-band {
@@ -1283,8 +1283,8 @@ button {
 .platform-hero h1 {
   max-width: 960px;
   margin-bottom: 22px;
-  font-size: clamp(2.5rem, 6vw, 5rem);
-  line-height: 0.98;
+  font-size: clamp(2.15rem, 5vw, 4.1rem);
+  line-height: 1.02;
 }
 
 .platform-hero p,
@@ -1512,8 +1512,8 @@ button {
 
 .admin-beta-head h1 {
   margin-bottom: 14px;
-  font-size: clamp(2.2rem, 5vw, 4.6rem);
-  line-height: 0.98;
+  font-size: clamp(2rem, 4.4vw, 3.75rem);
+  line-height: 1.02;
 }
 
 .admin-beta-token-form,
@@ -2196,8 +2196,8 @@ p {
 h1 {
   max-width: 860px;
   margin-bottom: 22px;
-  font-size: clamp(2.45rem, 7vw, 5.65rem);
-  line-height: 0.95;
+  font-size: clamp(2.15rem, 5.8vw, 4.6rem);
+  line-height: 1;
   letter-spacing: 0;
 }
 
@@ -3033,9 +3033,9 @@ li {
 .connected-page-head h1 {
   margin: 0 0 8px;
   color: #171717;
-  font-size: clamp(2rem, 4vw, 3.1rem);
+  font-size: clamp(1.85rem, 3.4vw, 2.75rem);
   font-weight: 900;
-  line-height: 0.98;
+  line-height: 1.02;
 }
 
 .connected-page-head p {
