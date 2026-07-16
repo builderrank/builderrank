@@ -1,6 +1,8 @@
 const BUILDER_RANK_LOGO_SRC = "/assets/builder-rank-logo.png";
 
 const BUILDER_RANK_PAYMENT_URL = "";
+const ADDITIONAL_REPORT_PAYMENT_URL = "";
+const ADDITIONAL_REPORT_PRICE = 10;
 const SUPABASE_URL = "https://hosepwwflfpqgemfcafj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Tq-L9aiYVbdtij2JL3oW3Q_FBDNokzQ";
 const PENDING_REPORT_KEY = "builderRankPendingReport";
@@ -10,6 +12,8 @@ const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const PROMO_CODE_KEY = "builderRankPromoCode";
 const AUTO_RUN_CHECKOUT_KEY = "builderRankAutoRunCheckout";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
+const PAYMENT_CONFIRMATION_ATTEMPTS = 8;
+const PAYMENT_CONFIRMATION_DELAY_MS = 1500;
 const MARKET_ALIASES = {
   denver: "Denver, CO",
   "denver co": "Denver, CO",
@@ -340,7 +344,7 @@ if (auditForm) {
         throw new Error("Log in before running a free report.");
       }
 
-      await ensureFreeReportEligible(session.access_token);
+      const reportAccess = await ensureReportAccess(session.access_token, pendingReport?.checkoutReference || "");
 
       const response = await fetch("/api/audit", {
         method: "POST",
@@ -362,7 +366,7 @@ if (auditForm) {
       }
 
       audit = payload;
-      const saveResult = await saveCompletedReport(payload);
+      const saveResult = await saveCompletedReport(payload, reportAccess);
       auditStatus.textContent = saveResult?.cloudSaved
         ? `Real audit complete for ${payload.website}. Saved to your account.`
         : `Real audit complete for ${payload.website}. Saved in this browser.`;
@@ -436,8 +440,22 @@ async function beginFreeReport() {
       return;
     }
 
-    await ensureFreeReportEligible(session.access_token);
-    savePendingReport({ checkoutReference: createFreeReportReference() });
+    const eligibility = await checkReportEligibility(session.access_token);
+    const checkoutReference = eligibility.requiresPayment ? createCheckoutReference() : createFreeReportReference();
+    const pendingReport = savePendingReport({ checkoutReference });
+
+    if (eligibility.requiresPayment) {
+      if (!ADDITIONAL_REPORT_PAYMENT_URL) {
+        throw new Error(`This account already used its free report. Additional reports are $${ADDITIONAL_REPORT_PRICE} each. Online checkout is being connected; contact Support@builderrank.io if you need another report right now.`);
+      }
+
+      if (auditStatus) {
+        auditStatus.textContent = `This account already used its free report. Sending you to the $${ADDITIONAL_REPORT_PRICE} additional report checkout...`;
+      }
+      window.location.href = buildCheckoutUrl(pendingReport, ADDITIONAL_REPORT_PAYMENT_URL);
+      return;
+    }
+
     checkoutConfirmed = true;
     if (auditSubmitButton) auditSubmitButton.textContent = "Generate Free Report";
     if (checkoutNotice) {
@@ -490,7 +508,7 @@ async function validateReportIntake() {
     // Continue even if browser storage is unavailable.
   }
 
-  if (auditStatus) auditStatus.textContent = "Account ready. Checking your free report eligibility...";
+  if (auditStatus) auditStatus.textContent = "Account ready. Checking report access...";
   return true;
 }
 
@@ -558,7 +576,7 @@ function setCheckoutPreparing(isPreparing) {
   auditSubmitButton.textContent = isPreparing
     ? "Checking..."
     : checkoutConfirmed
-      ? "Generate Free Report"
+      ? "Generate Report"
       : "Claim Free Report";
 }
 
@@ -609,8 +627,8 @@ function savePendingReportDraft() {
   }
 }
 
-function buildCheckoutUrl(pendingReport) {
-  const checkoutUrl = new URL(BUILDER_RANK_PAYMENT_URL);
+function buildCheckoutUrl(pendingReport, paymentUrl = BUILDER_RANK_PAYMENT_URL) {
+  const checkoutUrl = new URL(paymentUrl);
   const email = pendingReport?.email || readAccountEmail();
 
   if (email) checkoutUrl.searchParams.set("prefilled_email", email);
@@ -637,7 +655,7 @@ function createFreeReportReference() {
   return `free_${randomValue}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
 }
 
-async function ensureFreeReportEligible(accessToken) {
+async function checkReportEligibility(accessToken) {
   const response = await fetch("/api/report-eligibility", {
     method: "POST",
     headers: {
@@ -649,14 +667,22 @@ async function ensureFreeReportEligible(accessToken) {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(payload.detail || payload.error || "Could not check free report eligibility.");
-  }
-
-  if (!payload.eligible) {
-    throw new Error("This email has already generated its free Builder Rank report. Contact Support@builderrank.io if you need another report for a different location or business.");
+    throw new Error(payload.detail || payload.error || "Could not check report eligibility.");
   }
 
   return payload;
+}
+
+async function ensureReportAccess(accessToken, checkoutReference = "") {
+  const eligibility = await checkReportEligibility(accessToken);
+  if (!eligibility.requiresPayment) return { mode: "free", eligibility };
+
+  if (!checkoutReference) {
+    throw new Error(`This account already used its free report. Additional reports are $${ADDITIONAL_REPORT_PRICE} each.`);
+  }
+
+  await waitForPaymentConfirmation(accessToken, checkoutReference);
+  return { mode: "paid", eligibility };
 }
 
 function hydrateCheckoutReturn() {
@@ -695,7 +721,7 @@ function hydrateCheckoutReturn() {
     return;
   }
 
-  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Free Report";
+  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Report";
   if (checkoutNotice) checkoutNotice.hidden = false;
   document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -703,11 +729,11 @@ function hydrateCheckoutReturn() {
     markCheckoutAutoRun(pendingReport);
     if (checkoutNotice) {
       checkoutNotice.classList.add("is-generating");
-      checkoutNotice.querySelector("strong").textContent = "Free report unlocked";
+      checkoutNotice.querySelector("strong").textContent = "Report credit unlocked";
       checkoutNotice.querySelector("p").textContent = "Hang tight. We are generating your Builder Rank report now.";
     }
     if (auditStatus) {
-      auditStatus.textContent = `Generating the free Builder Rank report for ${pendingReport.website}...`;
+      auditStatus.textContent = `Generating the Builder Rank report for ${pendingReport.website}...`;
     }
     window.setTimeout(() => auditForm?.requestSubmit(), 250);
     return;
@@ -715,8 +741,8 @@ function hydrateCheckoutReturn() {
 
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
-      ? `Ready to run the free Builder Rank report for ${pendingReport.website}.`
-      : "Enter the business details to run the free Builder Rank report.";
+      ? `Ready to run the Builder Rank report for ${pendingReport.website}.`
+      : "Enter the business details to run the Builder Rank report.";
   }
 }
 
@@ -798,7 +824,7 @@ function resetCheckoutNotice() {
 
   checkoutNotice.classList.remove("is-generating");
   checkoutNotice.querySelector("strong").textContent = "Free report unlocked";
-  checkoutNotice.querySelector("p").textContent = "Run the free report now. When it finishes, we will email a PDF copy.";
+  checkoutNotice.querySelector("p").textContent = "Run the report now. When it finishes, we will email a PDF copy.";
 }
 
 async function loadUSMarkets() {
@@ -1383,9 +1409,10 @@ function readReportHistory() {
   }
 }
 
-async function saveCompletedReport(report) {
+async function saveCompletedReport(report, reportAccess = {}) {
   const pendingReport = readPendingReport();
   const score = typeof report.score === "number" ? report.score : scoreAudit();
+  const isPaidReport = reportAccess.mode === "paid";
   const completedReport = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     email: emailInput?.value || pendingReport?.email || readAccountEmail() || "",
@@ -1396,8 +1423,8 @@ async function saveCompletedReport(report) {
     score,
     grade: report.grade || gradeForScore(score),
     checkoutReference: pendingReport?.checkoutReference || "",
-    amount: 0,
-    paymentStatus: "free",
+    amount: isPaidReport ? ADDITIONAL_REPORT_PRICE : 0,
+    paymentStatus: isPaidReport ? "paid" : "free",
     createdAt: new Date().toISOString(),
   };
 
@@ -1698,7 +1725,7 @@ function renderHistoryCard(report) {
       <strong>${escapeHtml(report.company || "Contractor report")}</strong>
       <p>${escapeHtml(report.market || "Market not set")} · ${escapeHtml(scoreLabel)} · ${escapeHtml(report.grade || "Ungraded")}</p>
       <span>${escapeHtml(report.website || "")}${report.email ? ` · ${escapeHtml(report.email)}` : ""}${report.phone ? ` · ${escapeHtml(report.phone)}` : ""} · ${escapeHtml(created)}</span>
-      <a href="/run-report">Run another report</a>
+      <a href="/run-report">Run another report · $${ADDITIONAL_REPORT_PRICE}</a>
     </article>
   `;
 }
@@ -2182,7 +2209,7 @@ function setLoading(isLoading) {
   const button = auditForm.querySelector("button");
   button.disabled = isLoading;
   if (returnedReportButton) returnedReportButton.disabled = isLoading;
-  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Free Report" : "Claim Free Report";
+  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Report" : "Claim Free Report";
   auditStatus.textContent = isLoading
     ? "Crawling the website, checking schema, reading text, and scoring LLM readability..."
     : auditStatus.textContent;

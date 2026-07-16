@@ -6,7 +6,7 @@ import {
   requireSupabaseServiceRole,
   sendJson,
 } from "./_shared.js";
-import { assertFreeReportEligible } from "./report-eligibility.js";
+import { assertReportRunAllowed } from "./report-eligibility.js";
 
 export const config = {
   maxDuration: 60,
@@ -27,7 +27,10 @@ export default async function handler(request, response) {
     }
 
     const body = await readJsonBody(request);
-    await assertFreeReportEligible(user.email);
+    await assertReportRunAllowed({
+      email: user.email,
+      checkoutReference: body.checkoutReference || body.checkout_reference,
+    });
 
     const audit = await runAudit(body.website, body.market);
     sendJson(response, 200, audit);

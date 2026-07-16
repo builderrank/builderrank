@@ -9,7 +9,7 @@ import hubSpotReportHandler from "./api/hubspot-report.js";
 import importAiVisibilityHandler from "./api/import-ai-visibility.js";
 import paymentStatusHandler from "./api/payment-status.js";
 import reportEligibilityHandler from "./api/report-eligibility.js";
-import { assertFreeReportEligible } from "./api/report-eligibility.js";
+import { assertReportRunAllowed } from "./api/report-eligibility.js";
 import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
 import adminWorkspacesHandler from "./api/admin-workspaces.js";
@@ -54,8 +54,11 @@ const server = createServer(async (request, response) => {
         sendJson(response, 401, { error: "Log in before running a report." });
         return;
       }
-      await assertFreeReportEligible(user.email);
       const body = await readJsonBody(request);
+      await assertReportRunAllowed({
+        email: user.email,
+        checkoutReference: body.checkoutReference || body.checkout_reference,
+      });
       const audit = await runAudit(body.website, body.market);
       sendJson(response, 200, audit);
       return;
