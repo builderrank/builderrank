@@ -25,6 +25,20 @@ const checks = [
   },
   {
     method: "POST",
+    path: "/api/report-eligibility",
+    expect: [401, 503],
+  },
+  {
+    method: "POST",
+    path: "/api/audit",
+    expect: [401, 503],
+    body: {
+      website: "https://example.com",
+      market: "Denver, CO",
+    },
+  },
+  {
+    method: "POST",
     path: "/api/bootstrap-workspace",
     expect: [401, 503],
     body: {

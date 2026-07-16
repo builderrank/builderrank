@@ -8,6 +8,9 @@ import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
 import importAiVisibilityHandler from "./api/import-ai-visibility.js";
 import paymentStatusHandler from "./api/payment-status.js";
+import reportEligibilityHandler from "./api/report-eligibility.js";
+import { assertFreeReportEligible } from "./api/report-eligibility.js";
+import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
 import adminWorkspacesHandler from "./api/admin-workspaces.js";
 import betaIntakeHandler from "./api/beta-intake.js";
@@ -45,6 +48,13 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
 
     if (request.method === "POST" && url.pathname === "/api/audit") {
+      requireSupabaseServiceRole();
+      const user = await getSupabaseUser(extractBearerToken(request));
+      if (!user?.email) {
+        sendJson(response, 401, { error: "Log in before running a report." });
+        return;
+      }
+      await assertFreeReportEligible(user.email);
       const body = await readJsonBody(request);
       const audit = await runAudit(body.website, body.market);
       sendJson(response, 200, audit);
@@ -58,6 +68,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/payment-status") {
       await callApiHandler(paymentStatusHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/report-eligibility") {
+      await callApiHandler(reportEligibilityHandler, request, response);
       return;
     }
 
@@ -138,7 +153,7 @@ const server = createServer(async (request, response) => {
 
     await serveStatic(url.pathname, response);
   } catch (error) {
-    sendJson(response, 500, {
+    sendJson(response, error.statusCode || 500, {
       error: "Audit failed",
       detail: error.message,
     });

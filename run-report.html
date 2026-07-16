@@ -31,7 +31,7 @@
           <a href="/account">Account</a>
           <a href="/support">Support</a>
           <a href="/legal">Legal</a>
-          <button class="nav-pay-button" type="button" data-payment-link>Buy Report</button>
+          <button class="nav-pay-button" type="button" data-payment-link>Free Report</button>
         </nav>
       </header>
 
@@ -43,14 +43,14 @@
           </div>
           <h1>Generate the contractor or service business AI visibility report.</h1>
           <p class="hero-text">
-            Log in, enter one business website and primary market, then complete the one-time $49
-            Stripe checkout. You will return here to generate, save, export, and automatically email the report.
+            Log in, enter one business website, primary market, and phone number, then claim the free report.
+            We save it to your workspace and email a PDF copy automatically.
           </p>
           <div id="reportAuthPanel" class="report-auth-panel">
             <div>
               <p class="eyebrow">Customer Login</p>
-              <strong id="reportAuthTitle">Log in before buying a report</strong>
-              <p id="reportAuthSummary">Use the same login any time you come back to view purchased reports.</p>
+              <strong id="reportAuthTitle">Log in before claiming the free report</strong>
+              <p id="reportAuthSummary">Use the same login any time you come back to view saved reports.</p>
             </div>
             <div id="reportLoginForm" class="login-form compact-login-form">
               <label>
@@ -72,7 +72,7 @@
           <form id="auditForm" class="audit-form">
             <input id="emailInput" type="hidden" />
             <label class="url-field">
-              <span>Contractor website</span>
+              <span>Business website</span>
               <input id="websiteInput" type="url" placeholder="https://example-service-business.com" required />
             </label>
             <label class="city-field">
@@ -88,16 +88,16 @@
               <span>Promo code</span>
               <input id="promoCodeInput" data-promo-code-input type="text" inputmode="latin" autocomplete="off" placeholder="Optional" />
             </label>
-            <button id="auditSubmitButton" type="submit">Continue to Checkout</button>
+            <button id="auditSubmitButton" type="submit">Claim Free Report</button>
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
-            <strong>Payment received</strong>
+            <strong>Free report unlocked</strong>
             <p>Hang tight. We will generate the report, save it to your account, and email a PDF copy.</p>
-            <button id="returnedReportButton" type="button">Run Paid Report</button>
+            <button id="returnedReportButton" type="button">Run Free Report</button>
           </div>
           <div class="report-actions" aria-label="Save report">
             <p id="auditStatus" class="audit-status" role="status">
-              Log in or create an account, then complete the report fields before checkout.
+              Log in or create an account, then complete the required fields to claim one free report.
             </p>
             <div class="save-buttons">
               <button id="pdfButton" type="button">Save PDF</button>
@@ -192,14 +192,14 @@
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <div>
               <p class="eyebrow">How it works</p>
-              <h2>From checkout to recommendations</h2>
+              <h2>From signup to recommendations</h2>
             </div>
           </div>
           <div class="phase-list">
             <div class="phase active">
               <span>Step 1</span>
               <strong>Enter the business details</strong>
-              <p>Provide the website, primary market, phone number, and customer account before checkout.</p>
+              <p>Provide the website, primary market, phone number, and customer account before generating the free report.</p>
             </div>
             <div class="phase">
               <span>Step 2</span>

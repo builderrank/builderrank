@@ -48,6 +48,8 @@ using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
 create index if not exists reports_user_created_idx on public.reports (user_id, created_at desc);
+create index if not exists reports_email_created_idx on public.reports (lower(email), created_at desc)
+  where email is not null and email <> '';
 create index if not exists reports_checkout_reference_idx on public.reports (checkout_reference);
 create unique index if not exists reports_user_checkout_reference_uidx
   on public.reports (user_id, checkout_reference)

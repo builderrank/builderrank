@@ -14,6 +14,7 @@ const requiredFiles = [
   "api/connect-site.js",
   "api/dashboard-data.js",
   "api/import-ai-visibility.js",
+  "api/report-eligibility.js",
   "api/track.js",
   "api/tracking-health.js",
   "api/update-recommendation.js",
@@ -66,6 +67,7 @@ const sitemap = read("sitemap.xml");
   "/api/connect-site",
   "/api/dashboard-data",
   "/api/import-ai-visibility",
+  "/api/report-eligibility",
   "/api/track",
   "/api/tracking-health",
   "/api/update-recommendation",
@@ -90,6 +92,7 @@ const server = read("server.js");
   "/api/connect-site",
   "/api/dashboard-data",
   "/api/import-ai-visibility",
+  "/api/report-eligibility",
   "/api/track",
   "/api/tracking-health",
   "/api/update-recommendation",
@@ -114,6 +117,7 @@ const schema = read("supabase-setup.sql");
   "br_website_events_site_source_received_idx",
   "add column if not exists business_id uuid references public.br_businesses",
   "reports_business_created_idx",
+  "reports_email_created_idx",
 ].forEach((pattern) => check(`schema contains ${pattern}`, schema.includes(pattern)));
 
 [

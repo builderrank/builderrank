@@ -2108,6 +2108,22 @@ button {
   font-size: 2.2rem;
 }
 
+.price-anchor {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.price-anchor s {
+  color: rgba(247, 249, 251, 0.48);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.price-anchor strong {
+  line-height: 1;
+}
+
 .mini-score strong {
   display: block;
   margin-bottom: 8px;

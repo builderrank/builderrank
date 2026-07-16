@@ -1,6 +1,6 @@
 const BUILDER_RANK_LOGO_SRC = "/assets/builder-rank-logo.png";
 
-const BUILDER_RANK_PAYMENT_URL = "https://buy.stripe.com/5kQeVd0Gdb1UaRu7AQ8bS00";
+const BUILDER_RANK_PAYMENT_URL = "";
 const SUPABASE_URL = "https://hosepwwflfpqgemfcafj.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Tq-L9aiYVbdtij2JL3oW3Q_FBDNokzQ";
 const PENDING_REPORT_KEY = "builderRankPendingReport";
@@ -10,8 +10,6 @@ const ACCOUNT_PROFILE_KEY = "builderRankAccountProfile";
 const PROMO_CODE_KEY = "builderRankPromoCode";
 const AUTO_RUN_CHECKOUT_KEY = "builderRankAutoRunCheckout";
 const CHECKOUT_SUCCESS_VALUES = new Set(["1", "true", "paid", "success", "complete", "completed"]);
-const PAYMENT_CONFIRMATION_ATTEMPTS = 8;
-const PAYMENT_CONFIRMATION_DELAY_MS = 1500;
 const MARKET_ALIASES = {
   denver: "Denver, CO",
   "denver co": "Denver, CO",
@@ -323,7 +321,7 @@ if (auditForm) {
     event.preventDefault();
 
     if (!checkoutConfirmed) {
-      await beginCheckout();
+      await beginFreeReport();
       return;
     }
 
@@ -337,16 +335,12 @@ if (auditForm) {
 
     try {
       const pendingReport = readPendingReport();
-      if (!pendingReport?.checkoutReference) {
-        throw new Error("Payment confirmation is missing. Return from Stripe checkout before running the report.");
-      }
-
       const session = await getCurrentSession();
       if (!session?.access_token) {
-        throw new Error("Log in before running a paid report.");
+        throw new Error("Log in before running a free report.");
       }
 
-      await waitForPaymentConfirmation(session.access_token, pendingReport.checkoutReference);
+      await ensureFreeReportEligible(session.access_token);
 
       const response = await fetch("/api/audit", {
         method: "POST",
@@ -357,7 +351,7 @@ if (auditForm) {
         body: JSON.stringify({
           website: websiteInput.value,
           market: normalizeMarket(marketInput.value),
-          checkoutReference: pendingReport.checkoutReference,
+          checkoutReference: pendingReport?.checkoutReference || createFreeReportReference(),
         }),
       });
 
@@ -424,24 +418,41 @@ function handlePaymentClick() {
     return;
   }
 
-  void beginCheckout();
+  void beginFreeReport();
 }
 
-async function beginCheckout() {
-  if (!auditForm) {
-    window.location.href = "/run-report";
-    return;
+async function beginFreeReport() {
+  try {
+    if (!auditForm) {
+      window.location.href = "/run-report";
+      return;
+    }
+
+    if (!(await validateReportIntake())) return;
+
+    const session = await getCurrentSession();
+    if (!session?.access_token) {
+      if (auditStatus) auditStatus.textContent = "Log in or create an account before claiming the free report.";
+      return;
+    }
+
+    await ensureFreeReportEligible(session.access_token);
+    savePendingReport({ checkoutReference: createFreeReportReference() });
+    checkoutConfirmed = true;
+    if (auditSubmitButton) auditSubmitButton.textContent = "Generate Free Report";
+    if (checkoutNotice) {
+      checkoutNotice.hidden = false;
+      checkoutNotice.classList.add("is-generating");
+      checkoutNotice.querySelector("strong").textContent = "Free report unlocked";
+      checkoutNotice.querySelector("p").textContent = "Running the audit now. We will save it to your account and email a PDF copy.";
+    }
+    window.setTimeout(() => auditForm?.requestSubmit(), 100);
+  } catch (error) {
+    checkoutConfirmed = false;
+    resetCheckoutNotice();
+    if (checkoutNotice) checkoutNotice.hidden = true;
+    if (auditStatus) auditStatus.textContent = error.message;
   }
-
-  if (!(await validateReportIntake())) return;
-
-  if (BUILDER_RANK_PAYMENT_URL) {
-    const pendingReport = savePendingReport({ checkoutReference: createCheckoutReference() });
-    window.location.href = buildCheckoutUrl(pendingReport);
-    return;
-  }
-
-  alert("Payment link is not connected yet. Create a Stripe Payment Link, then replace BUILDER_RANK_PAYMENT_URL in assets/client.js.");
 }
 
 async function validateReportIntake() {
@@ -451,22 +462,22 @@ async function validateReportIntake() {
   if (!auditForm.checkValidity()) {
     auditForm.reportValidity();
     if (auditStatus) {
-      auditStatus.textContent = "Enter the business website and market before checkout.";
+      auditStatus.textContent = "Enter the business website, market, and phone before claiming the free report.";
     }
     return false;
   }
 
   if (!session?.user) {
-    if (auditStatus) auditStatus.textContent = "Log in or create an account before buying a report.";
+    if (auditStatus) auditStatus.textContent = "Log in or create an account before claiming the free report.";
     reportLoginEmailInput?.focus();
     return false;
   }
 
   if (emailInput) emailInput.value = session.user.email || "";
-  if (!validateEmailField(emailInput, "Use a valid email address before checkout.")) {
+  if (!validateEmailField(emailInput, "Use a valid email address before claiming the free report.")) {
     return false;
   }
-  if (!validatePhoneField(phoneInput, "Use a valid 10-digit phone number before checkout.")) {
+  if (!validatePhoneField(phoneInput, "Use a valid 10-digit phone number before claiming the free report.")) {
     return false;
   }
   if (!validateMarketField(marketInput)) {
@@ -476,10 +487,10 @@ async function validateReportIntake() {
     localStorage.setItem(ACCOUNT_EMAIL_KEY, session.user.email || "");
     saveAccountProfile(session.user.email, session.user.user_metadata);
   } catch {
-    // Continue to checkout even if browser storage is unavailable.
+    // Continue even if browser storage is unavailable.
   }
 
-  if (auditStatus) auditStatus.textContent = "Account ready. Sending you to secure Stripe checkout for the one-time $49 report...";
+  if (auditStatus) auditStatus.textContent = "Account ready. Checking your free report eligibility...";
   return true;
 }
 
@@ -537,7 +548,7 @@ async function createSupabaseAccount(profile, password, statusElement) {
     return { mode: "signed-in", user: signUpResult.data.user };
   }
 
-  throw new Error("Account created. Check your email to confirm it, then sign in before checkout.");
+  throw new Error("Account created. Check your email to confirm it, then sign in before claiming the free report.");
 }
 
 function setCheckoutPreparing(isPreparing) {
@@ -545,10 +556,10 @@ function setCheckoutPreparing(isPreparing) {
 
   auditSubmitButton.disabled = isPreparing;
   auditSubmitButton.textContent = isPreparing
-    ? "Creating Account..."
+    ? "Checking..."
     : checkoutConfirmed
-      ? "Generate Paid Report"
-      : "Continue to Checkout";
+      ? "Generate Free Report"
+      : "Claim Free Report";
 }
 
 function savePendingReport({ checkoutReference = readPendingReport()?.checkoutReference || "" } = {}) {
@@ -621,6 +632,33 @@ function createCheckoutReference() {
   return `br_${randomValue}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
 }
 
+function createFreeReportReference() {
+  const randomValue = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `free_${randomValue}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
+}
+
+async function ensureFreeReportEligible(accessToken) {
+  const response = await fetch("/api/report-eligibility", {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.detail || payload.error || "Could not check free report eligibility.");
+  }
+
+  if (!payload.eligible) {
+    throw new Error("This email has already generated its free Builder Rank report. Contact Support@builderrank.io if you need another report for a different location or business.");
+  }
+
+  return payload;
+}
+
 function hydrateCheckoutReturn() {
   const params = new URLSearchParams(window.location.search);
   const checkoutValue = params.get("checkout") || params.get("paid") || params.get("payment");
@@ -650,14 +688,14 @@ function hydrateCheckoutReturn() {
   }
 
   if (!isCheckoutReturn) {
-    if (auditSubmitButton) auditSubmitButton.textContent = "Continue to Checkout";
+    if (auditSubmitButton) auditSubmitButton.textContent = "Claim Free Report";
     if (auditStatus) {
-      auditStatus.textContent = "Log in or create an account, then complete the report fields before checkout.";
+      auditStatus.textContent = "Log in or create an account, then complete the required fields to claim one free report.";
     }
     return;
   }
 
-  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Paid Report";
+  if (auditSubmitButton) auditSubmitButton.textContent = "Generate Free Report";
   if (checkoutNotice) checkoutNotice.hidden = false;
   document.querySelector("#report-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
@@ -665,11 +703,11 @@ function hydrateCheckoutReturn() {
     markCheckoutAutoRun(pendingReport);
     if (checkoutNotice) {
       checkoutNotice.classList.add("is-generating");
-      checkoutNotice.querySelector("strong").textContent = "Payment received";
+      checkoutNotice.querySelector("strong").textContent = "Free report unlocked";
       checkoutNotice.querySelector("p").textContent = "Hang tight. We are generating your Builder Rank report now.";
     }
     if (auditStatus) {
-      auditStatus.textContent = `Payment confirmed. Generating the paid Builder Rank report for ${pendingReport.website}...`;
+      auditStatus.textContent = `Generating the free Builder Rank report for ${pendingReport.website}...`;
     }
     window.setTimeout(() => auditForm?.requestSubmit(), 250);
     return;
@@ -677,8 +715,8 @@ function hydrateCheckoutReturn() {
 
   if (auditStatus) {
     auditStatus.textContent = pendingReport?.website
-      ? `Payment confirmed. Ready to run the paid Builder Rank report for ${pendingReport.website}.`
-      : "Payment confirmed. Enter the business details to run the paid Builder Rank report.";
+      ? `Ready to run the free Builder Rank report for ${pendingReport.website}.`
+      : "Enter the business details to run the free Builder Rank report.";
   }
 }
 
@@ -704,7 +742,7 @@ function markCheckoutAutoRun(pendingReport) {
 
 async function waitForPaymentConfirmation(accessToken, checkoutReference) {
   if (!checkoutReference) {
-    throw new Error("Payment confirmation is missing. Return from Stripe checkout before running the report.");
+    throw new Error("Report access confirmation is missing. Claim the free report before running it.");
   }
 
   for (let attempt = 1; attempt <= PAYMENT_CONFIRMATION_ATTEMPTS; attempt += 1) {
@@ -715,14 +753,14 @@ async function waitForPaymentConfirmation(accessToken, checkoutReference) {
 
     if (auditStatus) {
       auditStatus.textContent = attempt === 1
-        ? "Payment received. Confirming Stripe webhook delivery before generating the report..."
-        : "Still confirming payment with Stripe. This usually takes only a few seconds...";
+        ? "Confirming report access before generating the report..."
+        : "Still confirming report access. This usually takes only a few seconds...";
     }
 
     await delay(PAYMENT_CONFIRMATION_DELAY_MS);
   }
 
-  throw new Error("Payment confirmation is still processing. Wait a few seconds, then click Generate Paid Report again.");
+  throw new Error("Report access is still processing. Wait a few seconds, then click Generate Free Report again.");
 }
 
 async function checkPaymentStatus(accessToken, checkoutReference) {
@@ -759,8 +797,8 @@ function resetCheckoutNotice() {
   if (!checkoutNotice) return;
 
   checkoutNotice.classList.remove("is-generating");
-  checkoutNotice.querySelector("strong").textContent = "Payment received";
-  checkoutNotice.querySelector("p").textContent = "Run the paid report now. When it finishes, we will email a thank-you note and PDF copy.";
+  checkoutNotice.querySelector("strong").textContent = "Free report unlocked";
+  checkoutNotice.querySelector("p").textContent = "Run the free report now. When it finishes, we will email a PDF copy.";
 }
 
 async function loadUSMarkets() {
@@ -975,7 +1013,7 @@ function hydrateAuthFlows() {
       await createSupabaseAccount(profile, createPasswordInput.value, createAccountStatus);
       closeCreateAccountModal();
       if (accountStatus) accountStatus.textContent = `Signed in as ${profile.email}.`;
-      if (auditStatus) auditStatus.textContent = "Account ready. Complete the report fields before checkout.";
+      if (auditStatus) auditStatus.textContent = "Account ready. Complete the report fields to claim the free report.";
       await refreshAuthState();
       void syncHubSpotAccount(profile);
     } catch (error) {
@@ -1176,8 +1214,8 @@ async function refreshAuthState() {
     if (reportAuthPanel) reportAuthPanel.classList.remove("signed-in");
     if (reportLoginForm) reportLoginForm.hidden = false;
     if (accountLoginForm) accountLoginForm.hidden = false;
-    if (reportAuthTitle) reportAuthTitle.textContent = "Log in before buying a report";
-    if (reportAuthSummary) reportAuthSummary.textContent = "Use the same login any time you come back to view purchased reports.";
+    if (reportAuthTitle) reportAuthTitle.textContent = "Log in before claiming the free report";
+    if (reportAuthSummary) reportAuthSummary.textContent = "Use the same login any time you come back to view saved reports.";
     if (accountLoginButton) accountLoginButton.disabled = false;
     if (accountResetOpenButton) accountResetOpenButton.hidden = false;
     if (reportResetOpenButton) reportResetOpenButton.hidden = false;
@@ -1358,8 +1396,8 @@ async function saveCompletedReport(report) {
     score,
     grade: report.grade || gradeForScore(score),
     checkoutReference: pendingReport?.checkoutReference || "",
-    amount: 49,
-    paymentStatus: "paid",
+    amount: 0,
+    paymentStatus: "free",
     createdAt: new Date().toISOString(),
   };
 
@@ -2091,7 +2129,7 @@ function renderModelAnalyses(modelAnalyses) {
     return `
       <div class="model-followup-notice">
         <strong>Model follow-up</strong>
-        <p>If ChatGPT, Claude, or Gemini does not report on a paid customer report, Builder Rank will review the issue and follow up.</p>
+        <p>If ChatGPT, Claude, or Gemini does not report on a customer report, Builder Rank will review the issue and follow up.</p>
       </div>
       <div class="model-analysis-card">
         <div class="model-analysis-topline">
@@ -2144,7 +2182,7 @@ function setLoading(isLoading) {
   const button = auditForm.querySelector("button");
   button.disabled = isLoading;
   if (returnedReportButton) returnedReportButton.disabled = isLoading;
-  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Paid Report" : "Continue to Checkout";
+  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Free Report" : "Claim Free Report";
   auditStatus.textContent = isLoading
     ? "Crawling the website, checking schema, reading text, and scoring LLM readability..."
     : auditStatus.textContent;
