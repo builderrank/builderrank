@@ -13,6 +13,7 @@ import reportEligibilityHandler from "./api/report-eligibility.js";
 import { assertReportRunAllowed } from "./api/report-eligibility.js";
 import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
+import supabaseKeepaliveHandler from "./api/supabase-keepalive.js";
 import adminWorkspacesHandler from "./api/admin-workspaces.js";
 import betaIntakeHandler from "./api/beta-intake.js";
 import bootstrapWorkspaceHandler from "./api/bootstrap-workspace.js";
@@ -102,6 +103,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/stripe-webhook") {
       await callApiHandler(stripeWebhookHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/supabase-keepalive") {
+      await callApiHandler(supabaseKeepaliveHandler, request, response);
       return;
     }
 

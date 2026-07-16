@@ -44,6 +44,11 @@ Keep `MAX_JSON_BODY_BYTES` between `100000` and `2000000` during beta. The defau
 
 `npm run production:readiness` separates required blockers from recommended follow-ups. Treat required blockers as no-go for the first beta customer; recommended follow-ups can be scheduled unless they are part of the specific customer workflow.
 
+The Free Supabase project can pause after inactivity. The repo includes a daily Vercel Cron job,
+configured in `vercel.json`, that calls `/api/supabase-keepalive` so the database receives regular
+traffic and fails visibly if the project is paused or unreachable. Upgrading Supabase to Pro is still
+the only provider-backed guarantee against automatic pausing.
+
 ## 2. Supabase Setup
 
 Run `supabase-setup.sql` in the Supabase SQL editor. It now includes:

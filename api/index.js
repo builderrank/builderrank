@@ -14,6 +14,7 @@ import paymentConfigHandler from "./payment-config.js";
 import paymentStatusHandler from "./payment-status.js";
 import reportEligibilityHandler from "./report-eligibility.js";
 import stripeWebhookHandler from "./stripe-webhook.js";
+import supabaseKeepaliveHandler from "./supabase-keepalive.js";
 import trackHandler from "./track.js";
 import trackingHealthHandler from "./tracking-health.js";
 import updateRecommendationHandler from "./update-recommendation.js";
@@ -34,6 +35,7 @@ const handlers = new Map([
   ["/api/payment-status", paymentStatusHandler],
   ["/api/report-eligibility", reportEligibilityHandler],
   ["/api/stripe-webhook", stripeWebhookHandler],
+  ["/api/supabase-keepalive", supabaseKeepaliveHandler],
   ["/api/track", trackHandler],
   ["/api/tracking-health", trackingHealthHandler],
   ["/api/update-recommendation", updateRecommendationHandler],
