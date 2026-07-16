@@ -2,8 +2,10 @@
   var script = document.currentScript;
   var siteId = script && script.getAttribute("data-site-id");
   var endpoint = (script && script.getAttribute("data-endpoint")) || "https://builderrank.io/api/track";
+  var skipLoggedIn = script && script.getAttribute("data-skip-logged-in") !== "false";
 
   if (!siteId || !window.fetch) return;
+  if (skipLoggedIn && isLoggedInBuilderRankUser()) return;
 
   var sessionKey = "builderRankSessionId";
   var sessionId = getSessionId();
@@ -238,5 +240,20 @@
     var value = "brs_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
     sessionStorage.setItem(sessionKey, value);
     return value;
+  }
+
+  function isLoggedInBuilderRankUser() {
+    try {
+      if (localStorage.getItem("builderRankAccountEmail")) return true;
+
+      for (var i = 0; i < localStorage.length; i += 1) {
+        var key = localStorage.key(i) || "";
+        if (/^sb-.+-auth-token$/.test(key)) return true;
+      }
+    } catch (error) {
+      return false;
+    }
+
+    return false;
   }
 })();
