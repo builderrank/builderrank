@@ -199,6 +199,7 @@ This project is Vercel-ready:
 - Static files are served from the project root.
 - The production audit endpoint lives at `/api/audit`.
 - API keys must be configured in Vercel Project Settings, not committed to GitHub.
+- Set `STRIPE_ADDITIONAL_REPORT_PAYMENT_URL` to the live Stripe Payment Link for $10 additional report credits.
 - Stripe should redirect successful payments to `https://builderrank.io/run-report?checkout=success#report-workspace`
   so the site restores the saved website and market inputs after checkout.
 
@@ -260,6 +261,10 @@ Checkout links are generated with:
 - `prefilled_promo_code`: the optional customer-entered promo code, when present.
 - `client_reference_id`: a generated `br_...` checkout reference saved with the pending report.
 - `utm_source=builder_rank_app` and `utm_medium=checkout`.
+
+The first report is credited only after the customer creates or completes a free account profile with
+email, name, phone, company name, company size, and trade/service type. Additional report credits use
+the Payment Link stored in `STRIPE_ADDITIONAL_REPORT_PAYMENT_URL`.
 
 Promotion codes must be enabled on the Stripe Payment Link, and the actual customer-facing codes must
 exist in Stripe, for the promo field to apply a discount.

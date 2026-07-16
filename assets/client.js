@@ -284,6 +284,8 @@ let usMarkets = [];
 let usMarketByKey = new Map();
 let usMarketCityCounts = new Map();
 let accountReportHistoryCache = [];
+let createAccountMode = "signup";
+let paymentConfigPromise = null;
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = BUILDER_RANK_LOGO_SRC;
@@ -445,14 +447,15 @@ async function beginFreeReport() {
     const pendingReport = savePendingReport({ checkoutReference });
 
     if (eligibility.requiresPayment) {
-      if (!ADDITIONAL_REPORT_PAYMENT_URL) {
+      const additionalReportPaymentUrl = await getAdditionalReportPaymentUrl();
+      if (!additionalReportPaymentUrl) {
         throw new Error(`This account already used its free report. Additional reports are $${ADDITIONAL_REPORT_PRICE} each. Online checkout is being connected; contact Support@builderrank.io if you need another report right now.`);
       }
 
       if (auditStatus) {
         auditStatus.textContent = `This account already used its free report. Sending you to the $${ADDITIONAL_REPORT_PRICE} additional report checkout...`;
       }
-      window.location.href = buildCheckoutUrl(pendingReport, ADDITIONAL_REPORT_PAYMENT_URL);
+      window.location.href = buildCheckoutUrl(pendingReport, additionalReportPaymentUrl);
       return;
     }
 
@@ -501,9 +504,24 @@ async function validateReportIntake() {
   if (!validateMarketField(marketInput)) {
     return false;
   }
+
+  const profile = {
+    ...(readAccountProfile() || {}),
+    ...(session.user.user_metadata || {}),
+    email: session.user.email || "",
+    phone: normalizePhone(phoneInput?.value || getProfilePhone(session.user.user_metadata)),
+  };
+  if (!hasCompleteLeadProfile(profile)) {
+    if (auditStatus) {
+      auditStatus.textContent = "Complete the free account profile before we credit this account with a free report.";
+    }
+    openCreateAccountModal(session.user.email || "", { mode: "complete", profile });
+    return false;
+  }
+
   try {
     localStorage.setItem(ACCOUNT_EMAIL_KEY, session.user.email || "");
-    saveAccountProfile(session.user.email, session.user.user_metadata);
+    saveAccountProfile(session.user.email, profile);
   } catch {
     // Continue even if browser storage is unavailable.
   }
@@ -567,6 +585,38 @@ async function createSupabaseAccount(profile, password, statusElement) {
   }
 
   throw new Error("Account created. Check your email to confirm it, then sign in before claiming the free report.");
+}
+
+async function updateSupabaseAccountProfile(profile, statusElement) {
+  const session = await getCurrentSession();
+  if (!session?.user) {
+    throw new Error("Log in before completing the free account profile.");
+  }
+
+  const completeProfile = {
+    ...(session.user.user_metadata || {}),
+    ...profile,
+    email: session.user.email,
+  };
+
+  if (!hasCompleteLeadProfile(completeProfile)) {
+    throw new Error("Complete every account field before claiming the free report.");
+  }
+
+  if (statusElement) statusElement.textContent = "Saving your free account...";
+
+  if (!builderRankSupabase) {
+    saveAccountProfile(completeProfile.email, completeProfile);
+    return { mode: "local", user: session.user };
+  }
+
+  const { data, error } = await builderRankSupabase.auth.updateUser({
+    data: completeProfile,
+  });
+  if (error) throw error;
+
+  saveAccountProfile(completeProfile.email, completeProfile);
+  return { mode: "updated", user: data?.user || session.user };
 }
 
 function setCheckoutPreparing(isPreparing) {
@@ -643,6 +693,24 @@ function buildCheckoutUrl(pendingReport, paymentUrl = BUILDER_RANK_PAYMENT_URL) 
   checkoutUrl.searchParams.set("utm_medium", "checkout");
 
   return checkoutUrl.toString();
+}
+
+async function getAdditionalReportPaymentUrl() {
+  if (ADDITIONAL_REPORT_PAYMENT_URL) return ADDITIONAL_REPORT_PAYMENT_URL;
+  if (!paymentConfigPromise) {
+    paymentConfigPromise = fetch("/api/payment-config")
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Payment settings are unavailable.");
+        return payload.additionalReportPaymentUrl || "";
+      })
+      .catch((error) => {
+        console.warn("Could not load payment config", error);
+        return "";
+      });
+  }
+
+  return paymentConfigPromise;
 }
 
 function createCheckoutReference() {
@@ -1013,7 +1081,8 @@ function hydrateAuthFlows() {
       return;
     }
 
-    if (createPasswordInput.value !== createPasswordConfirmInput.value) {
+    const isProfileCompletion = createAccountMode === "complete";
+    if (!isProfileCompletion && createPasswordInput.value !== createPasswordConfirmInput.value) {
       createPasswordConfirmInput.setCustomValidity("Passwords must match.");
       createPasswordConfirmInput.reportValidity();
       createPasswordConfirmInput.setCustomValidity("");
@@ -1035,18 +1104,24 @@ function hydrateAuthFlows() {
 
     try {
       submitButton.disabled = true;
-      submitButton.textContent = "Creating...";
-      await createSupabaseAccount(profile, createPasswordInput.value, createAccountStatus);
+      submitButton.textContent = isProfileCompletion ? "Saving..." : "Creating...";
+
+      if (isProfileCompletion) {
+        await updateSupabaseAccountProfile(profile, createAccountStatus);
+      } else {
+        await createSupabaseAccount(profile, createPasswordInput.value, createAccountStatus);
+      }
+
       closeCreateAccountModal();
       if (accountStatus) accountStatus.textContent = `Signed in as ${profile.email}.`;
-      if (auditStatus) auditStatus.textContent = "Account ready. Complete the report fields to claim the free report.";
+      if (auditStatus) auditStatus.textContent = "Free account complete. You can claim the free report now.";
       await refreshAuthState();
       void syncHubSpotAccount(profile);
     } catch (error) {
       if (createAccountStatus) createAccountStatus.textContent = error.message || "Could not create the account.";
     } finally {
       submitButton.disabled = false;
-      submitButton.textContent = "Create Account";
+      submitButton.textContent = isProfileCompletion ? "Save Free Account" : "Create Account";
     }
   });
 
@@ -1090,10 +1165,36 @@ async function handleLogin(emailElement, passwordElement, statusElement, buttonE
   }
 }
 
-function openCreateAccountModal(prefillEmail = "") {
+function openCreateAccountModal(prefillEmail = "", options = {}) {
   if (!createAccountModal) return;
+  createAccountMode = options.mode === "complete" ? "complete" : "signup";
+  const profile = options.profile || readAccountProfile() || {};
+  const isProfileCompletion = createAccountMode === "complete";
+  const title = createAccountModal.querySelector("#createAccountTitle");
+  const eyebrow = createAccountModal.querySelector(".modal-topline .eyebrow");
+  const submitButton = createAccountForm?.querySelector("button[type='submit']");
+  const passwordLabel = createPasswordInput?.closest("label");
+  const passwordConfirmLabel = createPasswordConfirmInput?.closest("label");
+
+  if (eyebrow) eyebrow.textContent = isProfileCompletion ? "Free Account" : "Create Account";
+  if (title) title.textContent = isProfileCompletion ? "Complete your free Builder Rank account" : "Set up your Builder Rank workspace";
+  if (submitButton) submitButton.textContent = isProfileCompletion ? "Save Free Account" : "Create Account";
+  if (passwordLabel) passwordLabel.hidden = isProfileCompletion;
+  if (passwordConfirmLabel) passwordConfirmLabel.hidden = isProfileCompletion;
+  if (createPasswordInput) {
+    createPasswordInput.required = !isProfileCompletion;
+    createPasswordInput.value = "";
+  }
+  if (createPasswordConfirmInput) {
+    createPasswordConfirmInput.required = !isProfileCompletion;
+    createPasswordConfirmInput.value = "";
+  }
+
   createAccountModal.hidden = false;
-  if (createEmailInput && prefillEmail) createEmailInput.value = prefillEmail;
+  fillCreateAccountForm({
+    ...profile,
+    email: prefillEmail || profile.email || readAccountEmail(),
+  });
   if (createAccountStatus) createAccountStatus.textContent = "";
   createEmailInput?.focus();
 }
@@ -1102,6 +1203,15 @@ function closeCreateAccountModal() {
   if (!createAccountModal) return;
   createAccountModal.hidden = true;
   createAccountForm?.reset();
+  createAccountMode = "signup";
+  const submitButton = createAccountForm?.querySelector("button[type='submit']");
+  const passwordLabel = createPasswordInput?.closest("label");
+  const passwordConfirmLabel = createPasswordConfirmInput?.closest("label");
+  if (submitButton) submitButton.textContent = "Create Account";
+  if (passwordLabel) passwordLabel.hidden = false;
+  if (passwordConfirmLabel) passwordConfirmLabel.hidden = false;
+  if (createPasswordInput) createPasswordInput.required = true;
+  if (createPasswordConfirmInput) createPasswordConfirmInput.required = true;
 }
 
 function openResetPasswordModal(prefillEmail = "") {
@@ -1398,6 +1508,31 @@ function saveAccountProfile(email, metadata = {}) {
   };
 
   localStorage.setItem(ACCOUNT_PROFILE_KEY, JSON.stringify(profile));
+}
+
+function hasCompleteLeadProfile(profile = {}) {
+  const requiredValues = [
+    normalizeEmail(profile.email),
+    profile.first_name,
+    profile.last_name,
+    getProfilePhone(profile),
+    profile.company_name,
+    profile.company_size,
+    profile.trade,
+  ];
+
+  return requiredValues.every((value) => String(value || "").trim().length > 0)
+    && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(profile.email));
+}
+
+function fillCreateAccountForm(profile = {}) {
+  if (createEmailInput) createEmailInput.value = normalizeEmail(profile.email || "");
+  if (createFirstNameInput) createFirstNameInput.value = profile.first_name || "";
+  if (createLastNameInput) createLastNameInput.value = profile.last_name || "";
+  if (createPhoneInput) createPhoneInput.value = getProfilePhone(profile) || "";
+  if (createCompanyInput) createCompanyInput.value = profile.company_name || "";
+  if (createCompanySizeInput) createCompanySizeInput.value = profile.company_size || "";
+  if (createTradeInput) createTradeInput.value = profile.trade || "";
 }
 
 function readReportHistory() {

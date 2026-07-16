@@ -7,6 +7,7 @@ import emailReportHandler from "./api/email-report.js";
 import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
 import importAiVisibilityHandler from "./api/import-ai-visibility.js";
+import paymentConfigHandler from "./api/payment-config.js";
 import paymentStatusHandler from "./api/payment-status.js";
 import reportEligibilityHandler from "./api/report-eligibility.js";
 import { assertReportRunAllowed } from "./api/report-eligibility.js";
@@ -71,6 +72,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/payment-status") {
       await callApiHandler(paymentStatusHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/payment-config") {
+      await callApiHandler(paymentConfigHandler, request, response);
       return;
     }
 

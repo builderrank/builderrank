@@ -10,6 +10,7 @@ import hubspotAccountHandler from "./hubspot-account.js";
 import hubspotReportHandler from "./hubspot-report.js";
 import importAiVisibilityHandler from "./import-ai-visibility.js";
 import notFoundHandler from "./not-found.js";
+import paymentConfigHandler from "./payment-config.js";
 import paymentStatusHandler from "./payment-status.js";
 import reportEligibilityHandler from "./report-eligibility.js";
 import stripeWebhookHandler from "./stripe-webhook.js";
@@ -29,6 +30,7 @@ const handlers = new Map([
   ["/api/hubspot-account", hubspotAccountHandler],
   ["/api/hubspot-report", hubspotReportHandler],
   ["/api/import-ai-visibility", importAiVisibilityHandler],
+  ["/api/payment-config", paymentConfigHandler],
   ["/api/payment-status", paymentStatusHandler],
   ["/api/report-eligibility", reportEligibilityHandler],
   ["/api/stripe-webhook", stripeWebhookHandler],
