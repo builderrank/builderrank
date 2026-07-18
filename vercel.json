@@ -74,6 +74,10 @@
       "dest": "/marketing-platform.html"
     },
     {
+      "src": "/onboarding-intake/?",
+      "dest": "/onboarding-intake.html"
+    },
+    {
       "src": "/first-customer-runbook/?",
       "dest": "/first-customer-runbook.html"
     },

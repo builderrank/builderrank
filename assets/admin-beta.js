@@ -255,9 +255,18 @@ function workspaceContactLine(workspace) {
     contact.ownerName,
     contact.email,
     contact.phone,
+    agreementLine(contact),
     contact.installMethod ? `Install: ${contact.installMethod}` : "",
   ].filter(Boolean);
   return parts.length ? parts.map(escapeHtml).join("<br>") : "<span>No contact context</span>";
+}
+
+function agreementLine(contact = {}) {
+  const term = contact.contractTerm === "12_months" ? "12 months" : contact.contractTerm === "6_months" ? "6 months" : "";
+  const status = contact.contractStatus === "agreement_signed" ? "signed" : contact.contractStatus === "signature_pending" ? "signature pending" : "";
+  const plan = contact.plan ? ` · ${contact.plan}` : "";
+  if (!term && !status && !plan) return "";
+  return `Agreement: ${[term, status].filter(Boolean).join(" · ")}${plan}`;
 }
 
 function readinessStatusLabel(workspace) {

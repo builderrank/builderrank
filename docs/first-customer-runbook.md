@@ -30,6 +30,14 @@ Required:
 - Top competitors.
 - Customer goal.
 
+For signed customers, send the customer to:
+
+```text
+https://builderrank.io/onboarding-intake
+```
+
+This page should be used after a 6-month or 12-month agreement is signed, or while signature is pending after a demo. The intake stores the contract term, contact details, dashboard users, website access notes, Google Business Profile access notes, CRM/form tracking notes, competitors, services, and customer goal for internal onboarding.
+
 Good customer goal examples:
 
 - More bathroom remodel leads.
@@ -40,7 +48,7 @@ Good customer goal examples:
 
 ## 2. Bootstrap Workspace
 
-Open `/admin-beta`, enter the admin token, and fill out Bootstrap customer.
+Open `/admin-beta`, enter the admin token, review the submitted client intake in the workspace summary, and fill out Bootstrap customer.
 
 Confirm the response includes:
 

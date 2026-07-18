@@ -1820,6 +1820,152 @@ button {
   gap: 12px;
 }
 
+.onboarding-intake-hero,
+.client-onboarding-form section,
+.client-onboarding-cta {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 121, 0, 0.13), transparent 44%),
+    rgba(10, 10, 10, 0.94);
+  box-shadow: var(--shadow);
+  padding: clamp(22px, 4vw, 42px);
+}
+
+.onboarding-intake-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.38fr);
+  gap: 24px;
+  align-items: stretch;
+  margin-bottom: 18px;
+}
+
+.onboarding-intake-hero h1 {
+  max-width: 900px;
+  margin: 0 0 16px;
+  font-size: clamp(2.45rem, 6vw, 5rem);
+  line-height: 0.98;
+}
+
+.onboarding-intake-hero p {
+  max-width: 820px;
+  color: #d9d9d4;
+  font-size: 1.06rem;
+  line-height: 1.62;
+}
+
+.onboarding-intake-hero aside {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080808;
+  padding: 20px;
+}
+
+.onboarding-intake-hero aside strong {
+  color: var(--orange);
+  font-size: 1.05rem;
+}
+
+.onboarding-intake-hero ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+  color: #d8d8d8;
+  line-height: 1.45;
+}
+
+.client-onboarding-form {
+  display: grid;
+  gap: 18px;
+}
+
+.client-onboarding-form h2 {
+  margin: 0 0 16px;
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+}
+
+.client-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.client-form-grid label,
+.client-onboarding-submit .checkbox-field {
+  display: grid;
+  gap: 8px;
+}
+
+.client-form-grid span,
+.client-onboarding-submit span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.client-form-grid .wide-field {
+  grid-column: 1 / -1;
+}
+
+.client-form-grid textarea {
+  min-height: 110px;
+}
+
+.client-onboarding-submit {
+  display: grid;
+  gap: 14px;
+}
+
+.client-onboarding-submit .checkbox-field {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.client-onboarding-submit input[type="checkbox"] {
+  width: 20px;
+  min-height: 20px;
+}
+
+.client-onboarding-submit button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #080808;
+  font-weight: 900;
+}
+
+.client-onboarding-submit p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.client-onboarding-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.client-onboarding-cta h2 {
+  margin: 0 0 10px;
+  font-size: clamp(1.7rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.client-onboarding-cta p {
+  max-width: 780px;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
 .hotelrank-metric-board small {
   text-transform: none;
 }
@@ -4131,9 +4277,15 @@ li {
   .admin-readiness-checklist,
   .runbook-grid,
   .runbook-checklist,
+  .onboarding-intake-hero,
+  .client-onboarding-cta,
   .next-best-move-list,
   .connect-site-card {
     grid-template-columns: 1fr;
+  }
+
+  .client-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .connected-table-card {
@@ -4217,7 +4369,8 @@ li {
   .admin-beta-grid,
   .admin-beta-token-form,
   .admin-beta-form,
-  .admin-beta-form.compact {
+  .admin-beta-form.compact,
+  .client-form-grid {
     grid-template-columns: 1fr;
   }
 

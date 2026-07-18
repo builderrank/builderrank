@@ -185,6 +185,9 @@ function workspaceContact(business) {
     email: safeTrim(intake.email).toLowerCase(),
     phone: safeTrim(business.phone || intake.phone),
     installMethod: safeTrim(intake.installMethod),
+    contractStatus: safeTrim(intake.contractStatus),
+    contractTerm: safeTrim(intake.contractTerm),
+    plan: safeTrim(intake.plan),
     notes: safeTrim(intake.notes),
   };
 }

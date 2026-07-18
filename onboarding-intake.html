@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Onboarding Intake | Builder Rank</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <script async defer src="https://js-na2.hs-scripts.com/246471522.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="brand-header">
+        <a class="brand-lockup" href="/" aria-label="Builder Rank home">
+          <img src="/assets/builder-rank-logo.png" alt="Builder Rank logo" />
+          <span>Builder Rank</span>
+        </a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="/marketing-platform">Marketing Platform</a>
+          <a href="/account">Account</a>
+          <a href="/support">Support</a>
+        </nav>
+      </header>
+
+      <section class="onboarding-intake-hero">
+        <div>
+          <p class="eyebrow">Signed client onboarding</p>
+          <h1>Set up your Builder Rank Marketing Engine workspace.</h1>
+          <p>
+            This intake is for customers who have completed, or are finalizing, a 6-month or 12-month Builder Rank agreement.
+            Your dashboard, tracking resources, reports, and onboarding materials will live on builderrank.io after setup.
+          </p>
+        </div>
+        <aside>
+          <strong>What happens next</strong>
+          <ol>
+            <li>Builder Rank reviews your intake.</li>
+            <li>We create your private workspace and Site Signal ID.</li>
+            <li>We install or coordinate tracking on your website.</li>
+            <li>We import your first AI visibility checks.</li>
+            <li>You review your dashboard with Builder Rank.</li>
+          </ol>
+        </aside>
+      </section>
+
+      <form id="clientOnboardingForm" class="client-onboarding-form">
+        <section>
+          <p class="eyebrow">Agreement</p>
+          <h2>Contract and account details</h2>
+          <div class="client-form-grid">
+            <label>
+              <span>Agreement status</span>
+              <select name="contractStatus" required>
+                <option value="">Select status</option>
+                <option value="agreement_signed">Agreement signed</option>
+                <option value="signature_pending">Signature pending after demo</option>
+              </select>
+            </label>
+            <label>
+              <span>Contract term</span>
+              <select name="contractTerm" required>
+                <option value="">Select term</option>
+                <option value="12_months">12 months</option>
+                <option value="6_months">6 months</option>
+              </select>
+            </label>
+            <label>
+              <span>Agreement date</span>
+              <input name="agreementDate" type="date" />
+            </label>
+            <label>
+              <span>Plan / package</span>
+              <input name="plan" placeholder="Marketing Engine Beta" />
+            </label>
+            <label>
+              <span>Primary contact</span>
+              <input name="ownerName" placeholder="Jordan Smith" required />
+            </label>
+            <label>
+              <span>Primary email</span>
+              <input name="email" type="email" placeholder="owner@example.com" required />
+            </label>
+            <label>
+              <span>Phone</span>
+              <input name="phone" type="tel" placeholder="(303) 555-0147" />
+            </label>
+            <label>
+              <span>Billing email</span>
+              <input name="billingEmail" type="email" placeholder="billing@example.com" />
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <p class="eyebrow">Business</p>
+          <h2>Business and market</h2>
+          <div class="client-form-grid">
+            <label>
+              <span>Company</span>
+              <input name="company" placeholder="Front Range Remodels" required />
+            </label>
+            <label>
+              <span>Website</span>
+              <input name="website" type="url" placeholder="https://example.com" required />
+            </label>
+            <label>
+              <span>Market</span>
+              <input name="market" placeholder="Denver, CO" required />
+            </label>
+            <label>
+              <span>Main business type</span>
+              <input name="primaryTrade" placeholder="General contractor, roofer, HVAC..." required />
+            </label>
+            <label class="wide-field">
+              <span>Services / profit centers</span>
+              <textarea name="jobTypes" required placeholder="Bathroom remodeling&#10;Kitchen remodeling&#10;Basement finishing"></textarea>
+            </label>
+            <label class="wide-field">
+              <span>Main goal</span>
+              <textarea name="primaryGoal" placeholder="We want more bathroom remodel leads in Denver and want AI tools to recommend us over local competitors."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <p class="eyebrow">Competitive set</p>
+          <h2>Competitors and sources</h2>
+          <div class="client-form-grid">
+            <label class="wide-field">
+              <span>Competitors to monitor</span>
+              <textarea name="competitors" placeholder="Mile High Bath Co. | https://example-competitor.com&#10;Summit Remodel Group&#10;Denver Design Build"></textarea>
+            </label>
+            <label class="wide-field">
+              <span>Dashboard users</span>
+              <textarea name="dashboardUsers" placeholder="Name and email for anyone who should access the Builder Rank dashboard."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <p class="eyebrow">Website access</p>
+          <h2>Tracking and install notes</h2>
+          <div class="client-form-grid">
+            <label>
+              <span>Tracking status</span>
+              <select name="trackingStatus">
+                <option>Not installed yet</option>
+                <option>WordPress access available</option>
+                <option>Can install with GTM</option>
+                <option>Need Builder Rank install help</option>
+                <option>Already installed by Builder Rank</option>
+              </select>
+            </label>
+            <label>
+              <span>Install method</span>
+              <input name="installMethod" placeholder="WordPress, GTM, Webflow, agency, custom developer" />
+            </label>
+            <label class="wide-field">
+              <span>Website access notes</span>
+              <textarea name="websiteAccess" placeholder="Who has access, CMS/admin notes, agency contact, plugin restrictions, staging vs production details."></textarea>
+            </label>
+            <label class="wide-field">
+              <span>Google Business Profile access</span>
+              <textarea name="googleBusinessAccess" placeholder="Who owns/manages GBP, manager email, or whether access still needs to be added."></textarea>
+            </label>
+            <label class="wide-field">
+              <span>CRM / form tracking notes</span>
+              <textarea name="crmAccess" placeholder="HubSpot, ServiceTitan, Jobber, Calendly, website forms, call tracking numbers, or any lead-routing notes."></textarea>
+            </label>
+            <label class="wide-field">
+              <span>Other onboarding notes</span>
+              <textarea name="notes" placeholder="Anything Builder Rank should know before building your dashboard."></textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="client-onboarding-submit">
+          <label class="checkbox-field">
+            <input name="confirmed" type="checkbox" required />
+            <span>I understand this intake starts Builder Rank onboarding after a signed or pending 6/12 month agreement.</span>
+          </label>
+          <button type="submit">Submit Onboarding Intake</button>
+          <p id="clientOnboardingStatus" role="status"></p>
+        </section>
+      </form>
+    </main>
+
+    <script src="/assets/onboarding-intake.js"></script>
+    <script src="/tracker.js" data-site-id="br_builderrank" data-skip-logged-in="true" async></script>
+  </body>
+</html>
