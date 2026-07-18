@@ -15,9 +15,9 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 ```
 - Supabase Auth is connected for customer accounts.
 - Supabase `reports` table saves completed reports for authenticated users.
-- Google Workspace Gmail is active for `kaleb@builderrank.io`.
+- Google Workspace Gmail is active for `Support@builderrank.io` for public support and report replies.
 - HubSpot portal ID: `246471522`.
-- HubSpot personal email connection is enabled for `kaleb@builderrank.io`.
+- HubSpot personal email connection was originally enabled for `kaleb@builderrank.io`; current public-facing Builder Rank support should use `Support@builderrank.io`.
 - HubSpot tracking is installed on the live Builder Rank pages.
 - Stripe webhook destination is active:
   - Destination ID: `we_1Tee1zGxlRL6ZAPVGqCYBEWg`
@@ -62,8 +62,8 @@ https://builderrank.io/run-report?checkout=success#report-workspace
 - `/api/stripe-webhook` records `checkout.session.completed` events to the private Supabase `purchases` table when Stripe and Supabase service-role environment variables are configured.
 - The report workspace automatically emails the signed-in customer after a paid report is generated when Resend and Supabase service-role environment variables are configured.
 - Report email includes a thank-you note, basic PDF attachment, and JSON export. The `Email Report` action remains available for manual resend.
-- Report email defaults now use `Builder Rank <kaleb@builderrank.io>` with replies routed to `kaleb@builderrank.io`.
-- Basic Support and Legal pages are available with `Kaleb@builderrank.io` and `720-701-3156`.
+- Report email defaults now use `Builder Rank <Support@builderrank.io>` with replies routed to `Support@builderrank.io`.
+- Basic Support and Legal pages are available with `Support@builderrank.io` and `720-701-3156`.
 - If ChatGPT, Claude, or Gemini does not report on a paid customer report, the on-screen report and emailed copy say Builder Rank will review and follow up.
 - Pricing and checkout copy now describe the one-time $49 Stripe purchase, report return flow, and support email.
 - `/api/hubspot-account` syncs authenticated account profiles into HubSpot contacts/companies when `HUBSPOT_ACCESS_TOKEN` is configured.
