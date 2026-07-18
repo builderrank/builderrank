@@ -18,6 +18,7 @@ const checks = [
   { method: "GET", path: "/api/dashboard-data", expect: [200], assertJson: assertDashboardDataEnvelope },
   { method: "GET", path: "/api/dashboard-data?days=90", expect: [200], assertJson: assertDashboardDataEnvelope },
   { method: "GET", path: "/api/dashboard-data?days=999", expect: [200], assertJson: assertDashboardDataEnvelope },
+  { method: "GET", path: "/api/launch-readiness", expect: [200, 503], assertJson: assertLaunchReadinessEnvelope },
   {
     method: "GET",
     path: "/api/admin-workspaces",
@@ -258,6 +259,17 @@ function assertTrackQaPayload(payload) {
     if (!domainFieldsValid) return "Invalid /api/track qaDomain payload shape.";
   }
 
+  return "";
+}
+
+function assertLaunchReadinessEnvelope(payload) {
+  if (payload?.service !== "builderrank-launch-readiness") return "Invalid launch-readiness service label.";
+  if (!payload.summary || !Array.isArray(payload.required) || !Array.isArray(payload.nextSteps)) {
+    return "Invalid launch-readiness payload shape.";
+  }
+  if (!payload.required.some((check) => check.name === "ADMIN_API_TOKEN")) {
+    return "Launch readiness did not check ADMIN_API_TOKEN.";
+  }
   return "";
 }
 

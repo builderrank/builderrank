@@ -48,7 +48,17 @@ Good customer goal examples:
 
 ## 2. Bootstrap Workspace
 
-Open `/admin-beta`, enter the admin token, review the submitted client intake in the workspace summary, and fill out Bootstrap customer.
+Open `/admin-beta` and check Launch Readiness before entering the admin token.
+
+Do not continue until required blockers are `0`. If blockers exist, run:
+
+```text
+npm run production:secrets
+npm run production:env-handoff
+npm run production:readiness
+```
+
+After launch readiness is clear, enter the admin token, review the submitted client intake in the workspace summary, and fill out Bootstrap customer.
 
 Confirm the response includes:
 

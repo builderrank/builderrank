@@ -1648,14 +1648,18 @@ button {
 }
 
 .onboarding-stage-grid,
-.admin-readiness-checklist {
+.admin-readiness-checklist,
+.launch-readiness-summary,
+.launch-readiness-checks {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
 .onboarding-stage-grid article,
-.admin-readiness-checklist article {
+.admin-readiness-checklist article,
+.launch-readiness-summary article,
+.launch-readiness-checks article {
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
@@ -1665,7 +1669,9 @@ button {
 }
 
 .onboarding-stage-grid article span,
-.admin-readiness-checklist article span {
+.admin-readiness-checklist article span,
+.launch-readiness-summary article span,
+.launch-readiness-checks article span {
   display: inline-grid;
   min-width: 30px;
   min-height: 30px;
@@ -1677,21 +1683,34 @@ button {
 }
 
 .onboarding-stage-grid strong,
-.admin-readiness-checklist strong {
+.admin-readiness-checklist strong,
+.launch-readiness-summary strong,
+.launch-readiness-checks strong {
   display: block;
   margin: 10px 0 6px;
 }
 
 .onboarding-stage-grid p,
-.admin-readiness-checklist p {
+.admin-readiness-checklist p,
+.launch-readiness-summary p,
+.launch-readiness-checks p {
   margin: 0;
   color: var(--muted);
   line-height: 1.45;
 }
 
-.admin-readiness-checklist {
+.admin-readiness-checklist,
+.launch-readiness-checks {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 14px;
+}
+
+.launch-readiness-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.launch-readiness-summary article:first-child {
+  border-color: rgba(255, 121, 0, 0.36);
 }
 
 .admin-readiness-checklist .admin-readiness-overview {
@@ -1709,16 +1728,38 @@ button {
   text-decoration: none;
 }
 
-.admin-readiness-checklist article.is-ready {
+.admin-readiness-checklist article.is-ready,
+.launch-readiness-summary article.is-ready,
+.launch-readiness-checks article.is-ready {
   border-color: rgba(66, 189, 115, 0.36);
 }
 
-.admin-readiness-checklist article.is-ready span {
+.admin-readiness-checklist article.is-ready span,
+.launch-readiness-summary article.is-ready span,
+.launch-readiness-checks article.is-ready span {
   background: #42bd73;
 }
 
-.admin-readiness-checklist article.needs-work span {
+.admin-readiness-checklist article.needs-work span,
+.launch-readiness-summary article.needs-work span,
+.launch-readiness-checks article.needs-work span {
   background: var(--amber);
+}
+
+.launch-readiness-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.launch-readiness-actions code {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #050505;
+  color: #e5e5e5;
+  padding: 10px 12px;
+  white-space: nowrap;
 }
 
 .admin-beta-form.compact {

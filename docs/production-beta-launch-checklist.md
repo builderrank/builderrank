@@ -285,6 +285,7 @@ Use `/admin-beta` for first-customer setup and monitoring. The page is not linke
 
 It can:
 
+- Show launch readiness before the admin token is configured through `/api/launch-readiness`.
 - List recent beta workspaces through `/api/admin-workspaces`.
 - Bootstrap a customer workspace through `/api/bootstrap-workspace`.
 - Import one weekly AI visibility run through `/api/import-ai-visibility`.
@@ -292,6 +293,18 @@ It can:
 - Check Site Signal health through `/api/tracking-health`.
 
 Paste `ADMIN_API_TOKEN` into the page for the current browser session before running an action.
+
+The launch-readiness panel is safe to load before the admin token exists. It reports required env vars as
+`ready`, `missing`, or `weak` without exposing secret values, then shows the next commands to run:
+
+```text
+npm run production:secrets
+npm run production:env-handoff
+npm run production:readiness
+npm run customer:dry-run -- docs/first-beta-customer.sample.json
+```
+
+Do not bootstrap a real customer while `/admin-beta` shows required launch-readiness blockers.
 
 The protected workspace summary endpoint is:
 

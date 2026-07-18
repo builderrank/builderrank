@@ -9,6 +9,7 @@ import healthHandler from "./health.js";
 import hubspotAccountHandler from "./hubspot-account.js";
 import hubspotReportHandler from "./hubspot-report.js";
 import importAiVisibilityHandler from "./import-ai-visibility.js";
+import launchReadinessHandler from "./launch-readiness.js";
 import notFoundHandler from "./not-found.js";
 import paymentConfigHandler from "./payment-config.js";
 import paymentStatusHandler from "./payment-status.js";
@@ -31,6 +32,7 @@ const handlers = new Map([
   ["/api/hubspot-account", hubspotAccountHandler],
   ["/api/hubspot-report", hubspotReportHandler],
   ["/api/import-ai-visibility", importAiVisibilityHandler],
+  ["/api/launch-readiness", launchReadinessHandler],
   ["/api/payment-config", paymentConfigHandler],
   ["/api/payment-status", paymentStatusHandler],
   ["/api/report-eligibility", reportEligibilityHandler],

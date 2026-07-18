@@ -15,6 +15,10 @@ const workspaceResult = document.querySelector("#adminWorkspaceResult");
 const readinessChecklist = document.querySelector("#adminReadinessChecklist");
 const fillSampleIntakeButton = document.querySelector("#adminFillSampleIntake");
 const fillPromptTemplateButton = document.querySelector("#adminFillPromptTemplate");
+const launchReadinessRefreshButton = document.querySelector("#adminLaunchReadinessRefresh");
+const launchReadinessSummary = document.querySelector("#adminLaunchReadinessSummary");
+const launchReadinessChecks = document.querySelector("#adminLaunchReadinessChecks");
+const launchReadinessResult = document.querySelector("#adminLaunchReadinessResult");
 
 let adminToken = "";
 
@@ -94,6 +98,10 @@ trackingHealthForm?.addEventListener("submit", async (event) => {
 
 workspaceRefreshButton?.addEventListener("click", () => {
   void loadAdminWorkspaces();
+});
+
+launchReadinessRefreshButton?.addEventListener("click", () => {
+  void loadLaunchReadiness();
 });
 
 fillSampleIntakeButton?.addEventListener("click", () => {
@@ -189,6 +197,103 @@ async function loadAdminWorkspaces() {
     workspaceRefreshButton.disabled = false;
     workspaceRefreshButton.textContent = "Refresh";
   }
+}
+
+async function loadLaunchReadiness() {
+  if (!launchReadinessSummary) return;
+
+  if (launchReadinessRefreshButton) {
+    launchReadinessRefreshButton.disabled = true;
+    launchReadinessRefreshButton.textContent = "Checking...";
+  }
+  launchReadinessSummary.innerHTML = "<article><strong>Checking production setup...</strong><p>Reading safe launch readiness signals.</p></article>";
+  if (launchReadinessChecks) launchReadinessChecks.innerHTML = "";
+  if (launchReadinessResult) launchReadinessResult.textContent = "";
+
+  try {
+    const response = await fetch("/api/launch-readiness");
+    const data = await response.json().catch(() => ({}));
+    renderLaunchReadiness(data, response.ok);
+  } catch (error) {
+    launchReadinessSummary.innerHTML = `<article class="needs-work"><strong>Could not check launch readiness</strong><p>${escapeHtml(error.message)}</p></article>`;
+    if (launchReadinessResult) launchReadinessResult.textContent = error.message;
+  } finally {
+    if (launchReadinessRefreshButton) {
+      launchReadinessRefreshButton.disabled = false;
+      launchReadinessRefreshButton.textContent = "Recheck";
+    }
+  }
+}
+
+function renderLaunchReadiness(data, responseOk) {
+  const summary = data?.summary || {};
+  const blockers = Number(summary.blockers || 0);
+  const warnings = Number(summary.warnings || 0);
+  const ready = Boolean(data?.ok && responseOk);
+  const tone = ready ? "is-ready" : "needs-work";
+  const nextSteps = Array.isArray(data?.nextSteps) ? data.nextSteps : [];
+  const required = Array.isArray(data?.required) ? data.required : [];
+  const recommended = Array.isArray(data?.recommended) ? data.recommended : [];
+  const optional = Array.isArray(data?.optional) ? data.optional : [];
+
+  launchReadinessSummary.innerHTML = `
+    <article class="${tone}">
+      <span>${ready ? "Ready" : "Blocked"}</span>
+      <strong>${ready ? "Production required checks are ready" : `${blockers} required blocker${blockers === 1 ? "" : "s"}`}</strong>
+      <p>${ready ? "You can move into Supabase schema verification, customer dry-run, and workspace bootstrap." : "Fix these before bootstrapping a real GC or service-business workspace."}</p>
+    </article>
+    <article>
+      <span>Required</span>
+      <strong>${escapeHtml(summary.required || "0/0")}</strong>
+      <p>Secrets and services needed for customer onboarding.</p>
+    </article>
+    <article>
+      <span>Follow-ups</span>
+      <strong>${warnings}</strong>
+      <p>Recommended integrations or optional config warnings.</p>
+    </article>
+    <article>
+      <span>Next</span>
+      <strong>${escapeHtml(nextSteps[0] || "Run customer dry-run")}</strong>
+      <p>${escapeHtml(nextSteps.slice(1, 3).join(" "))}</p>
+    </article>
+  `;
+
+  if (launchReadinessChecks) {
+    launchReadinessChecks.innerHTML = [
+      ...required.map((check) => readinessCheckCard(check, true)),
+      ...recommended.filter((check) => !check.ok).map((check) => readinessCheckCard(check, false)),
+      ...optional.filter((check) => !check.ok).map((check) => readinessCheckCard(check, false)),
+    ].join("");
+  }
+
+  if (launchReadinessResult) {
+    launchReadinessResult.textContent = launchReadinessTextSummary(data);
+  }
+}
+
+function readinessCheckCard(check, requiredCheck) {
+  const ok = Boolean(check.ok);
+  return `
+    <article class="${ok ? "is-ready" : "needs-work"}">
+      <span>${ok ? "Ready" : requiredCheck ? "Blocker" : "Follow-up"}</span>
+      <strong>${escapeHtml(check.name || "Check")}</strong>
+      <p>${escapeHtml(check.hint || check.status || "")}</p>
+    </article>
+  `;
+}
+
+function launchReadinessTextSummary(data) {
+  const lines = [
+    `Checked: ${data?.checkedAt || "unknown"}`,
+    `Required: ${data?.summary?.required || "0/0"}`,
+    `Blockers: ${data?.summary?.blockers || 0}`,
+    `Warnings: ${data?.summary?.warnings || 0}`,
+    "",
+    "Next steps:",
+    ...(Array.isArray(data?.nextSteps) ? data.nextSteps.map((step, index) => `${index + 1}. ${step}`) : ["1. Re-run launch readiness."]),
+  ];
+  return lines.join("\n");
 }
 
 function renderReadinessChecklist(workspaces) {
@@ -520,3 +625,5 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 }
+
+void loadLaunchReadiness();

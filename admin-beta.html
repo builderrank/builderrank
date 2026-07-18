@@ -88,6 +88,27 @@
             </div>
           </section>
 
+          <section class="admin-beta-panel wide-panel launch-readiness-panel">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Launch readiness</p>
+                <h2>Production customer onboarding checks</h2>
+              </div>
+              <button id="adminLaunchReadinessRefresh" type="button">Recheck</button>
+            </div>
+            <div id="adminLaunchReadinessSummary" class="launch-readiness-summary">
+              <article><strong>Checking production setup...</strong><p>Builder Rank is checking required env vars and customer-onboarding blockers.</p></article>
+            </div>
+            <div id="adminLaunchReadinessChecks" class="launch-readiness-checks"></div>
+            <div class="launch-readiness-actions">
+              <code>npm run production:secrets</code>
+              <code>npm run production:env-handoff</code>
+              <code>npm run production:readiness</code>
+              <code>npm run customer:dry-run -- docs/first-beta-customer.sample.json</code>
+            </div>
+            <pre id="adminLaunchReadinessResult" class="admin-beta-result"></pre>
+          </section>
+
           <section class="admin-beta-panel wide-panel">
             <div class="dashboard-panel-topline">
               <div>

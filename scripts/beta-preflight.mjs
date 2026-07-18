@@ -14,6 +14,7 @@ const requiredFiles = [
   "api/connect-site.js",
   "api/dashboard-data.js",
   "api/import-ai-visibility.js",
+  "api/launch-readiness.js",
   "api/report-eligibility.js",
   "api/track.js",
   "api/tracking-health.js",
@@ -67,6 +68,7 @@ const sitemap = read("sitemap.xml");
   "/api/connect-site",
   "/api/dashboard-data",
   "/api/import-ai-visibility",
+  "/api/launch-readiness",
   "/api/report-eligibility",
   "/api/track",
   "/api/tracking-health",
@@ -92,6 +94,7 @@ const server = read("server.js");
   "/api/connect-site",
   "/api/dashboard-data",
   "/api/import-ai-visibility",
+  "/api/launch-readiness",
   "/api/report-eligibility",
   "/api/track",
   "/api/tracking-health",
@@ -432,6 +435,7 @@ check("admin beta parses cited source state", adminJs.includes("citedState") && 
 check("admin beta renders AI freshness", adminJs.includes("workspace.aiFreshness") && adminJs.includes("workspace.lastAiRunAt"));
 check("admin beta renders unassigned AI run count", adminJs.includes("aiDataLine") && adminJs.includes("workspace.unassignedAiRuns") && adminJs.includes("unassigned"));
 check("admin beta renders workspace readiness", adminJs.includes("workspace.readinessStatus") && adminJs.includes("workspace.nextStep") && adminJs.includes("readinessBlockers") && adminJs.includes("readinessScore"));
+check("admin beta renders launch readiness", admin.includes("adminLaunchReadinessSummary") && adminJs.includes("loadLaunchReadiness") && adminJs.includes("/api/launch-readiness") && adminJs.includes("Production required checks are ready"));
 check("admin beta renders linked report count", adminJs.includes("workspace.linkedReports") && adminJs.includes("workspace.latestReportAt"));
 check("admin beta renders bootstrap summary", adminJs.includes("bootstrapWorkspaceSummary") && adminJs.includes("handoff.dashboardUrl") && adminJs.includes("counts.jobTypes"));
 check("admin beta renders copyable bootstrap handoff", adminJs.includes("handoff.accountUrl") && adminJs.includes("handoff.trackingHealthUrl") && adminJs.includes("handoff.snippet") && adminJs.includes("Next steps:"));
