@@ -49,6 +49,16 @@ const dashboardScenarios = {
       ["Add bathroom project proof block", "+5 trust proof", "Place before/after photos, neighborhoods, scope, budget range, and testimonial language on the service page."],
       ["Update GBP bathroom services", "+3 local source", "Add walk-in showers, tile, vanities, accessibility, and luxury remodel services to the Google Business Profile."],
     ],
+    segments: [
+      ["High-budget remodelers", "Looking for design help, project proof, and premium finishes.", "39%"],
+      ["Aging-in-place planners", "Ask about safety, accessibility, timelines, and warranty clarity.", "27%"],
+      ["Fast estimate shoppers", "Compare cost ranges, reviews, and availability before calling.", "22%"],
+    ],
+    levers: [
+      ["Service page CTA", "Move estimate button above proof blocks", "+9 leads"],
+      ["Project proof", "Add before/after bathroom cards by neighborhood", "+6 mentions"],
+      ["Follow-up context", "Tag walk-in shower leads for sales review", "+4 consults"],
+    ],
   },
   kitchen: {
     label: "Kitchen remodeling",
@@ -97,6 +107,16 @@ const dashboardScenarios = {
       ["Add cabinet and countertop proof", "+4 trust proof", "Create project examples with materials, neighborhoods, before/after photos, and testimonial snippets."],
       ["Create layout planning FAQ", "+3 prompt coverage", "Answer island, galley, open-concept, storage, and appliance-placement questions in crawlable text."],
     ],
+    segments: [
+      ["Design-build buyers", "Need planning, layout guidance, scope confidence, and process clarity.", "34%"],
+      ["Cabinet shoppers", "Compare materials, cabinet styles, timelines, and install proof.", "29%"],
+      ["Cost researchers", "Ask AI for renovation budgets and what drives price changes.", "25%"],
+    ],
+    levers: [
+      ["Cost guide CTA", "Pair pricing ranges with a consultation form", "+7 leads"],
+      ["Design proof", "Add layout examples and cabinet/countertop galleries", "+5 mentions"],
+      ["Sales routing", "Flag kitchen-cost inquiries as consultation-ready", "+3 consults"],
+    ],
   },
   roofing: {
     label: "Roof replacement",
@@ -143,6 +163,16 @@ const dashboardScenarios = {
       ["Generate hail damage claim page", "+7 content depth", "Explain inspection, documentation, adjusters, timelines, and emergency tarp options."],
       ["Add warranty and material proof", "+5 trust proof", "Make asphalt, metal, tile, workmanship warranty, and manufacturer certification language easy to cite."],
       ["Update storm-response GBP services", "+3 local source", "Add roof inspection, hail damage, emergency tarp, and insurance claim support services."],
+    ],
+    segments: [
+      ["Storm-damage homeowners", "Need emergency inspection, claim support, and trust proof quickly.", "41%"],
+      ["Insurance claim researchers", "Ask about documentation, adjusters, timelines, and coverage.", "31%"],
+      ["Warranty comparers", "Evaluate materials, workmanship promises, and certifications.", "18%"],
+    ],
+    levers: [
+      ["Emergency phone CTA", "Prioritize call buttons on storm and roof pages", "+12 leads"],
+      ["Claim guide", "Publish adjuster and documentation steps", "+7 mentions"],
+      ["GBP service update", "Add hail inspection and emergency tarp language", "+5 calls"],
     ],
   },
   hvac: {
@@ -191,6 +221,16 @@ const dashboardScenarios = {
       ["Add technician certification proof", "+4 trust proof", "Surface licenses, background checks, credentials, warranties, and response-time promises."],
       ["Update GBP emergency categories", "+3 local source", "Add emergency AC repair, same-day furnace repair, maintenance, and open-now service language."],
     ],
+    segments: [
+      ["Open-now emergencies", "Search for immediate phone help and same-day availability.", "46%"],
+      ["Repair troubleshooters", "Ask why AC is not cooling and who to call next.", "28%"],
+      ["Trust checkers", "Look for technician proof, reviews, warranties, and service areas.", "17%"],
+    ],
+    levers: [
+      ["Phone-first layout", "Put open-now call action above the fold", "+15 calls"],
+      ["Troubleshooting FAQ", "Answer no-cooling and furnace failure prompts", "+8 mentions"],
+      ["Technician proof", "Surface license, badges, and response promises", "+5 leads"],
+    ],
   },
   restoration: {
     label: "Water damage restoration",
@@ -238,6 +278,16 @@ const dashboardScenarios = {
       ["Add mold-after-leak content", "+5 prompt coverage", "Create crawlable answers for mold risk, drying timelines, testing, and remediation handoffs."],
       ["Update emergency GBP services", "+3 local source", "Add flood cleanup, water extraction, drying, mold remediation, and emergency response services."],
     ],
+    segments: [
+      ["Emergency cleanup callers", "Need urgent help, response time, and phone confidence.", "43%"],
+      ["Insurance documentation planners", "Ask how to document damage and coordinate adjusters.", "30%"],
+      ["Mold-risk researchers", "Look for drying timelines, testing, and remediation guidance.", "19%"],
+    ],
+    levers: [
+      ["Emergency CTA", "Keep phone and dispatch language visible on every restoration page", "+14 calls"],
+      ["Claim workflow", "Add mitigation, photos, and adjuster coordination content", "+7 mentions"],
+      ["Mold content", "Create leak-to-mold FAQ and internal links", "+5 leads"],
+    ],
   },
 };
 
@@ -267,6 +317,8 @@ const metricHelp = {
   "Mention Rate": "How often the business appears when monitored homeowner prompts are checked across AI platforms.",
   "Avg. Position": "The average rank position when the business is mentioned. Lower is better, just like search results.",
   "Mention Rate by Job-Type Attribute": "Which service terms and proof points AI understands for the selected profit center.",
+  "AI Job Journey": "A funnel view from AI discovery to qualified service interest, tracked lead actions, and booked consults.",
+  "Homeowner Segments": "The types of buyers AI prompts appear to represent, based on monitored questions, page intent, and lead behavior.",
   "Profit Center Visibility": "How each service line performs across AI platforms, such as bathrooms, kitchens, roofing, HVAC, or restoration.",
   "Platform Visibility": "How often each AI platform mentions the business when we run the monitored prompt set.",
   "Overall Mention Rank": "Where this business ranks against the selected local competitor set in AI-generated answers.",
@@ -281,6 +333,7 @@ const metricHelp = {
   "Top CTA / Form": "The call-to-action, phone link, or form with the most useful tracked intent.",
   "Highest Intent Source": "The source producing the strongest mix of sessions and lead events.",
   "Next Best Moves": "Prioritized actions generated from live website behavior, AI visibility gaps, and Punch List data.",
+  "Direct lead conversion": "How Builder Rank turns AI-assisted discovery into measurable calls, forms, quote clicks, and sales-ready consults.",
   "Lead Events by Source": "Which traffic sources are producing sessions, calls, forms, quote clicks, and lead rate.",
   "Job Pipeline by Intent": "Lead and traffic activity grouped by the job type or homeowner intent Builder Rank inferred.",
   "Top CTAs & Forms": "The forms, buttons, phone links, and quote actions customers are using most often.",
@@ -350,6 +403,13 @@ const siteSignalStatusMetric = document.querySelector("#siteSignalStatusMetric")
 const siteSignalLastEventMetric = document.querySelector("#siteSignalLastEventMetric");
 const liveDashboardNotice = document.querySelector("#liveDashboardNotice");
 const nextBestMoveList = document.querySelector("#nextBestMoveList");
+const buyerSegmentList = document.querySelector("#buyerSegmentList");
+const conversionLeverList = document.querySelector("#conversionLeverList");
+const directLeadSummary = document.querySelector("#directLeadSummary");
+const journeyDiscoveryMetric = document.querySelector("#journeyDiscoveryMetric");
+const journeyQualifiedMetric = document.querySelector("#journeyQualifiedMetric");
+const journeyLeadMetric = document.querySelector("#journeyLeadMetric");
+const journeyBookedMetric = document.querySelector("#journeyBookedMetric");
 
 let activeScenarioKey = jobTypeSelect?.value || "bathroom";
 let appliedActions = [];
@@ -434,6 +494,9 @@ function renderDashboardScenario() {
   renderRows("#jobIntentRows", jobIntentRowsFor(scenario), { raw: true });
   renderRows("#ctaRows", ctaRowsFor(scenario), { raw: true });
   renderRows("#pageRows", pageRowsFor(scenario), { raw: true });
+  renderAiJourney(scenario, actionBoost);
+  renderBuyerSegments(scenario);
+  renderConversionLevers(scenario);
   renderNextBestMoves(nextBestMovesForScenario(scenario));
   renderBuilderActions(scenario);
   renderDeployedChanges();
@@ -926,6 +989,60 @@ function renderNextBestMoves(moves = []) {
   `).join("");
 }
 
+function renderAiJourney(scenario, actionBoost = 0) {
+  if (!journeyDiscoveryMetric) return;
+
+  const sessions = numberFromFormatted(scenario.sessions);
+  const qualified = Math.round(sessions * 0.24) + actionBoost * 12;
+  const leads = scenario.quoteEvents + actionBoost * 2;
+  const booked = Math.max(3, Math.round(leads * 0.29));
+
+  journeyDiscoveryMetric.textContent = formatNumber(sessions);
+  journeyQualifiedMetric.textContent = formatNumber(qualified);
+  journeyLeadMetric.textContent = formatNumber(leads);
+  journeyBookedMetric.textContent = formatNumber(booked);
+}
+
+function renderBuyerSegments(scenario) {
+  if (!buyerSegmentList) return;
+
+  const segments = scenario.segments?.length ? scenario.segments : [
+    ["High-intent homeowners", "Ask AI for contractor recommendations, pricing, proof, and timing.", "38%"],
+    ["Comparison shoppers", "Compare competitors, reviews, sources, and project examples.", "31%"],
+    ["Ready-to-book leads", "Move from AI discovery into calls, forms, and quote clicks.", "21%"],
+  ];
+
+  buyerSegmentList.innerHTML = segments.map(([name, detail, share]) => `
+    <article>
+      <strong>${escapeHtml(name)}</strong>
+      <p>${escapeHtml(detail)}</p>
+      <span>${escapeHtml(share)} of monitored intent</span>
+    </article>
+  `).join("");
+}
+
+function renderConversionLevers(scenario) {
+  if (!conversionLeverList) return;
+
+  const levers = scenario.levers?.length ? scenario.levers : [
+    ["CTA clarity", "Move quote action closer to service proof", "+6 leads"],
+    ["Proof depth", "Add project, review, and warranty language AI can cite", "+5 mentions"],
+    ["Sales routing", "Tag AI-assisted leads by service intent", "+3 consults"],
+  ];
+
+  if (directLeadSummary) {
+    directLeadSummary.textContent = `${scenario.label} has ${scenario.aiReferrals} AI-assisted sessions and ${scenario.quoteEvents} tracked lead actions in this demo. Builder Rank shows the exact levers to turn visibility into booked estimates.`;
+  }
+
+  conversionLeverList.innerHTML = levers.map(([label, detail, impact]) => `
+    <article>
+      <span>${escapeHtml(impact)}</span>
+      <strong>${escapeHtml(label)}</strong>
+      <p>${escapeHtml(detail)}</p>
+    </article>
+  `).join("");
+}
+
 function renderDeployedChanges() {
   changeLogBadge.textContent = `${appliedActions.length} live`;
 
@@ -1039,6 +1156,14 @@ function renderEmptyRow(selector, message, columnCount) {
   if (!body) return;
 
   body.innerHTML = `<tr><td class="connected-empty-row" colspan="${columnCount}">${escapeHtml(message)}</td></tr>`;
+}
+
+function numberFromFormatted(value) {
+  return Number.parseInt(String(value || "0").replace(/[^0-9]/g, ""), 10) || 0;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-US").format(value || 0);
 }
 
 function showDashboardNotice(title, message, tone = "setup") {

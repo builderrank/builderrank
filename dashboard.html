@@ -160,6 +160,28 @@
             </article>
           </div>
 
+          <div class="connected-card-grid two-up">
+            <article class="connected-card ai-journey-card">
+              <div class="card-topline">
+                <h2>AI Job Journey</h2>
+                <span>Discovery to booked job</span>
+              </div>
+              <div class="journey-funnel" aria-label="AI discovery funnel">
+                <article><span>Discovered</span><strong id="journeyDiscoveryMetric">1,284</strong><small>AI-visible sessions</small></article>
+                <article><span>Qualified</span><strong id="journeyQualifiedMetric">312</strong><small>Service-fit visitors</small></article>
+                <article><span>Lead Action</span><strong id="journeyLeadMetric">41</strong><small>Calls, forms, quotes</small></article>
+                <article><span>Booked Consult</span><strong id="journeyBookedMetric">12</strong><small>Sales-ready jobs</small></article>
+              </div>
+            </article>
+            <article class="connected-card ai-segments-card">
+              <div class="card-topline">
+                <h2>Homeowner Segments</h2>
+                <span>Prompt context</span>
+              </div>
+              <div id="buyerSegmentList" class="buyer-segment-list"></div>
+            </article>
+          </div>
+
           <section class="connected-table-card">
             <div class="card-topline">
               <h2 id="visibilityBreakdownTitle">Mention Rate by Job-Type Attribute</h2>
@@ -285,6 +307,14 @@
           <section class="connected-card next-best-moves-card">
             <div class="card-topline"><h2>Next Best Moves</h2><span>Prioritized from live Site Signal and AI data</span></div>
             <div id="nextBestMoveList" class="next-best-move-list"></div>
+          </section>
+          <section class="connected-card direct-lead-card">
+            <div>
+              <p class="eyebrow">Direct lead conversion</p>
+              <h2>Turn AI visibility into calls, forms, and booked estimates.</h2>
+              <p id="directLeadSummary">Builder Rank watches which AI-discovered visitors become real leads, then recommends the content and CTA changes most likely to increase booked jobs.</p>
+            </div>
+            <div id="conversionLeverList" class="conversion-lever-list"></div>
           </section>
           <section class="connected-table-card">
             <div class="card-topline"><h2>Lead Events by Source</h2><button type="button" data-export-table="leadRows" data-export-name="builder-rank-leads">Export CSV</button></div>

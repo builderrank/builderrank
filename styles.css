@@ -16,6 +16,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 [hidden] {
   display: none !important;
 }
@@ -1371,6 +1375,74 @@ button {
 
 .platform-strip strong {
   font-size: 1.25rem;
+}
+
+.ai-growth-system {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(420px, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 121, 0, 0.14), transparent 45%),
+    rgba(10, 10, 10, 0.94);
+  box-shadow: var(--shadow);
+  padding: clamp(22px, 4vw, 36px);
+}
+
+.ai-growth-system h2 {
+  max-width: 720px;
+  margin-bottom: 14px;
+  font-size: clamp(1.7rem, 3.4vw, 2.8rem);
+  line-height: 1;
+}
+
+.ai-growth-system p {
+  color: #d2d2d2;
+  line-height: 1.6;
+}
+
+.ai-growth-funnel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-growth-funnel article {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  min-height: 210px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 121, 0, 0.12), transparent 58%),
+    #080808;
+  padding: 16px;
+}
+
+.ai-growth-funnel span {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #080808;
+  font-weight: 900;
+}
+
+.ai-growth-funnel strong {
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.ai-growth-funnel small {
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .platform-dashboard-preview {
@@ -3300,7 +3372,9 @@ li {
   grid-template-columns: 260px minmax(0, 1fr);
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .connected-topbar {
@@ -4163,6 +4237,85 @@ li {
   padding: 16px;
 }
 
+.journey-funnel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.journey-funnel article {
+  display: grid;
+  gap: 8px;
+  min-height: 136px;
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 121, 0, 0.09), transparent),
+    #fbfbf8;
+  padding: 14px;
+}
+
+.journey-funnel article:nth-child(even) {
+  transform: translateY(14px);
+}
+
+.journey-funnel span,
+.buyer-segment-list span,
+.conversion-lever-list span {
+  color: var(--orange);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.journey-funnel strong {
+  color: #171717;
+  font-size: clamp(1.6rem, 3vw, 2.35rem);
+  line-height: 1;
+}
+
+.journey-funnel small {
+  color: #777777;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.buyer-segment-list,
+.conversion-lever-list {
+  display: grid;
+  gap: 10px;
+}
+
+.buyer-segment-list article,
+.conversion-lever-list article {
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  background: #fbfbf8;
+  padding: 14px;
+}
+
+.buyer-segment-list strong,
+.conversion-lever-list strong {
+  display: block;
+  color: #171717;
+  font-weight: 900;
+}
+
+.buyer-segment-list p,
+.conversion-lever-list p,
+.direct-lead-card p {
+  margin: 7px 0;
+  color: #777777;
+  line-height: 1.45;
+}
+
+.direct-lead-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(360px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
 .next-best-move-list span,
 .next-best-move-list small {
   color: var(--orange);
@@ -4216,6 +4369,7 @@ li {
   .sample-hero,
   .product-ladder,
   .platform-hero,
+  .ai-growth-system,
   .platform-strip,
   .platform-dashboard-preview,
   .customer-kpi-grid,
@@ -4313,8 +4467,14 @@ li {
   .onboarding-intake-hero,
   .client-onboarding-cta,
   .next-best-move-list,
+  .journey-funnel,
+  .direct-lead-card,
   .connect-site-card {
     grid-template-columns: 1fr;
+  }
+
+  .journey-funnel article {
+    transform: none !important;
   }
 
   .client-form-grid {
@@ -4394,6 +4554,7 @@ li {
   .job-type-form,
   .platform-preview-grid,
   .workspace-preview-grid,
+  .ai-growth-funnel,
   .builder-os-main,
   .connected-kpi-grid,
   .lead-attribution-grid,
