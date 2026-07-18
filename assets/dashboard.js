@@ -257,6 +257,48 @@ const pageCopy = {
   reports: ["Reports", "Saved inspections, exports, and connected tracking reports."],
 };
 
+const metricHelp = {
+  "Site Signal": "The Builder Rank tracking connection installed on the customer website. Healthy means recent page and lead events are reaching the dashboard.",
+  "Visibility Score": "A blended AI search health score based on mention rate, rank, platform coverage, sources, and whether AI can understand the business clearly.",
+  "AI Referrals": "Website sessions that came from, or appear assisted by, AI tools such as ChatGPT, Gemini, Claude, Perplexity, and AI-tagged search experiences.",
+  "AI Lead Rate": "The share of AI-assisted sessions that turn into calls, forms, quote clicks, email clicks, or other lead actions.",
+  "Quote Events": "Tracked high-intent actions such as estimate clicks, quote buttons, phone calls, forms, and email clicks.",
+  "Punch List": "The prioritized Builder Rank work queue: content, schema, GBP, review, and source fixes that should improve visibility and lead quality.",
+  "Mention Rate": "How often the business appears when monitored homeowner prompts are checked across AI platforms.",
+  "Avg. Position": "The average rank position when the business is mentioned. Lower is better, just like search results.",
+  "Mention Rate by Job-Type Attribute": "Which service terms and proof points AI understands for the selected profit center.",
+  "Profit Center Visibility": "How each service line performs across AI platforms, such as bathrooms, kitchens, roofing, HVAC, or restoration.",
+  "Platform Visibility": "How often each AI platform mentions the business when we run the monitored prompt set.",
+  "Overall Mention Rank": "Where this business ranks against the selected local competitor set in AI-generated answers.",
+  "Rankings": "Competitor-by-competitor view of who AI recommends, how often, and across which platforms.",
+  "Sources Share": "The mix of websites and profiles AI relies on when forming recommendations for this business and market.",
+  "All Sources": "Specific domains that are being cited, used as trust signals, or sending tracked lead behavior.",
+  "Prompt Citations": "Prompt-level evidence showing whether the business was mentioned, what source was cited, and what fix should improve that prompt.",
+  "Connect this website": "The setup area for tying a customer website to Builder Rank using the Site Signal ID.",
+  "Tracked Sessions": "Website sessions captured by Site Signal during the selected date range.",
+  "Tracked Website Events": "Raw activity captured from the installed tracking script: views, calls, forms, quote clicks, email clicks, and source details.",
+  "Top AI Landing Page": "The page receiving the strongest AI-assisted traffic or lead behavior.",
+  "Top CTA / Form": "The call-to-action, phone link, or form with the most useful tracked intent.",
+  "Highest Intent Source": "The source producing the strongest mix of sessions and lead events.",
+  "Next Best Moves": "Prioritized actions generated from live website behavior, AI visibility gaps, and Punch List data.",
+  "Lead Events by Source": "Which traffic sources are producing sessions, calls, forms, quote clicks, and lead rate.",
+  "Job Pipeline by Intent": "Lead and traffic activity grouped by the job type or homeowner intent Builder Rank inferred.",
+  "Top CTAs & Forms": "The forms, buttons, phone links, and quote actions customers are using most often.",
+  "Landing Pages": "Service and market pages receiving traffic, AI-assisted sessions, and conversion activity.",
+  "Builder Rank Punch List": "Approved website and profile changes that Builder Rank can help execute for the customer.",
+  "Live Change Log": "Completed Punch List work that has been marked live for this customer.",
+  "Reviews & Google Business Profile Tasks": "Local trust work: reviews, GBP services, GBP posts, profile updates, and citation improvements.",
+  "Reports": "Saved inspections, report history, exports, and connected tracking reviews.",
+  "All platforms": "Combined performance across the monitored AI platforms.",
+  "ChatGPT": "Visibility and ranking performance inside ChatGPT checks.",
+  "Gemini": "Visibility and ranking performance inside Gemini checks.",
+  "Claude": "Visibility and ranking performance inside Claude checks.",
+  "Lead Signal": "Whether this source is connected to tracked visits, lead actions, or citation evidence.",
+  "Content Gap": "The page improvement most likely to help AI understand and recommend this service.",
+  "Top Intent": "The job type or buying intent inferred from page URL, CTA text, source, or event metadata.",
+  "Lead Rate": "Lead events divided by sessions for this row.",
+};
+
 const jobTypeSelect = document.querySelector("#jobTypeSelect");
 const marketSelect = document.querySelector("#marketSelect");
 const dateRangeSelect = document.querySelector("#dateRangeSelect");
@@ -360,12 +402,12 @@ function renderDashboardScenario() {
   if (visibilityBreakdownFirstColumn) visibilityBreakdownFirstColumn.textContent = "Attribute";
 
   renderRows("#attributeMetricRows", scenario.attributes.map(([name, all, chatgpt, gemini, claude]) => [
-    name,
+    escapeHtml(name),
     metricWithDot(all),
-    chatgpt,
-    gemini,
-    claude,
-  ]));
+    escapeHtml(chatgpt),
+    escapeHtml(gemini),
+    escapeHtml(claude),
+  ]), { raw: true });
 
   renderRows("#competitorRows", scenario.competitors.map((row) => {
     const isClient = row[1] === "Front Range Remodels";
@@ -395,6 +437,38 @@ function renderDashboardScenario() {
   renderNextBestMoves(nextBestMovesForScenario(scenario));
   renderBuilderActions(scenario);
   renderDeployedChanges();
+}
+
+function initializeMetricHelp() {
+  const selector = [
+    ".connected-summary-strip span",
+    ".connected-card h2",
+    ".connected-table-card h2",
+    ".connected-kpi span",
+    ".connected-table-card th",
+    ".connected-controls button",
+  ].join(",");
+
+  document.querySelectorAll(selector).forEach((element) => {
+    const label = normalizeHelpLabel(element.textContent);
+    const help = metricHelp[label];
+    if (!help || element.querySelector(".metric-help")) return;
+    element.classList.add("has-metric-help");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "metric-help";
+    button.setAttribute("aria-label", `${label}: ${help}`);
+    button.dataset.help = help;
+    button.textContent = "?";
+    element.append(" ", button);
+  });
+}
+
+function normalizeHelpLabel(value) {
+  return String(value || "")
+    .replace(/\?/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 async function hydrateLiveDashboardData() {
@@ -588,6 +662,7 @@ function applyLiveDashboardData(payload) {
 
   renderLiveReviewTasks(recommendations);
   renderLiveReports(payload.reports || []);
+  initializeMetricHelp();
 }
 
 function renderLiveRecommendations(recommendations) {
@@ -807,6 +882,7 @@ function applyEmptyDashboardState(payload) {
   renderLivePunchListState([], {});
   renderLiveReviewTasks([]);
   renderLiveReports([]);
+  initializeMetricHelp();
 }
 
 function renderBuilderActions(scenario) {
@@ -1296,6 +1372,7 @@ function connectSiteSummary(payload = {}) {
 
 setActiveTab("visibility");
 renderDashboardScenario();
+initializeMetricHelp();
 prefillSiteIdFromUrl();
 void hydrateLiveDashboardData();
 

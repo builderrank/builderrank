@@ -34,6 +34,10 @@
           <p class="eyebrow">Internal Beta Admin</p>
           <h1>Set up and monitor a customer workspace.</h1>
           <p>Enter the admin token for this browser session, then bootstrap the workspace, import weekly AI checks, or inspect Site Signal health.</p>
+          <div class="admin-beta-actions">
+            <a href="/first-customer-runbook">Open runbook</a>
+            <a href="/docs/first-customer-runbook.md" download>Download onboarding doc</a>
+          </div>
         </div>
 
         <form id="adminTokenForm" class="admin-beta-token-form">
@@ -46,6 +50,43 @@
         </form>
 
         <div class="admin-beta-grid">
+          <section class="admin-beta-panel wide-panel onboarding-command-center">
+            <div class="dashboard-panel-topline">
+              <div>
+                <p class="eyebrow">Operator workflow</p>
+                <h2>Manual onboarding command center</h2>
+              </div>
+              <span>Use this before every customer review</span>
+            </div>
+            <div class="onboarding-stage-grid">
+              <article>
+                <span>1</span>
+                <strong>Collect intake</strong>
+                <p>Business, website, market, services, competitors, contact, install method, and goal.</p>
+              </article>
+              <article>
+                <span>2</span>
+                <strong>Bootstrap workspace</strong>
+                <p>Create the Site Signal ID, profit centers, competitors, prompts, and first Punch List.</p>
+              </article>
+              <article>
+                <span>3</span>
+                <strong>Install + QA</strong>
+                <p>Install the snippet or WordPress plugin, then send page-view and lead-event tests.</p>
+              </article>
+              <article>
+                <span>4</span>
+                <strong>Import AI checks</strong>
+                <p>Paste ChatGPT, Gemini, and Claude results for the customer’s highest-value services.</p>
+              </article>
+              <article>
+                <span>5</span>
+                <strong>Customer review</strong>
+                <p>Have the customer sign in, connect the Site ID, review dashboard readiness, and choose tasks.</p>
+              </article>
+            </div>
+          </section>
+
           <section class="admin-beta-panel wide-panel">
             <div class="dashboard-panel-topline">
               <div>
@@ -63,6 +104,9 @@
                   <tr><td colspan="8">Enter the admin token, then refresh workspaces.</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div id="adminReadinessChecklist" class="admin-readiness-checklist">
+              <article><strong>Pick a workspace</strong><p>Refresh workspaces after entering the admin token. The checklist will summarize first-customer readiness here.</p></article>
             </div>
             <pre id="adminWorkspaceResult" class="admin-beta-result"></pre>
           </section>
@@ -88,7 +132,10 @@
               <label class="wide-field"><span>Job types</span><textarea name="jobTypes" placeholder="Bathroom remodeling&#10;Kitchen remodeling"></textarea></label>
               <label class="wide-field"><span>Competitors</span><textarea name="competitors" placeholder="Mile High Bath Co.&#10;Summit Remodel Group"></textarea></label>
               <label class="wide-field"><span>Operator notes</span><textarea name="notes" placeholder="Customer wants more bathroom projects. Marketing contact can install through WordPress."></textarea></label>
-              <button type="submit">Bootstrap Workspace</button>
+              <div class="admin-form-actions wide-field">
+                <button type="button" id="adminFillSampleIntake">Use sample remodeler</button>
+                <button type="submit">Bootstrap Workspace</button>
+              </div>
             </form>
             <pre id="adminBootstrapResult" class="admin-beta-result"></pre>
           </section>
@@ -103,7 +150,15 @@
             </div>
             <form id="adminImportForm" class="admin-beta-form">
               <label><span>Site ID</span><input name="siteId" required placeholder="br_customer_site_id" /></label>
-              <label><span>Platform</span><input name="platform" required placeholder="ChatGPT" /></label>
+              <label>
+                <span>Platform</span>
+                <select name="platform" required>
+                  <option value="ChatGPT">ChatGPT</option>
+                  <option value="Gemini">Gemini</option>
+                  <option value="Claude">Claude</option>
+                  <option value="Perplexity">Perplexity</option>
+                </select>
+              </label>
               <label><span>Model</span><input name="model" placeholder="gpt-5.2" /></label>
               <label><span>Job type</span><input name="jobType" placeholder="Bathroom remodeling" /></label>
               <label><span>Run date</span><input name="runAt" type="date" /></label>
@@ -117,7 +172,10 @@
               <label class="wide-field"><span>Mention text</span><textarea name="mentionText" placeholder="Text around the customer mention."></textarea></label>
               <label class="wide-field"><span>Sources</span><textarea name="sources" placeholder="front-range-remodels.com|https://front-range-remodels.com/bathroom-remodeling|direct_site|cited&#10;google.com|https://google.com/search?q=business|gbp|not_cited"></textarea></label>
               <label class="checkbox-field"><input name="mentioned" type="checkbox" checked /> <span>Mentioned customer</span></label>
-              <button type="submit">Import AI Run</button>
+              <div class="admin-form-actions wide-field">
+                <button type="button" id="adminFillPromptTemplate">Use prompt template</button>
+                <button type="submit">Import AI Run</button>
+              </div>
             </form>
             <pre id="adminImportResult" class="admin-beta-result"></pre>
           </section>

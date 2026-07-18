@@ -74,6 +74,14 @@
       "dest": "/marketing-platform.html"
     },
     {
+      "src": "/first-customer-runbook/?",
+      "dest": "/first-customer-runbook.html"
+    },
+    {
+      "src": "/docs/(.*)",
+      "dest": "/docs/$1"
+    },
+    {
       "src": "/dashboard/?",
       "dest": "/dashboard.html"
     },

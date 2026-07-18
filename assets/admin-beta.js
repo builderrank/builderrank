@@ -12,6 +12,9 @@ const importResult = document.querySelector("#adminImportResult");
 const trackingHealthResult = document.querySelector("#adminTrackingHealthResult");
 const trackTestResult = document.querySelector("#adminTrackTestResult");
 const workspaceResult = document.querySelector("#adminWorkspaceResult");
+const readinessChecklist = document.querySelector("#adminReadinessChecklist");
+const fillSampleIntakeButton = document.querySelector("#adminFillSampleIntake");
+const fillPromptTemplateButton = document.querySelector("#adminFillPromptTemplate");
 
 let adminToken = "";
 
@@ -93,6 +96,45 @@ workspaceRefreshButton?.addEventListener("click", () => {
   void loadAdminWorkspaces();
 });
 
+fillSampleIntakeButton?.addEventListener("click", () => {
+  if (!bootstrapForm) return;
+  setFormValue(bootstrapForm, "company", "Front Range Remodels");
+  setFormValue(bootstrapForm, "website", "https://front-range-remodels.com");
+  setFormValue(bootstrapForm, "market", "Denver, CO");
+  setFormValue(bootstrapForm, "primaryTrade", "Remodeling contractor");
+  setFormValue(bootstrapForm, "ownerName", "Jordan Smith");
+  setFormValue(bootstrapForm, "email", "owner@example.com");
+  setFormValue(bootstrapForm, "phone", "(303) 555-0147");
+  setFormValue(bootstrapForm, "installMethod", "WordPress plugin");
+  setFormValue(bootstrapForm, "siteId", "br_front_range_remodels");
+  setFormValue(bootstrapForm, "jobTypes", "Bathroom remodeling\nKitchen remodeling\nBasement finishing");
+  setFormValue(bootstrapForm, "competitors", "Mile High Bath Co.\nSummit Remodel Group\nDenver Design Build\nUrban Tile & Bath");
+  setFormValue(bootstrapForm, "notes", "Friendly beta customer. Wants more bathroom and kitchen projects. Marketing contact can install the WordPress plugin.");
+});
+
+fillPromptTemplateButton?.addEventListener("click", () => {
+  if (!importForm) return;
+  const siteId = bootstrapForm?.elements.siteId?.value || "br_front_range_remodels";
+  const jobType = bootstrapForm?.elements.jobTypes?.value?.split(/\n|,/).map((item) => item.trim()).filter(Boolean)[0] || "Bathroom remodeling";
+  const market = bootstrapForm?.elements.market?.value || "Denver, CO";
+  const website = bootstrapForm?.elements.website?.value || "https://front-range-remodels.com";
+  const domain = domainFromUrl(website) || "front-range-remodels.com";
+  setFormValue(importForm, "siteId", siteId);
+  setFormValue(importForm, "platform", "ChatGPT");
+  setFormValue(importForm, "model", "gpt-5.2");
+  setFormValue(importForm, "jobType", jobType);
+  setFormValue(importForm, "runAt", new Date().toISOString().slice(0, 10));
+  setFormValue(importForm, "rankPosition", "2");
+  setFormValue(importForm, "confidence", "85");
+  setFormValue(importForm, "sentiment", "positive");
+  setFormValue(importForm, "persona", "Homeowner ready to hire");
+  setFormValue(importForm, "intent", "hire_local_contractor");
+  setFormValue(importForm, "prompt", `best ${jobType.toLowerCase()} company in ${market}`);
+  setFormValue(importForm, "answerText", "Paste the AI answer here. Capture whether the customer appears, what competitors appear, and which sources the model references.");
+  setFormValue(importForm, "mentionText", "Customer was mentioned as a local option with relevant project proof.");
+  setFormValue(importForm, "sources", `${domain}|${website}|direct_site|cited\ngoogle.com/maps|https://google.com/maps|gbp|cited\nhouzz.com|https://www.houzz.com/|directory|not_cited`);
+});
+
 trackTestForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(trackTestForm);
@@ -139,6 +181,7 @@ async function loadAdminWorkspaces() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || data.error || "Could not load workspaces.");
     renderWorkspaceRows(data.workspaces || []);
+    renderReadinessChecklist(data.workspaces || []);
     if (workspaceResult) workspaceResult.textContent = `${data.workspaces?.length || 0} workspace${data.workspaces?.length === 1 ? "" : "s"} loaded.`;
   } catch (error) {
     if (workspaceResult) workspaceResult.textContent = error.message;
@@ -146,6 +189,42 @@ async function loadAdminWorkspaces() {
     workspaceRefreshButton.disabled = false;
     workspaceRefreshButton.textContent = "Refresh";
   }
+}
+
+function renderReadinessChecklist(workspaces) {
+  if (!readinessChecklist) return;
+  const workspace = [...workspaces].sort((a, b) => Number(b.readinessScore || 0) - Number(a.readinessScore || 0))[0];
+
+  if (!workspace) {
+    readinessChecklist.innerHTML = "<article><strong>No workspace yet</strong><p>Bootstrap the customer workspace, then refresh to see the onboarding checklist.</p></article>";
+    return;
+  }
+
+  const checks = [
+    ["Workspace created", Boolean(workspace.siteId), workspace.siteId || "Assign Site Signal ID"],
+    ["Site Signal installed", Boolean(workspace.lastEventAt), workspace.lastEventAt ? `Last event ${relativeTime(workspace.lastEventAt)}` : "Send a page-view test"],
+    ["Lead-event QA passed", Number(workspace.recentLeadEvents || 0) > 0, `${workspace.recentLeadEvents || 0} recent lead events`],
+    ["Domain matches", !workspace.domainMismatch && Boolean(workspace.lastEventAt), workspace.domainMismatch ? "Fix installed domain" : "No mismatch flagged"],
+    ["AI visibility imported", Number(workspace.promptRuns || 0) > 0, `${workspace.promptRuns || 0} prompt runs`],
+    ["Competitors loaded", Number(workspace.competitors || 0) >= 3, `${workspace.competitors || 0} competitors`],
+    ["Punch List seeded", Number(workspace.openRecommendations || 0) > 0, `${workspace.openRecommendations || 0} open tasks`],
+    ["Customer account connected", Boolean(workspace.hasOwner), workspace.hasOwner ? "Claimed" : "Have customer sign in and connect Site ID"],
+  ];
+
+  readinessChecklist.innerHTML = `
+    <article class="admin-readiness-overview">
+      <strong>${escapeHtml(workspace.name || "Beta workspace")} · ${escapeHtml(readinessStatusLabel(workspace))}</strong>
+      <p>${escapeHtml(workspace.nextStep || readinessLine(workspace))}</p>
+      <a href="/dashboard?siteId=${encodeURIComponent(workspace.siteId || "")}">Open customer dashboard</a>
+    </article>
+    ${checks.map(([label, ok, detail]) => `
+      <article class="${ok ? "is-ready" : "needs-work"}">
+        <span>${ok ? "Ready" : "Todo"}</span>
+        <strong>${escapeHtml(label)}</strong>
+        <p>${escapeHtml(detail)}</p>
+      </article>
+    `).join("")}
+  `;
 }
 
 function renderWorkspaceRows(workspaces) {
@@ -356,6 +435,12 @@ function listFromTextarea(value) {
     .split(/\n|,/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function setFormValue(form, name, value) {
+  const field = form.elements[name];
+  if (!field) return;
+  field.value = value;
 }
 
 function parseSources(value) {

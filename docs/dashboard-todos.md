@@ -8,6 +8,8 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Model-by-model visibility trends for ChatGPT, Gemini, Claude, Perplexity, and future AI platforms.
 - Job-type visibility comparison across bathroom, kitchen, roofing, HVAC, restoration, and other services.
 - City and service-area visibility breakdowns.
+- Info bubbles beside Mention Rate, Avg. Position, Visibility Score, platform names, and profit-center rows that explain each metric in customer-friendly language.
+- More premium dashboard texture: subtle section depth, clearer chart context, richer empty states, and Builder Rank branded microcopy without making the screen feel busy.
 
 ## Competition
 
@@ -15,6 +17,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - "Who passed us this week" alerts.
 - Competitor source gaps by domain, directory, GBP, and review profile.
 - Competitor prompt wins and prompt losses.
+- Info bubbles for Overall Mention Rank, mention rate, platform columns, average position, and comp set.
 
 ## Sources
 
@@ -22,6 +25,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Source quality score.
 - Missing-source opportunities.
 - Source pages that AI repeatedly cites.
+- Info bubbles for Sources Share, source type, share percentage, lead signal, direct website, GBP, directories, UGC/social, and local media.
 
 ## Citations
 
@@ -30,6 +34,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Citation domains by platform.
 - Prompts where the customer was not mentioned.
 - Prompts where competitors were mentioned instead.
+- Info bubbles for Prompt Citations, Mentioned, Rank, Linked Source, and Recommended Fix.
 
 ## Site Signal
 
@@ -41,6 +46,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Form submits.
 - Quote and estimate clicks.
 - Probable AI-assisted sessions.
+- Info bubbles for Site Signal, Tracked Sessions, AI Referrals, AI Lead Rate, Quote Events, source, detail, and last seen.
 
 ## Leads & Events
 
@@ -49,6 +55,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Source attribution.
 - Call, form, quote, email, and chat breakdown.
 - Lead rate by platform and landing page.
+- Info bubbles for Top AI Landing Page, Top CTA/Form, Highest Intent Source, Next Best Moves, Job Pipeline by Intent, lead rate, and top intent.
 
 ## Landing Pages
 
@@ -57,6 +64,7 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Missing service pages.
 - Local market page opportunities.
 - Pages that need schema, FAQs, project proof, or stronger CTAs.
+- Info bubbles for AI Sessions, Phone Clicks, Forms, Conversion, Top Intent, and Content Gap.
 
 ## Punch List
 
@@ -68,3 +76,4 @@ Ideas to add later as the connected dashboard becomes a real customer workspace.
 - Content drafts.
 - Project proof blocks.
 - Approved publish queue for website/CMS integrations.
+- Info bubbles for expected impact, task status, approved changes, and Live Change Log.
