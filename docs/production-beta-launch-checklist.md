@@ -109,6 +109,12 @@ Use `/demo-remodeler` as the free fake GC/service-business site before a real cu
 
 This page intentionally runs the public Site Signal script with `data-skip-logged-in="false"` because it lives on the Builder Rank domain. That lets us test tracking while signed into Builder Rank during QA. A real customer's website should use the normal customer snippet unless they explicitly want logged-in site admins tracked.
 
+Run the full no-network customer handoff rehearsal with:
+
+```bash
+npm run customer:demo-dry-run
+```
+
 ## 4. Site Connection
 
 The authenticated endpoint is:

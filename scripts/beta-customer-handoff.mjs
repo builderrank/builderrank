@@ -4,7 +4,7 @@ const inputPath = process.argv[2] || "/tmp/builderrank-first-beta.json";
 const baseUrl = (process.env.BASE_URL || "https://builderrank.io").replace(/\/+$/, "");
 const customer = readCustomer(inputPath);
 const siteId = customer.siteId;
-const productionPageUrl = productionTestUrl(customer.website);
+const productionPageUrl = customer.qaPage || productionTestUrl(customer.website);
 const primaryDomain = hostnameFor(customer.website);
 const bootstrapPayload = JSON.stringify(customer, null, 2);
 const aiImportPayload = JSON.stringify(buildAiImportPayload(customer, primaryDomain), null, 2);
@@ -73,6 +73,7 @@ printCurl({
 });
 console.log("");
 console.log("Site Signal page-view QA:");
+console.log(`QA page: ${productionPageUrl}`);
 printCurl({
   method: "POST",
   url: `${baseUrl}/api/track`,
@@ -81,6 +82,7 @@ printCurl({
 });
 console.log("");
 console.log("Site Signal lead-event QA:");
+console.log(`QA page: ${productionPageUrl}`);
 printCurl({
   method: "POST",
   url: `${baseUrl}/api/track`,

@@ -1,0 +1,24 @@
+{
+  "company": "Front Range Remodels",
+  "website": "https://builderrank.io/demo-remodeler",
+  "qaPage": "https://builderrank.io/demo-remodeler",
+  "market": "Denver, CO",
+  "primaryTrade": "Bathroom remodeling",
+  "jobTypes": [
+    "Bathroom remodeling",
+    "Kitchen remodeling",
+    "Basement finishing"
+  ],
+  "competitors": [
+    "Mile High Bath Co.",
+    "Summit Remodel Group",
+    "Urban Tile & Bath",
+    "Colorado Bath Works"
+  ],
+  "ownerName": "Jordan Smith",
+  "email": "demo@frontrangeremodels.test",
+  "phone": "(303) 555-0147",
+  "installMethod": "Builder Rank hosted demo page",
+  "siteId": "br_demo_front_range_remodels",
+  "notes": "Fake onboarding rehearsal customer. The demo site already includes Site Signal with data-skip-logged-in=false because it lives on the Builder Rank domain."
+}

@@ -42,6 +42,7 @@ The validator normalizes the website URL, checks required fields, warns when the
 {
   "company": "Front Range Remodels",
   "website": "https://front-range-remodels.com",
+  "qaPage": "https://front-range-remodels.com/builder-rank-test",
   "market": "Denver, CO",
   "primaryTrade": "Bathroom remodeling",
   "jobTypes": [
@@ -85,6 +86,8 @@ After the workspace is created, install the returned snippet on the customer sit
 For WordPress, install `integrations/wordpress/builder-rank-site-signal.php` and paste the Site Signal ID into the plugin settings.
 
 Use `/admin-beta` -> `Test Site Signal` with a real customer production page URL such as `https://front-range-remodels.com/builder-rank-test`. Do not use the Builder Rank admin URL. The test response should include `qaDomain.expectedHost`, `qaDomain.receivedHost`, and `qaDomain.matches`; if it returns `qaStatus: "stored_domain_mismatch"`, fix the installed domain or workspace website before the customer review.
+
+For the Builder Rank hosted demo site, use `docs/demo-remodeler-customer.json`. Its QA page is `https://builderrank.io/demo-remodeler` and its Site Signal ID is `br_demo_front_range_remodels`.
 
 ## First AI Visibility Import
 

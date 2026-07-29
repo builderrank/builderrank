@@ -36,6 +36,8 @@ const requiredFiles = [
   "docs/production-beta-launch-checklist.md",
   "docs/first-beta-customer-template.md",
   "docs/first-beta-customer.sample.json",
+  "docs/demo-remodeler-customer.json",
+  "docs/builderrank-link-glossary.md",
   "robots.txt",
   ".env.example",
 ];
@@ -58,6 +60,7 @@ check("package script supabase:schema-check", packageJson?.scripts?.["supabase:s
 check("package script customer:validate", packageJson?.scripts?.["customer:validate"] === "node scripts/validate-beta-customer.mjs");
 check("package script customer:handoff", packageJson?.scripts?.["customer:handoff"] === "node scripts/beta-customer-handoff.mjs");
 check("package script customer:dry-run", packageJson?.scripts?.["customer:dry-run"] === "node scripts/beta-launch-dry-run.mjs");
+check("package script customer:demo-dry-run", packageJson?.scripts?.["customer:demo-dry-run"] === "node scripts/beta-launch-dry-run.mjs docs/demo-remodeler-customer.json");
 
 const vercel = read("vercel.json");
 const apiRouter = read("api/index.js");
@@ -215,12 +218,19 @@ const firstCustomerTemplate = read("docs/first-beta-customer-template.md");
   "customer production page URL",
   "qaDomain.expectedHost",
   "stored_domain_mismatch",
+  "docs/demo-remodeler-customer.json",
 ].forEach((pattern) => check(`first customer template mentions ${pattern}`, firstCustomerTemplate.includes(pattern)));
 
 const firstCustomerSample = readJson("docs/first-beta-customer.sample.json");
 check("first customer sample has required fields", firstCustomerSample?.company && firstCustomerSample?.website && firstCustomerSample?.market && firstCustomerSample?.primaryTrade);
 check("first customer sample has competitor set", Array.isArray(firstCustomerSample?.competitors) && firstCustomerSample.competitors.length >= 3);
 check("first customer sample has job types", Array.isArray(firstCustomerSample?.jobTypes) && firstCustomerSample.jobTypes.length >= 1);
+
+const demoCustomerSample = readJson("docs/demo-remodeler-customer.json");
+check("demo customer payload points at demo remodeler", demoCustomerSample?.website === "https://builderrank.io/demo-remodeler" && demoCustomerSample?.qaPage === "https://builderrank.io/demo-remodeler");
+check("demo customer payload uses demo Site Signal ID", demoCustomerSample?.siteId === "br_demo_front_range_remodels");
+const linkGlossary = read("docs/builderrank-link-glossary.md");
+check("link glossary includes core customer URLs", linkGlossary.includes("https://builderrank.io/dashboard") && linkGlossary.includes("https://builderrank.io/demo-remodeler"));
 
 const wordpressPlugin = read("integrations/wordpress/builder-rank-site-signal.php");
 const wordpressReadme = read("integrations/wordpress/README.md");

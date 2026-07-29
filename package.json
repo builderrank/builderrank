@@ -8,6 +8,7 @@
     "customer:validate": "node scripts/validate-beta-customer.mjs",
     "customer:handoff": "node scripts/beta-customer-handoff.mjs",
     "customer:dry-run": "node scripts/beta-launch-dry-run.mjs",
+    "customer:demo-dry-run": "node scripts/beta-launch-dry-run.mjs docs/demo-remodeler-customer.json",
     "preflight:beta": "node scripts/beta-preflight.mjs",
     "production:env-handoff": "node scripts/production-env-handoff.mjs",
     "production:secrets": "node scripts/generate-production-secrets.mjs",

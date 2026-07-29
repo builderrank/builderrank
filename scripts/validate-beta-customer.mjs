@@ -177,6 +177,7 @@ function normalizeCustomer(value) {
     email: safeTrim(value.email).toLowerCase(),
     phone: safeTrim(value.phone).slice(0, 60),
     installMethod: safeTrim(value.installMethod).slice(0, 80),
+    qaPage: normalizeWebsite(value.qaPage || value.testPageUrl || value.productionPageUrl),
     notes: safeTrim(value.notes).slice(0, 1000),
     siteId: safeTrim(value.siteId),
   };
