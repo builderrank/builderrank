@@ -74,6 +74,10 @@
       "dest": "/marketing-platform.html"
     },
     {
+      "src": "/demo-remodeler/?",
+      "dest": "/demo-remodeler.html"
+    },
+    {
       "src": "/onboarding-intake/?",
       "dest": "/onboarding-intake.html"
     },

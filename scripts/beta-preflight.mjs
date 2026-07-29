@@ -6,6 +6,7 @@ const requiredFiles = [
   "dashboard.html",
   "admin-beta.html",
   "marketing-platform.html",
+  "demo-remodeler.html",
   "tracker.js",
   "api/index.js",
   "api/beta-intake.js",
@@ -81,6 +82,7 @@ const sitemap = read("sitemap.xml");
   "/dashboard/?",
   "/admin-beta/?",
   "/marketing-platform/?",
+  "/demo-remodeler/?",
   "/tracker.js",
 ].forEach((pattern) => check(`vercel route ${pattern}`, vercel.includes(pattern)));
 check("vercel builds a single API router function", vercel.includes('"src": "api/index.js"') && !vercel.includes('"src": "api/**/*.js"'));
@@ -100,7 +102,12 @@ const server = read("server.js");
   "/api/tracking-health",
   "/api/update-recommendation",
   '"/admin-beta": "/admin-beta.html"',
+  '"/demo-remodeler": "/demo-remodeler.html"',
 ].forEach((pattern) => check(`local server route ${pattern}`, server.includes(pattern)));
+
+const demoRemodeler = read("demo-remodeler.html");
+check("demo remodeler has Site Signal installed", demoRemodeler.includes("/tracker.js") && demoRemodeler.includes("br_demo_front_range_remodels"));
+check("demo remodeler tracks logged-in Builder Rank QA sessions", demoRemodeler.includes('data-skip-logged-in="false"'));
 
 const schema = read("supabase-setup.sql");
 [

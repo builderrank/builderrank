@@ -97,6 +97,18 @@ For a copy/paste-ready customer profile, bootstrap payload, and first manual AI 
 docs/first-beta-customer-template.md
 ```
 
+### Demo Customer Test Site
+
+Use `/demo-remodeler` as the free fake GC/service-business site before a real customer gives us access:
+
+- Business name: Front Range Remodels
+- Website: `https://builderrank.io/demo-remodeler`
+- Site Signal ID: `br_demo_front_range_remodels`
+- Priority service: Bathroom remodeling
+- Test events: page view, phone click, email click, quote/estimate CTA clicks, and estimate form submit
+
+This page intentionally runs the public Site Signal script with `data-skip-logged-in="false"` because it lives on the Builder Rank domain. That lets us test tracking while signed into Builder Rank during QA. A real customer's website should use the normal customer snippet unless they explicitly want logged-in site admins tracked.
+
 ## 4. Site Connection
 
 The authenticated endpoint is:

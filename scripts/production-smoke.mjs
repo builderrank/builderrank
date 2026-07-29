@@ -6,6 +6,7 @@ const baseUrl = (process.env.BASE_URL || "https://builderrank.io").replace(/\/+$
 const checks = [
   { method: "GET", path: "/", expect: [200] },
   { method: "GET", path: "/marketing-platform", expect: [200] },
+  { method: "GET", path: "/demo-remodeler", expect: [200], includes: ["br_demo_front_range_remodels", "Submit estimate request"] },
   { method: "GET", path: "/dashboard", expect: [200], includes: ["Next Best Moves", "nextBestMoveList"] },
   { method: "GET", path: "/assets/dashboard.js", expect: [200], includes: ["renderNextBestMoves", "payload.opportunities"] },
   { method: "GET", path: "/admin-beta", expect: [200], includes: ["noindex,nofollow"] },

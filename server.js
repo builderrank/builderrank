@@ -1105,6 +1105,7 @@ async function serveStatic(pathname, response) {
     "/": "/index.html",
     "/why-geo": "/why-geo.html",
     "/marketing-platform": "/marketing-platform.html",
+    "/demo-remodeler": "/demo-remodeler.html",
     "/onboarding-intake": "/onboarding-intake.html",
     "/first-customer-runbook": "/first-customer-runbook.html",
     "/dashboard": "/dashboard.html",
