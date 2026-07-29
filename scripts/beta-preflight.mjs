@@ -38,6 +38,7 @@ const requiredFiles = [
   "docs/first-beta-customer.sample.json",
   "docs/demo-remodeler-customer.json",
   "docs/builderrank-link-glossary.md",
+  "docs/publishing-unblock-notes.md",
   "robots.txt",
   ".env.example",
 ];
