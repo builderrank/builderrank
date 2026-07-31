@@ -97,6 +97,28 @@
   ],
   "routes": [
     {
+      "src": "/admin-beta/?",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
+        "Cache-Control": "no-store"
+      },
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "SAMEORIGIN",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()"
+      },
+      "continue": true
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.js?path=$1"
     },
