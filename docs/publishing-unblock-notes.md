@@ -61,3 +61,13 @@ https://builderrank.io/demo-remodeler
 https://builderrank.io/admin-beta
 https://builderrank.io/dashboard?siteId=br_demo_front_range_remodels
 ```
+
+## Production Env Fix
+
+The Vercel environment-variable page is:
+
+```text
+https://vercel.com/builderranks-projects/builderrank/settings/environment-variables
+```
+
+Use `docs/vercel-env-values.md` for the exact required values and placeholders. Do not commit generated secret values.

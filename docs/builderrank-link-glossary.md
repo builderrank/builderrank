@@ -66,6 +66,8 @@ PORT=4174 /Users/kalebgamez/.cache/codex-runtimes/codex-primary-runtime/dependen
 - Demo remodeler payload: `docs/demo-remodeler-customer.json`
 - WordPress plugin: `integrations/wordpress/builder-rank-site-signal.php`
 - WordPress install docs: `integrations/wordpress/README.md`
+- Vercel env values checklist: `docs/vercel-env-values.md`
+- Publishing unblock notes: `docs/publishing-unblock-notes.md`
 
 Useful checks:
 

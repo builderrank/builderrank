@@ -39,6 +39,7 @@ const requiredFiles = [
   "docs/demo-remodeler-customer.json",
   "docs/builderrank-link-glossary.md",
   "docs/publishing-unblock-notes.md",
+  "docs/vercel-env-values.md",
   "robots.txt",
   ".env.example",
 ];
@@ -232,6 +233,8 @@ check("demo customer payload points at demo remodeler", demoCustomerSample?.webs
 check("demo customer payload uses demo Site Signal ID", demoCustomerSample?.siteId === "br_demo_front_range_remodels");
 const linkGlossary = read("docs/builderrank-link-glossary.md");
 check("link glossary includes core customer URLs", linkGlossary.includes("https://builderrank.io/dashboard") && linkGlossary.includes("https://builderrank.io/demo-remodeler"));
+const vercelEnvValues = read("docs/vercel-env-values.md");
+check("Vercel env checklist includes current production fixes", vercelEnvValues.includes("SUPABASE_URL=https://hosepwwflfpqgemfcafj.supabase.co") && vercelEnvValues.includes("REPORT_EMAIL_FROM=Builder Rank <Support@builderrank.io>") && vercelEnvValues.includes("TRACKING_HASH_SALT=<generated"));
 
 const wordpressPlugin = read("integrations/wordpress/builder-rank-site-signal.php");
 const wordpressReadme = read("integrations/wordpress/README.md");
