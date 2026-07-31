@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Front Range Remodels | Denver Bathroom and Kitchen Contractor</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <meta
+      name="description"
+      content="Front Range Remodels is a demo Denver remodeling contractor specializing in bathroom remodels, walk-in showers, kitchens, basements, and design-build home projects."
+    />
+    <link rel="canonical" href="https://builderrank.io/demo-remodeler" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .demo-customer-body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          linear-gradient(180deg, rgba(255, 121, 0, 0.1), transparent 320px),
+          #f6f3ed;
+        color: #171512;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .demo-customer-site {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 22px 0 34px;
+      }
+
+      .demo-customer-header,
+      .demo-customer-hero > div,
+      .demo-customer-scorecard,
+      .demo-service-grid article,
+      .demo-proof-band,
+      .demo-review-grid article,
+      .demo-estimate-panel {
+        border: 1px solid rgba(26, 20, 12, 0.12);
+        border-radius: 8px;
+        box-shadow: 0 18px 44px rgba(26, 20, 12, 0.08);
+      }
+
+      .demo-customer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 12px 14px;
+      }
+
+      .brand-lockup,
+      .site-nav a,
+      .demo-service-grid a {
+        text-decoration: none;
+      }
+
+      .brand-lockup {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        color: #171512;
+        font-weight: 900;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .sample-mark {
+        display: grid;
+        width: 54px;
+        height: 54px;
+        place-items: center;
+        border: 1px solid rgba(255, 121, 0, 0.42);
+        border-radius: 8px;
+        background: #000;
+        color: #ff7900;
+        font-size: 1.1rem;
+        letter-spacing: 0;
+      }
+
+      .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .site-nav a {
+        color: #4d453b;
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .site-nav a:hover,
+      .demo-service-grid a {
+        color: #ff7900;
+      }
+
+      .demo-customer-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(280px, 0.34fr);
+        gap: 18px;
+        align-items: stretch;
+        margin-bottom: 18px;
+      }
+
+      .demo-customer-hero > div,
+      .demo-service-grid article,
+      .demo-proof-band,
+      .demo-review-grid article,
+      .demo-estimate-panel {
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .demo-customer-hero > div {
+        min-height: 500px;
+        padding: clamp(30px, 6vw, 72px);
+      }
+
+      .eyebrow,
+      .demo-customer-scorecard span,
+      .demo-service-grid span,
+      .demo-review-grid span {
+        margin: 0 0 10px;
+        color: #ff7900;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .demo-customer-hero h1 {
+        max-width: 820px;
+        margin: 0 0 22px;
+        color: #171512;
+        font-size: clamp(2.7rem, 7vw, 5.8rem);
+        line-height: 0.95;
+      }
+
+      .demo-customer-hero p,
+      .demo-proof-band p,
+      .demo-review-grid p,
+      .demo-estimate-panel p {
+        color: #5d554b;
+        font-size: 1rem;
+        line-height: 1.65;
+      }
+
+      .marketing-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .marketing-actions a {
+        display: inline-grid;
+        min-height: 48px;
+        place-items: center;
+        border: 1px solid rgba(255, 121, 0, 0.42);
+        border-radius: 8px;
+        color: #ff7900;
+        padding: 0 18px;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .marketing-actions .button-link {
+        border-color: transparent;
+        background: #ff7900;
+        color: #080808;
+      }
+
+      .demo-customer-scorecard {
+        display: grid;
+        align-content: end;
+        gap: 12px;
+        min-height: 360px;
+        padding: 26px;
+        background:
+          linear-gradient(145deg, rgba(255, 121, 0, 0.18), transparent 48%),
+          #20160d;
+        color: #fffaf2;
+      }
+
+      .demo-customer-scorecard code {
+        display: block;
+        width: fit-content;
+        max-width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.32);
+        color: #ffd3ad;
+        padding: 9px 10px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .demo-customer-scorecard strong {
+        font-size: 2rem;
+        line-height: 1.06;
+      }
+
+      .demo-customer-scorecard p {
+        margin: 0;
+        color: rgba(255, 250, 242, 0.74);
+      }
+
+      .demo-service-grid,
+      .demo-review-grid,
+      .demo-proof-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .demo-service-grid article,
+      .demo-review-grid article {
+        padding: 24px;
+      }
+
+      .demo-service-grid h2,
+      .demo-proof-band h2,
+      .demo-review-grid h2,
+      .demo-estimate-panel h2 {
+        margin: 0 0 12px;
+        color: #171512;
+        font-size: clamp(1.5rem, 3vw, 2.4rem);
+        line-height: 1;
+      }
+
+      .demo-service-grid p,
+      .demo-review-grid p {
+        min-height: 96px;
+      }
+
+      .demo-service-grid a {
+        font-weight: 900;
+      }
+
+      .demo-proof-band {
+        display: grid;
+        gap: 18px;
+        margin-bottom: 18px;
+        padding: clamp(24px, 5vw, 44px);
+      }
+
+      .demo-proof-grid {
+        margin-bottom: 0;
+      }
+
+      .demo-proof-grid article {
+        display: grid;
+        gap: 8px;
+        border-left: 3px solid #ff7900;
+        background: #fff7ec;
+        padding: 18px;
+      }
+
+      .demo-proof-grid span {
+        color: #6c6256;
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .demo-estimate-panel {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+        gap: 24px;
+        margin-bottom: 26px;
+        padding: clamp(24px, 5vw, 44px);
+      }
+
+      .demo-estimate-panel form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .demo-estimate-panel label {
+        display: grid;
+        gap: 7px;
+        color: #352d24;
+        font-size: 0.86rem;
+        font-weight: 900;
+      }
+
+      .demo-estimate-panel input,
+      .demo-estimate-panel select,
+      .demo-estimate-panel textarea {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid rgba(26, 20, 12, 0.18);
+        border-radius: 8px;
+        background: #fffaf3;
+        color: #171512;
+        padding: 12px;
+        font: inherit;
+      }
+
+      .demo-estimate-panel textarea {
+        min-height: 116px;
+        resize: vertical;
+      }
+
+      .demo-estimate-panel .wide-field,
+      .demo-estimate-panel button,
+      .demo-estimate-panel [role="status"] {
+        grid-column: 1 / -1;
+      }
+
+      .demo-estimate-panel button {
+        min-height: 50px;
+        border: 0;
+        border-radius: 8px;
+        background: #ff7900;
+        color: #080808;
+        font: inherit;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .demo-estimate-panel [role="status"] {
+        min-height: 22px;
+        margin: 0;
+        color: #5d554b;
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 900px) {
+        .demo-customer-hero,
+        .demo-estimate-panel,
+        .demo-service-grid,
+        .demo-review-grid,
+        .demo-proof-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .demo-service-grid p,
+        .demo-review-grid p {
+          min-height: auto;
+        }
+      }
+
+      @media (max-width: 620px) {
+        .demo-customer-site {
+          width: min(100% - 20px, 1180px);
+          padding: 12px 0;
+        }
+
+        .demo-customer-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .site-nav {
+          justify-content: flex-start;
+        }
+
+        .demo-customer-hero > div,
+        .demo-customer-scorecard,
+        .demo-service-grid article,
+        .demo-proof-band,
+        .demo-review-grid article,
+        .demo-estimate-panel {
+          padding: 18px;
+        }
+
+        .demo-customer-hero > div {
+          min-height: auto;
+        }
+
+        .demo-customer-hero h1 {
+          font-size: clamp(2.4rem, 14vw, 3.9rem);
+        }
+
+        .demo-estimate-panel form {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "HomeAndConstructionBusiness",
+        "name": "Front Range Remodels",
+        "url": "https://builderrank.io/demo-remodeler",
+        "telephone": "+1-303-555-0147",
+        "priceRange": "$$$",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Denver",
+          "addressRegion": "CO",
+          "addressCountry": "US"
+        },
+        "areaServed": ["Denver", "Lakewood", "Arvada", "Littleton", "Centennial"],
+        "makesOffer": [
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Bathroom remodeling" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kitchen remodeling" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Basement finishing" } }
+        ]
+      }
+    </script>
+  </head>
+  <body class="demo-customer-body">
+    <main class="app-shell demo-customer-site">
+      <header class="brand-header demo-customer-header">
+        <a class="brand-lockup" href="#top" aria-label="Front Range Remodels home">
+          <span class="sample-mark">FR</span>
+          <span>Front Range Remodels</span>
+        </a>
+        <nav class="site-nav" aria-label="Demo customer navigation">
+          <a href="#services">Services</a>
+          <a href="#projects">Projects</a>
+          <a href="#reviews">Reviews</a>
+          <a href="#estimate-form">Estimate</a>
+        </nav>
+      </header>
+
+      <section id="top" class="demo-customer-hero">
+        <div>
+          <p class="eyebrow">Demo customer website</p>
+          <h1>Denver bathroom remodels, walk-in showers, kitchens, and basement finishing.</h1>
+          <p>
+            Front Range Remodels is a fake test contractor built for Builder Rank onboarding rehearsal.
+            It behaves like a real service-business website so Site Signal can track visits, calls,
+            quote clicks, form submits, and AI-assisted lead intent.
+          </p>
+          <div class="marketing-actions">
+            <a class="button-link" href="#estimate-form">Get a bathroom estimate</a>
+            <a href="tel:+13035550147">Call 303-555-0147</a>
+            <a href="mailto:demo@frontrangeremodels.test">Email project photos</a>
+          </div>
+        </div>
+        <aside class="demo-customer-scorecard" aria-label="Demo contractor proof">
+          <span>Site Signal ID</span>
+          <code>br_demo_front_range_remodels</code>
+          <strong>Bathroom jobs are the priority</strong>
+          <p>Denver · Lakewood · Arvada · Littleton</p>
+        </aside>
+      </section>
+
+      <section id="services" class="demo-service-grid" aria-label="Remodeling services">
+        <article>
+          <span>Profit Center 01</span>
+          <h2>Bathroom Remodeling</h2>
+          <p>Walk-in showers, tile, vanities, aging-in-place layouts, waterproofing, and fixture upgrades.</p>
+          <a href="#estimate-form">Schedule bathroom consultation</a>
+        </article>
+        <article>
+          <span>Profit Center 02</span>
+          <h2>Kitchen Remodeling</h2>
+          <p>Cabinets, countertops, backsplashes, layout updates, lighting, and permit coordination.</p>
+          <a href="#estimate-form">Book kitchen estimate</a>
+        </article>
+        <article>
+          <span>Profit Center 03</span>
+          <h2>Basement Finishing</h2>
+          <p>Family rooms, guest suites, wet bars, egress planning, drywall, flooring, and inspections.</p>
+          <a href="#estimate-form">Request basement quote</a>
+        </article>
+      </section>
+
+      <section id="projects" class="demo-proof-band">
+        <div>
+          <p class="eyebrow">Project proof</p>
+          <h2>Recent Denver-area remodel examples for AI and homeowners to understand.</h2>
+        </div>
+        <div class="demo-proof-grid">
+          <article><strong>Lakewood walk-in shower</strong><span>Bathroom · 4 weeks · accessibility upgrades</span></article>
+          <article><strong>Arvada kitchen refresh</strong><span>Kitchen · cabinets · quartz countertops</span></article>
+          <article><strong>Littleton basement suite</strong><span>Basement · guest room · wet bar</span></article>
+        </div>
+      </section>
+
+      <section id="reviews" class="demo-review-grid" aria-label="Reviews and trust proof">
+        <article>
+          <span>Review</span>
+          <h2>Clear estimate and clean work.</h2>
+          <p>“They explained the bathroom remodel timeline, kept dust contained, and finished the shower beautifully.”</p>
+        </article>
+        <article>
+          <span>Trust</span>
+          <h2>Licensed and insured demo contractor.</h2>
+          <p>License CO-GC-DEMO-2049, insured crew, written scope, weekly project updates, and warranty walkthrough.</p>
+        </article>
+        <article>
+          <span>AI context</span>
+          <h2>Good answers need good proof.</h2>
+          <p>This page includes services, locations, proof, reviews, schema, CTAs, and forms for Builder Rank testing.</p>
+        </article>
+      </section>
+
+      <section class="demo-estimate-panel" aria-label="Estimate request">
+        <div>
+          <p class="eyebrow">Lead event test</p>
+          <h2>Request a remodel estimate.</h2>
+          <p>
+            Submitting this fake form should create a Site Signal form-submit event once the demo workspace
+            is bootstrapped and production tracking storage is fully configured.
+          </p>
+        </div>
+        <form id="estimate-form" name="demo-remodeler-estimate" data-form-name="Demo remodel estimate form">
+          <label>
+            <span>Name</span>
+            <input name="name" placeholder="Jordan Smith" required />
+          </label>
+          <label>
+            <span>Email</span>
+            <input name="email" type="email" placeholder="homeowner@example.com" required />
+          </label>
+          <label>
+            <span>Project type</span>
+            <select name="projectType">
+              <option>Bathroom remodeling</option>
+              <option>Kitchen remodeling</option>
+              <option>Basement finishing</option>
+            </select>
+          </label>
+          <label>
+            <span>Timeline</span>
+            <select name="timeline">
+              <option>Ready this month</option>
+              <option>1-3 months</option>
+              <option>Just researching</option>
+            </select>
+          </label>
+          <label class="wide-field">
+            <span>Project notes</span>
+            <textarea name="notes" placeholder="We want a walk-in shower and new vanity in Denver."></textarea>
+          </label>
+          <button type="submit">Submit estimate request</button>
+          <p id="demoEstimateStatus" role="status"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="/tracker.js" data-site-id="br_demo_front_range_remodels" data-skip-logged-in="false" async></script>
+    <script>
+      document.querySelector("#estimate-form")?.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var status = document.querySelector("#demoEstimateStatus");
+        if (status) status.textContent = "Demo estimate request captured. Site Signal should receive a form_submit event.";
+        event.currentTarget.reset();
+      });
+    </script>
+  </body>
+</html>
