@@ -3855,6 +3855,63 @@ li {
   margin-bottom: 28px;
 }
 
+.connected-command-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: -8px 0 28px;
+}
+
+.connected-command-strip article {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 142px;
+  border: 1px solid rgba(23, 23, 23, 0.1);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 121, 0, 0.1), rgba(255, 255, 255, 0) 45%),
+    #ffffff;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.07);
+  padding: 18px;
+}
+
+.connected-command-strip article:first-child {
+  background:
+    linear-gradient(135deg, rgba(25, 25, 25, 0.92), rgba(25, 25, 25, 0.78)),
+    #191919;
+}
+
+.connected-command-strip span {
+  color: #8a8a8a;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.connected-command-strip strong {
+  color: #171717;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.08;
+}
+
+.connected-command-strip small {
+  color: #666666;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.connected-command-strip article:first-child span,
+.connected-command-strip article:first-child small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.connected-command-strip article:first-child strong {
+  color: #ffffff;
+}
+
 .connected-summary-strip article {
   display: grid;
   gap: 7px;
@@ -4447,6 +4504,58 @@ li {
   font-size: 1.3rem;
 }
 
+.change-control-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.change-control-card h2 {
+  margin: 4px 0 8px;
+  color: #171717;
+  font-size: 1.35rem;
+}
+
+.change-control-card p:not(.eyebrow) {
+  margin: 0;
+  color: #6f6f6f;
+  line-height: 1.55;
+}
+
+.change-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.change-control-grid article {
+  display: grid;
+  gap: 7px;
+  min-height: 126px;
+  border: 1px solid #e6e6e1;
+  border-radius: 8px;
+  background: #f8f8f5;
+  padding: 16px;
+}
+
+.change-control-grid span {
+  color: #8a8a8a;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.change-control-grid strong {
+  color: #171717;
+  font-size: 1.05rem;
+}
+
+.change-control-grid small {
+  color: #666666;
+  line-height: 1.4;
+}
+
 .connected-dashboard-body .builder-action-list {
   display: grid;
   gap: 14px;
@@ -4741,6 +4850,7 @@ li {
   .connected-card-grid.three-up,
   .connected-card-grid.four-up,
   .connected-card-grid.five-up,
+  .connected-command-strip,
   .connected-summary-strip,
   .onboarding-stage-grid,
   .admin-readiness-checklist,
@@ -4751,6 +4861,8 @@ li {
   .next-best-move-list,
   .journey-funnel,
   .direct-lead-card,
+  .change-control-card,
+  .change-control-grid,
   .connect-site-card {
     grid-template-columns: 1fr;
   }

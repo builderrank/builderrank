@@ -378,6 +378,14 @@ const topLandingPageMetric = document.querySelector("#topLandingPageMetric");
 const bestPromptMetric = document.querySelector("#bestPromptMetric");
 const topSourceMetric = document.querySelector("#topSourceMetric");
 const changesLiveMetric = document.querySelector("#changesLiveMetric");
+const workspaceReadinessMetric = document.querySelector("#workspaceReadinessMetric");
+const workspaceReadinessDetail = document.querySelector("#workspaceReadinessDetail");
+const nextOperatorActionMetric = document.querySelector("#nextOperatorActionMetric");
+const nextOperatorActionDetail = document.querySelector("#nextOperatorActionDetail");
+const bestOpportunityMetric = document.querySelector("#bestOpportunityMetric");
+const bestOpportunityDetail = document.querySelector("#bestOpportunityDetail");
+const changeControlMetric = document.querySelector("#changeControlMetric");
+const changeControlDetail = document.querySelector("#changeControlDetail");
 const changeLogBadge = document.querySelector("#changeLogBadge");
 const builderActionList = document.querySelector("#builderActionList");
 const deployedChangeList = document.querySelector("#deployedChangeList");
@@ -522,7 +530,7 @@ function initializeMetricHelp() {
     button.className = "metric-help";
     button.setAttribute("aria-label", `${label}: ${help}`);
     button.dataset.help = help;
-    button.textContent = "?";
+    button.textContent = "i";
     element.append(" ", button);
   });
 }
@@ -581,6 +589,8 @@ function applyLiveDashboardData(payload) {
   if (workspace.competitorsTracked != null) {
     competitorBadge.textContent = `${workspace.competitorsTracked} competitors tracked`;
   }
+
+  updateCommandStrip(payload);
 
   if (aiVisibility.visibilityScore != null) {
     visibilityScore.textContent = aiVisibility.visibilityScore;
@@ -726,6 +736,47 @@ function applyLiveDashboardData(payload) {
   renderLiveReviewTasks(recommendations);
   renderLiveReports(payload.reports || []);
   initializeMetricHelp();
+}
+
+function updateCommandStrip(payload) {
+  const readiness = payload.workspace?.readiness || {};
+  const summary = payload.summary || {};
+  const opportunities = payload.opportunities || [];
+  const topOpportunity = opportunities[0];
+
+  if (workspaceReadinessMetric) workspaceReadinessMetric.textContent = readiness.ready ? "Beta ready" : "Needs setup";
+  if (workspaceReadinessDetail) {
+    const blockers = readiness.blockers || [];
+    workspaceReadinessDetail.textContent = readiness.ready
+      ? "Customer workspace has tracking, AI data, and required QA evidence."
+      : blockers.length
+        ? blockers.slice(0, 2).join(" · ")
+        : "Finish tracking QA, account claim, and first AI import.";
+  }
+
+  if (nextOperatorActionMetric) {
+    nextOperatorActionMetric.textContent = readiness.ready ? "Review dashboard" : "Finish QA";
+  }
+  if (nextOperatorActionDetail) {
+    nextOperatorActionDetail.textContent = readiness.ready
+      ? "Walk through visibility, sources, leads, and Punch List with the customer."
+      : "Send a page-view QA test, a lead-event QA test, then refresh tracking health.";
+  }
+
+  if (bestOpportunityMetric) {
+    bestOpportunityMetric.textContent = topOpportunity?.title || summary.topLandingPage || "First service page";
+  }
+  if (bestOpportunityDetail) {
+    bestOpportunityDetail.textContent = topOpportunity?.nextStep || "Prioritize the profit center the customer wants more of first.";
+  }
+
+  if (changeControlMetric) {
+    const open = (payload.recommendations || []).filter((item) => item.status !== "complete").length;
+    changeControlMetric.textContent = open ? `${open} pending tasks` : "Approval queue clear";
+  }
+  if (changeControlDetail) {
+    changeControlDetail.textContent = "Customer-owned Punch List tasks can move from open to in progress to live.";
+  }
 }
 
 function renderLiveRecommendations(recommendations) {
