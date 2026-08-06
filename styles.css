@@ -789,7 +789,7 @@ button {
 }
 
 .compact-login-form {
-  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr) minmax(96px, auto);
   max-width: 100%;
 }
 
@@ -798,6 +798,7 @@ button {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  margin-top: -2px;
 }
 
 .auth-actions a,
@@ -821,6 +822,7 @@ button {
   border-color: transparent;
   background: transparent;
   color: var(--muted);
+  min-height: auto;
   padding: 0;
 }
 
@@ -3095,9 +3097,26 @@ h3 {
 .audit-form {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
   align-items: end;
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(8, 8, 8, 0.78);
+  padding: 16px;
   max-width: 100%;
+}
+
+.report-form-intro {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.report-form-intro strong {
+  font-size: 1rem;
+  line-height: 1.35;
 }
 
 .email-field,
@@ -3286,9 +3305,9 @@ button:disabled {
 }
 
 .report-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
   margin-top: 16px;
 }

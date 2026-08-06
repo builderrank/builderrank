@@ -192,6 +192,7 @@ const baseAudit = {
 
 let audit = structuredClone(baseAudit);
 let checkoutConfirmed = false;
+let hasGeneratedReport = false;
 
 const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
@@ -216,6 +217,7 @@ const auditSubmitButton = document.querySelector("#auditSubmitButton");
 const pdfButton = document.querySelector("#pdfButton");
 const jsonButton = document.querySelector("#jsonButton");
 const emailReportButton = document.querySelector("#emailReportButton");
+const saveButtons = document.querySelector(".save-buttons");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
 const promoCodeInputs = document.querySelectorAll("[data-promo-code-input]");
 const checkoutNotice = document.querySelector("#checkoutNotice");
@@ -368,6 +370,7 @@ if (auditForm) {
       }
 
       audit = payload;
+      hasGeneratedReport = true;
       const saveResult = await saveCompletedReport(payload, reportAccess);
       auditStatus.textContent = saveResult?.cloudSaved
         ? `Real audit complete for ${payload.website}. Saved to your account.`
@@ -1350,8 +1353,10 @@ async function refreshAuthState() {
     if (reportAuthPanel) reportAuthPanel.classList.remove("signed-in");
     if (reportLoginForm) reportLoginForm.hidden = false;
     if (accountLoginForm) accountLoginForm.hidden = false;
-    if (reportAuthTitle) reportAuthTitle.textContent = "Log in before claiming the free report";
-    if (reportAuthSummary) reportAuthSummary.textContent = "Use the same login any time you come back to view saved reports.";
+    if (reportAuthTitle) reportAuthTitle.textContent = "Create a free account or log in to start";
+    if (reportAuthSummary) {
+      reportAuthSummary.textContent = "This keeps your free report, PDF, and future dashboard access tied to one workspace.";
+    }
     if (accountLoginButton) accountLoginButton.disabled = false;
     if (accountResetOpenButton) accountResetOpenButton.hidden = false;
     if (reportResetOpenButton) reportResetOpenButton.hidden = false;
@@ -2184,6 +2189,7 @@ function render() {
   intentList.innerHTML = audit.intents.map(renderIntent).join("");
   evidenceList.innerHTML = renderEvidence(audit.evidence);
   modelAnalysisList.innerHTML = renderModelAnalyses(audit.modelAnalyses);
+  if (saveButtons) saveButtons.hidden = !hasGeneratedReport;
 }
 
 function reportFilename(extension) {

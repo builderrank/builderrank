@@ -39,14 +39,14 @@
           </div>
           <h1>Generate the contractor or service business AI visibility report.</h1>
           <p class="hero-text">
-            Log in, enter one business website, primary market, and phone number, then claim the free report.
-            We save it to your workspace and email a PDF copy automatically.
+            Create a free account or log in, then enter one business website, primary market, and phone
+            number. Builder Rank saves the report to your workspace and emails the PDF automatically.
           </p>
           <div id="reportAuthPanel" class="report-auth-panel">
             <div>
-              <p class="eyebrow">Customer Login</p>
-              <strong id="reportAuthTitle">Log in before claiming the free report</strong>
-              <p id="reportAuthSummary">Use the same login any time you come back to view saved reports.</p>
+              <p class="eyebrow">Step 1 · Account</p>
+              <strong id="reportAuthTitle">Create a free account or log in to start</strong>
+              <p id="reportAuthSummary">This keeps your free report, PDF, and future dashboard access tied to one workspace.</p>
             </div>
             <div id="reportLoginForm" class="login-form compact-login-form">
               <label>
@@ -60,12 +60,16 @@
               <button id="reportLoginButton" type="button">Log In</button>
             </div>
             <div class="auth-actions">
-              <button id="reportResetOpenButton" class="text-button" type="button">Forgot password?</button>
               <button id="reportCreateOpenButton" class="secondary-button" type="button">Create Account</button>
-              <a href="/account">View dashboard</a>
+              <a href="/account">Returning customer dashboard</a>
+              <button id="reportResetOpenButton" class="text-button" type="button">Forgot password?</button>
             </div>
           </div>
           <form id="auditForm" class="audit-form">
+            <div class="report-form-intro">
+              <p class="eyebrow">Step 2 · Business details</p>
+              <strong>Tell Builder Rank which website and market to inspect.</strong>
+            </div>
             <input id="emailInput" type="hidden" />
             <label class="url-field">
               <span>Business website</span>
@@ -95,7 +99,7 @@
             <p id="auditStatus" class="audit-status" role="status">
               Log in or create an account, then complete the required fields to claim one free report.
             </p>
-            <div class="save-buttons">
+            <div class="save-buttons" hidden>
               <button id="pdfButton" type="button">Save PDF</button>
               <button id="jsonButton" type="button">Export JSON</button>
               <button id="emailReportButton" type="button">Email Report</button>
