@@ -2594,6 +2594,23 @@ button {
   padding: 28px;
 }
 
+.pricing-offer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pricing-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: 410px;
+}
+
+.pricing-card-platform {
+  background:
+    linear-gradient(145deg, rgba(255, 121, 0, 0.16), transparent 46%),
+    #0c0c0c;
+}
+
 .mini-report-topline,
 .mini-score {
   border: 1px solid var(--line);
@@ -2667,9 +2684,24 @@ button {
   line-height: 1.45;
 }
 
+.pricing-card button,
+.pricing-card-button {
+  display: inline-grid;
+  min-height: 48px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: var(--orange);
+  color: #080808;
+  padding: 0 18px;
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
 .pricing-section {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  grid-template-columns: minmax(0, 0.85fr) minmax(520px, 1fr);
   gap: 18px;
   align-items: stretch;
   margin-bottom: 18px;
@@ -4753,6 +4785,7 @@ li {
   .audit-form,
   .education-grid,
   .pricing-section,
+  .pricing-offer-grid,
   .page-grid,
   .journey-grid,
   .account-shell,
