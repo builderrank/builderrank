@@ -44,6 +44,7 @@ export default async function handler(request, response) {
     const workspace = normalizeWorkspace(body);
     const business = await upsertBusiness(workspace);
     const jobTypes = await ensureJobTypes(business.id, workspace.jobTypes);
+    const targetTerms = await ensureTargetTerms(business, jobTypes, workspace.targetTerms);
     const competitors = await ensureCompetitors(business.id, workspace.competitors);
     const prompts = await ensurePrompts(business.id, jobTypes, workspace);
     const recommendations = await ensureRecommendations(business.id, jobTypes, workspace);
@@ -53,6 +54,7 @@ export default async function handler(request, response) {
       business,
       counts: {
         jobTypes: jobTypes.length,
+        targetTerms: targetTerms.length,
         competitors: competitors.length,
         prompts: prompts.length,
         recommendations: recommendations.length,
@@ -247,6 +249,31 @@ async function ensurePrompts(businessId, jobTypes, workspace) {
   return rows;
 }
 
+async function ensureTargetTerms(business, jobTypes, phrases) {
+  if (!phrases.length) return [];
+  const existingRows = await selectSupabaseRows("br_target_terms", { select: "id,job_type_id,phrase,target_market,priority,status", business_id: `eq.${business.id}`, status: "neq.archived", limit: "10" });
+  const existingByPhrase = new Map(existingRows.map((row) => [normalizePrompt(row.phrase), row]));
+  const rows = [];
+  for (let index = 0; index < phrases.length; index += 1) {
+    const phrase = phrases[index];
+    const existing = existingByPhrase.get(normalizePrompt(phrase));
+    const term = existing || (await insertSupabaseRow("br_target_terms", { business_id: business.id, job_type_id: jobTypes[0]?.id || null, phrase, target_market: business.market, priority: index + 1, status: "active" }))[0];
+    if (!term) continue;
+    rows.push(term);
+    const promptTexts = [`best ${phrase} in ${business.market}`, `who should I hire for ${phrase} near ${business.market}`, `${phrase} companies with strong reviews in ${business.market}`];
+    const existingPrompts = await selectSupabaseRows("br_prompts", { select: "id,prompt_text", business_id: `eq.${business.id}`, limit: "250" });
+    const knownPrompts = new Set(existingPrompts.map((row) => normalizePrompt(row.prompt_text)));
+    for (const promptText of promptTexts) {
+      if (knownPrompts.has(normalizePrompt(promptText))) continue;
+      await insertSupabaseRow("br_prompts", { business_id: business.id, job_type_id: term.job_type_id || jobTypes[0]?.id || null, target_term_id: term.id, prompt_text: promptText, persona: "Homeowner ready to hire", intent: "target_term", active: true });
+    }
+    const title = `Optimize for “${phrase}”`;
+    const existingRecommendation = (await selectSupabaseRows("br_recommendations", { select: "id", business_id: `eq.${business.id}`, title: `eq.${title}`, limit: "1" }))[0];
+    if (!existingRecommendation) await insertSupabaseRow("br_recommendations", { business_id: business.id, job_type_id: term.job_type_id || jobTypes[0]?.id || null, target_term_id: term.id, priority: "high", title, body: `Strengthen the service page, project proof, FAQs, schema, internal links, GBP services, and citations around “${phrase}” in ${business.market}. Recheck ChatGPT, Gemini, and Claude after approved changes go live.`, status: "open", source: "target_terms" });
+  }
+  return rows;
+}
+
 async function ensureRecommendations(businessId, jobTypes, workspace) {
   const recommendations = workspace.recommendations.length ? workspace.recommendations : starterRecommendations(workspace);
   const existingRows = await selectSupabaseRows("br_recommendations", {
@@ -266,7 +293,7 @@ async function ensureRecommendations(businessId, jobTypes, workspace) {
       title: recommendation.title,
       body: recommendation.body,
       status: recommendation.status || existing?.status || "open",
-      source: "admin_bootstrap",
+      source: recommendation.source || existing?.source || "admin_bootstrap",
     };
 
     if (existing?.id) {
@@ -323,17 +350,18 @@ function normalizeWorkspace(body) {
     notes: safeTrim(body.notes).slice(0, 1000),
     prompts: normalizePrompts(body.prompts),
     recommendations: normalizeRecommendations(body.recommendations),
+    targetTerms: normalizeStringList(body.targetTerms || [body.targetTerm1, body.targetTerm2]).map((item) => item.slice(0, 100)).filter((item) => item.length >= 3).slice(0, 2),
   };
 }
 
 function starterPrompts(workspace) {
   return workspace.jobTypes.slice(0, 3).flatMap((jobType) => [
-    `best ${jobType} contractor in ${workspace.market}`,
-    `who should I hire for ${jobType} near ${workspace.market}`,
-    `${jobType} company with good reviews in ${workspace.market}`,
-    `${jobType} cost and contractor recommendations in ${workspace.market}`,
-    `compare ${workspace.company} to other ${jobType} contractors`,
-  ].map((text) => ({ text, jobType })));
+    { text: `best ${jobType} contractor in ${workspace.market}`, intent: "discovery" },
+    { text: `who should I hire for ${jobType} near ${workspace.market}`, intent: "location" },
+    { text: `${jobType} company with good reviews in ${workspace.market}`, intent: "reputation" },
+    { text: `${jobType} cost and contractor recommendations in ${workspace.market}`, intent: "high_intent" },
+    { text: `compare ${workspace.company} to other ${jobType} contractors`, intent: "comparison" },
+  ].map((prompt) => ({ ...prompt, jobType })));
 }
 
 function starterRecommendations(workspace) {
@@ -366,6 +394,27 @@ function starterRecommendations(workspace) {
       body: `Add ${workspace.jobTypes.slice(0, 3).join(", ")} and related high-profit services to GBP so AI can connect website claims to local profile data.`,
       jobType: workspace.jobTypes[0],
     },
+    {
+      priority: "high",
+      title: "Align Instagram and Facebook business identity",
+      body: `Use the same business name, category, ${workspace.jobTypes.slice(0, 3).join(", ")} services, ${workspace.market} coverage, phone, and website identity across both Meta profiles.`,
+      jobType: workspace.jobTypes[0],
+      source: "meta_ai",
+    },
+    {
+      priority: "high",
+      title: "Publish Meta-readable project proof",
+      body: "Pair crawlable website project pages with Instagram and Facebook posts that clearly name the service, city or neighborhood, scope, outcome, and customer proof.",
+      jobType: workspace.jobTypes[0],
+      source: "meta_ai",
+    },
+    {
+      priority: "medium",
+      title: "Verify Meta AI consumer answers",
+      body: "Run controlled discovery, comparison, reputation, service, and location prompts inside Instagram Meta AI and record the profile, location, timestamp, answer, position, and sources.",
+      jobType: workspace.jobTypes[0],
+      source: "meta_ai",
+    },
   ];
 }
 
@@ -390,6 +439,7 @@ function normalizeRecommendations(value) {
       title: safeTrim(item.title),
       body: safeTrim(item.body || item.summary),
       status: safeTrim(item.status),
+      source: safeTrim(item.source),
       jobType: safeTrim(item.jobType),
     }))
     .filter((item) => item.title && item.body)

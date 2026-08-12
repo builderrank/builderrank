@@ -163,8 +163,22 @@ create table if not exists public.br_prompts (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.br_target_terms (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.br_businesses(id) on delete cascade,
+  job_type_id uuid references public.br_job_types(id) on delete set null,
+  phrase text not null,
+  target_market text,
+  priority integer not null default 1,
+  status text not null default 'active' check (status in ('active', 'paused', 'archived')),
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.br_prompts
   add column if not exists job_type_id uuid references public.br_job_types(id) on delete set null,
+  add column if not exists target_term_id uuid references public.br_target_terms(id) on delete set null,
   add column if not exists persona text,
   add column if not exists intent text,
   add column if not exists active boolean not null default true,
@@ -178,6 +192,11 @@ create table if not exists public.br_prompt_runs (
   run_status text not null default 'pending',
   raw_response jsonb,
   answer_text text,
+  measurement_mode text not null default 'api_benchmark',
+  consumer_surface text,
+  verified_at timestamptz,
+  verified_location text,
+  verifier_context jsonb not null default '{}'::jsonb,
   run_at timestamptz not null default now(),
   completed_at timestamptz
 );
@@ -187,6 +206,11 @@ alter table public.br_prompt_runs
   add column if not exists run_status text not null default 'pending',
   add column if not exists raw_response jsonb,
   add column if not exists answer_text text,
+  add column if not exists measurement_mode text not null default 'api_benchmark',
+  add column if not exists consumer_surface text,
+  add column if not exists verified_at timestamptz,
+  add column if not exists verified_location text,
+  add column if not exists verifier_context jsonb not null default '{}'::jsonb,
   add column if not exists run_at timestamptz not null default now(),
   add column if not exists completed_at timestamptz;
 
@@ -199,6 +223,8 @@ create table if not exists public.br_ai_mentions (
   rank_position integer,
   sentiment text,
   confidence numeric(5,2),
+  service_accuracy numeric(5,2),
+  geo_accuracy numeric(5,2),
   created_at timestamptz not null default now()
 );
 
@@ -208,6 +234,8 @@ alter table public.br_ai_mentions
   add column if not exists rank_position integer,
   add column if not exists sentiment text,
   add column if not exists confidence numeric(5,2),
+  add column if not exists service_accuracy numeric(5,2),
+  add column if not exists geo_accuracy numeric(5,2),
   add column if not exists created_at timestamptz not null default now();
 
 create table if not exists public.br_ai_sources (
@@ -275,6 +303,7 @@ create table if not exists public.br_recommendations (
 
 alter table public.br_recommendations
   add column if not exists job_type_id uuid references public.br_job_types(id) on delete set null,
+  add column if not exists target_term_id uuid references public.br_target_terms(id) on delete set null,
   add column if not exists priority text not null default 'medium',
   add column if not exists status text not null default 'open',
   add column if not exists source text not null default 'ai_dashboard',
@@ -290,6 +319,7 @@ alter table public.br_ai_mentions enable row level security;
 alter table public.br_ai_sources enable row level security;
 alter table public.br_website_events enable row level security;
 alter table public.br_recommendations enable row level security;
+alter table public.br_target_terms enable row level security;
 
 drop policy if exists "br_businesses_select_own" on public.br_businesses;
 create policy "br_businesses_select_own"
@@ -316,6 +346,11 @@ create policy "br_recommendations_select_own"
 on public.br_recommendations for select to authenticated
 using (exists (select 1 from public.br_businesses b where b.id = br_recommendations.business_id and b.owner_user_id = auth.uid()));
 
+drop policy if exists "br_target_terms_select_own" on public.br_target_terms;
+create policy "br_target_terms_select_own"
+on public.br_target_terms for select to authenticated
+using (exists (select 1 from public.br_businesses b where b.id = br_target_terms.business_id and b.owner_user_id = auth.uid()));
+
 drop policy if exists "br_website_events_no_client_write" on public.br_website_events;
 create policy "br_website_events_no_client_write"
 on public.br_website_events
@@ -332,7 +367,9 @@ create unique index if not exists br_job_types_business_slug_uidx on public.br_j
 create index if not exists br_competitors_business_idx on public.br_competitors (business_id);
 create unique index if not exists br_competitors_business_name_uidx on public.br_competitors (business_id, lower(name));
 create unique index if not exists br_prompts_business_prompt_uidx on public.br_prompts (business_id, lower(prompt_text));
+create index if not exists br_prompts_target_term_idx on public.br_prompts (target_term_id);
 create index if not exists br_prompt_runs_prompt_run_at_idx on public.br_prompt_runs (prompt_id, run_at desc);
+create index if not exists br_prompt_runs_meta_mode_idx on public.br_prompt_runs (platform, measurement_mode, run_at desc);
 create unique index if not exists br_prompt_runs_prompt_platform_run_at_uidx on public.br_prompt_runs (prompt_id, platform, run_at);
 create index if not exists br_ai_mentions_business_idx on public.br_ai_mentions (business_id, created_at desc);
 create unique index if not exists br_ai_mentions_run_business_uidx on public.br_ai_mentions (prompt_run_id, business_id);
@@ -344,3 +381,6 @@ create index if not exists br_website_events_site_event_received_idx on public.b
 create index if not exists br_website_events_site_source_received_idx on public.br_website_events (site_id, source_type, source_name, received_at desc);
 create index if not exists br_recommendations_business_status_idx on public.br_recommendations (business_id, status, created_at desc);
 create unique index if not exists br_recommendations_business_title_uidx on public.br_recommendations (business_id, lower(title));
+create index if not exists br_recommendations_target_term_idx on public.br_recommendations (target_term_id);
+create unique index if not exists br_target_terms_business_phrase_uidx on public.br_target_terms (business_id, lower(phrase)) where status <> 'archived';
+create index if not exists br_target_terms_business_status_idx on public.br_target_terms (business_id, status, priority);

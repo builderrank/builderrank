@@ -68,6 +68,21 @@ create table if not exists br_prompts (
   created_at timestamptz not null default now()
 );
 
+create table if not exists br_target_terms (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references br_businesses(id) on delete cascade,
+  job_type_id uuid references br_job_types(id) on delete set null,
+  phrase text not null,
+  target_market text,
+  priority integer not null default 1,
+  status text not null default 'active',
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table br_prompts add column if not exists target_term_id uuid references br_target_terms(id) on delete set null;
+
 create table if not exists br_prompt_runs (
   id uuid primary key default gen_random_uuid(),
   prompt_id uuid not null references br_prompts(id) on delete cascade,
@@ -76,6 +91,11 @@ create table if not exists br_prompt_runs (
   run_status text not null default 'pending',
   raw_response jsonb,
   answer_text text,
+  measurement_mode text not null default 'api_benchmark',
+  consumer_surface text,
+  verified_at timestamptz,
+  verified_location text,
+  verifier_context jsonb not null default '{}'::jsonb,
   run_at timestamptz not null default now(),
   completed_at timestamptz
 );
@@ -89,6 +109,8 @@ create table if not exists br_ai_mentions (
   rank_position integer,
   sentiment text,
   confidence numeric(5,2),
+  service_accuracy numeric(5,2),
+  geo_accuracy numeric(5,2),
   created_at timestamptz not null default now()
 );
 
@@ -167,10 +189,14 @@ create table if not exists br_recommendations (
   completed_at timestamptz
 );
 
+alter table br_recommendations add column if not exists target_term_id uuid references br_target_terms(id) on delete set null;
+
 create index if not exists br_prompt_runs_prompt_run_at_idx on br_prompt_runs(prompt_id, run_at desc);
+create index if not exists br_prompt_runs_meta_mode_idx on br_prompt_runs(platform, measurement_mode, run_at desc);
 create index if not exists br_ai_mentions_business_idx on br_ai_mentions(business_id, created_at desc);
 create index if not exists br_website_events_site_received_idx on br_website_events(site_id, received_at desc);
 create index if not exists br_website_events_session_idx on br_website_events(session_id);
 create index if not exists br_website_events_site_event_received_idx on br_website_events(site_id, event, received_at desc);
 create index if not exists br_website_events_site_source_received_idx on br_website_events(site_id, source_type, source_name, received_at desc);
 create index if not exists br_perception_scores_business_idx on br_perception_scores(business_id, measured_at desc);
+create index if not exists br_target_terms_business_status_idx on br_target_terms(business_id, status, priority);

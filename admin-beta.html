@@ -153,6 +153,7 @@
               <label><span>Site ID</span><input name="siteId" placeholder="br_customer_site_id" /></label>
               <label class="wide-field"><span>Job types</span><textarea name="jobTypes" placeholder="Bathroom remodeling&#10;Kitchen remodeling"></textarea></label>
               <label class="wide-field"><span>Competitors</span><textarea name="competitors" placeholder="Mile High Bath Co.&#10;Summit Remodel Group"></textarea></label>
+              <label class="wide-field"><span>AI target terms (maximum 2)</span><textarea name="targetTerms" placeholder="bathroom remodeler Denver&#10;walk-in shower contractor"></textarea></label>
               <label class="wide-field"><span>Operator notes</span><textarea name="notes" placeholder="Customer wants more bathroom projects. Marketing contact can install through WordPress."></textarea></label>
               <div class="admin-form-actions wide-field">
                 <button type="button" id="adminFillSampleIntake">Use sample remodeler</button>
@@ -179,8 +180,11 @@
                   <option value="Gemini">Gemini</option>
                   <option value="Claude">Claude</option>
                   <option value="Perplexity">Perplexity</option>
+                  <option value="Meta AI">Meta AI</option>
                 </select>
               </label>
+              <label><span>Measurement mode</span><select name="measurementMode"><option value="api_benchmark">Meta/API benchmark</option><option value="consumer_verified">Verified consumer result</option></select></label>
+              <label><span>Consumer surface</span><select name="consumerSurface"><option value="">API / unspecified</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="meta.ai">meta.ai</option></select></label>
               <label><span>Model</span><input name="model" placeholder="gpt-5.2" /></label>
               <label><span>Job type</span><input name="jobType" placeholder="Bathroom remodeling" /></label>
               <label><span>Run date</span><input name="runAt" type="date" /></label>
@@ -189,6 +193,9 @@
               <label><span>Sentiment</span><input name="sentiment" placeholder="positive" /></label>
               <label><span>Persona</span><input name="persona" placeholder="Homeowner ready to hire" /></label>
               <label><span>Intent</span><input name="intent" placeholder="hire_local_contractor" /></label>
+              <label><span>Verified location</span><input name="verifiedLocation" placeholder="Denver, CO" /></label>
+              <label><span>Service accuracy %</span><input name="serviceAccuracy" inputmode="decimal" placeholder="90" /></label>
+              <label><span>Geographic accuracy %</span><input name="geoAccuracy" inputmode="decimal" placeholder="100" /></label>
               <label class="wide-field"><span>Prompt</span><textarea name="prompt" required placeholder="best bathroom remodeler in Denver"></textarea></label>
               <label class="wide-field"><span>Answer summary</span><textarea name="answerText" placeholder="Paste or summarize the AI answer."></textarea></label>
               <label class="wide-field"><span>Mention text</span><textarea name="mentionText" placeholder="Text around the customer mention."></textarea></label>
@@ -196,6 +203,7 @@
               <label class="checkbox-field"><input name="mentioned" type="checkbox" checked /> <span>Mentioned customer</span></label>
               <div class="admin-form-actions wide-field">
                 <button type="button" id="adminFillPromptTemplate">Use prompt template</button>
+                <button type="button" id="adminRunMetaBenchmark">Run Meta Benchmark</button>
                 <button type="submit">Import AI Run</button>
               </div>
             </form>

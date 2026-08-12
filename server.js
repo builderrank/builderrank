@@ -7,6 +7,7 @@ import emailReportHandler from "./api/email-report.js";
 import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
 import importAiVisibilityHandler from "./api/import-ai-visibility.js";
+import runMetaBenchmarkHandler from "./api/run-meta-benchmark.js";
 import launchReadinessHandler from "./api/launch-readiness.js";
 import paymentConfigHandler from "./api/payment-config.js";
 import paymentStatusHandler from "./api/payment-status.js";
@@ -23,6 +24,7 @@ import dashboardDataHandler from "./api/dashboard-data.js";
 import trackHandler from "./api/track.js";
 import trackingHealthHandler from "./api/tracking-health.js";
 import updateRecommendationHandler from "./api/update-recommendation.js";
+import targetTermsHandler from "./api/target-terms.js";
 
 loadEnvFile();
 
@@ -103,6 +105,11 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (url.pathname === "/api/run-meta-benchmark") {
+      await callApiHandler(runMetaBenchmarkHandler, request, response);
+      return;
+    }
+
     if (url.pathname === "/api/launch-readiness") {
       await callApiHandler(launchReadinessHandler, request, response);
       return;
@@ -150,6 +157,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/update-recommendation") {
       await callApiHandler(updateRecommendationHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/target-terms") {
+      await callApiHandler(targetTermsHandler, request, response);
       return;
     }
 

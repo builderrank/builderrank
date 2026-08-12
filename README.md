@@ -86,6 +86,8 @@ They preview the next subscription product layer:
 - AI visibility score, mention rate, average rank, and AI-sourced leads.
 - Prompt library by job type and market.
 - Platform visibility for ChatGPT, Gemini, Claude, and Perplexity.
+- Meta AI visibility across repeatable Model API benchmarks and separately verified Instagram/Facebook consumer results.
+- Customer-controlled AI Target Terms with ChatGPT, Gemini, and Claude measurement and approval-based optimization workflows.
 - Competitor ranking gap.
 - Direct website vs directory vs Google Business Profile link share.
 - AI perception attributes and prioritized implementation path.
@@ -97,6 +99,7 @@ docs/builderrank-ai-dashboard-blueprint.md
 docs/hotelrank-source-notes.md
 docs/private-beta-implementation-plan.md
 docs/ai-dashboard-schema.sql
+docs/meta-ai-visibility-runbook.md
 ```
 
 ## Website tracking

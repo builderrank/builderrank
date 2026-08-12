@@ -20,6 +20,7 @@ const requiredFiles = [
   "api/track.js",
   "api/tracking-health.js",
   "api/update-recommendation.js",
+  "api/target-terms.js",
   "assets/admin-beta.js",
   "assets/dashboard.js",
   "scripts/production-env-handoff.mjs",
@@ -79,6 +80,7 @@ const sitemap = read("sitemap.xml");
   "/api/track",
   "/api/tracking-health",
   "/api/update-recommendation",
+  "/api/target-terms",
 ].forEach((pattern) => check(`api router route ${pattern}`, apiRouter.includes(pattern)));
 [
   '"src": "api/index.js"',
@@ -106,6 +108,7 @@ const server = read("server.js");
   "/api/track",
   "/api/tracking-health",
   "/api/update-recommendation",
+  "/api/target-terms",
   '"/admin-beta": "/admin-beta.html"',
   '"/demo-remodeler": "/demo-remodeler.html"',
 ].forEach((pattern) => check(`local server route ${pattern}`, server.includes(pattern)));
@@ -386,6 +389,23 @@ check("dashboard renders Site Signal health states", dashboardJs.includes("siteS
 check("dashboard updates live source mix", dashboardJs.includes("updateLiveSourceMix") && dashboardJs.includes("payload.sourceMix"));
 check("dashboard renders source lead signal", dashboard.includes("Lead Signal") && dashboardJs.includes("sourceSignalFallback"));
 check("dashboard exports table CSV", dashboardJs.includes("exportTableToCsv") && dashboardJs.includes("escapeCsvCell"));
+check("dashboard has dedicated Meta AI workspace", dashboard.includes('data-dashboard-page="meta"') && dashboard.includes("metaVisibilityScore") && dashboard.includes("metaPromptRows"));
+check("dashboard explains Meta AI metrics", dashboardJs.includes('"Meta Visibility Score"') && dashboardJs.includes('"Measurement Health"') && dashboardJs.includes('"Make Changes"') && dashboardJs.includes("initializeMetricHelp"));
+check("dashboard has guided Meta change workflow", dashboard.includes("metaChangeRows") && dashboard.includes("Review evidence") && dashboard.includes("Recheck Meta AI") && dashboardJs.includes("renderMetaChangeCenter"));
+check("dashboard keeps Meta changes approval-based", dashboard.includes("does not automatically publish") && dashboardJs.includes("data-next-status"));
+check("dashboard never substitutes demo Meta recommendations for live empty data", dashboardJs.includes("No customer-specific changes yet") && !dashboardJs.includes('const rows = recommendations.length ? recommendations : ['));
+check("dashboard supports two-step Meta change approval", dashboardJs.includes("Approve & Start") && dashboardJs.includes('dataset.demoState === "in_progress"') && dashboardJs.includes("Mark Live"));
+check("dashboard renders Meta provenance", dashboardJs.includes("row.mode") && dashboardJs.includes("row.surface") && dashboardJs.includes("verifiedRuns"));
+check("dashboard renders Meta prompt status badges", dashboardJs.includes('"#metaPromptRows"') && dashboardJs.includes("{ raw: true }") && dashboardJs.includes("meta-mode-pill"));
+check("dashboard has customer-controlled AI Target Terms", dashboard.includes("AI Target Terms") && dashboard.includes("targetTermForm") && dashboard.includes("targetTermRows") && dashboardJs.includes("/api/target-terms"));
+check("dashboard limits cockpit to two active targets", dashboard.includes("0 / 2") && dashboardJs.includes("submit.disabled = activeCount >= 2") && dashboardJs.includes("Pause target"));
+check("dashboard has guided ChatGPT Gemini Claude changes", dashboard.includes("Make Changes Across AI") && dashboard.includes('data-ai-platform="chatgpt"') && dashboard.includes('data-ai-platform="gemini"') && dashboard.includes('data-ai-platform="claude"') && dashboardJs.includes("renderAiChangeCenter"));
+check("dashboard routes cross-platform approvals into Punch List", dashboardJs.includes('#aiChangeRows [data-recommendation-id]') && dashboardJs.includes("updateLiveRecommendation(aiRecommendationButton)"));
+
+const targetTermsApi = read("api/target-terms.js");
+check("Target Terms API requires workspace ownership", targetTermsApi.includes("getSupabaseUser") && targetTermsApi.includes("owner_user_id") && targetTermsApi.includes("ownedTerm"));
+check("Target Terms API enforces two active terms", targetTermsApi.includes("active.length >= 2") && targetTermsApi.includes("Only two Target Terms can be active"));
+check("Target Terms API seeds prompts and recommendations", targetTermsApi.includes("seedTargetTermWork") && targetTermsApi.includes('intent: "target_term"') && targetTermsApi.includes('source: "target_terms"'));
 
 const dashboardApi = read("api/dashboard-data.js");
 check("dashboard API loads event metadata", dashboardApi.includes("metadata,received_at"));
@@ -429,11 +449,16 @@ check("connect-site backfills matching saved reports", connectSiteApi.includes("
 
 const admin = read("admin-beta.html");
 const adminJs = read("assets/admin-beta.js");
+const metaBenchmarkApi = read("api/run-meta-benchmark.js");
+check("admin beta can run bounded Meta benchmarks", admin.includes("adminRunMetaBenchmark") && adminJs.includes("/api/run-meta-benchmark") && adminJs.includes("limit: 5"));
+check("Meta benchmark preserves partial successes", metaBenchmarkApi.includes("Promise.allSettled") && metaBenchmarkApi.includes("failedRuns") && metaBenchmarkApi.includes("META_BENCHMARK_MAX_RUNS"));
+check("Meta web search integration is capability-gated", metaBenchmarkApi.includes("META_MODEL_WEB_SEARCH_ENABLED") && metaBenchmarkApi.includes("tools: [{ type: \"web_search\" }]") && metaBenchmarkApi.includes("? { tools:"));
 const robotsTxt = read("robots.txt");
 check("admin beta loads assets/admin-beta.js", admin.includes("/assets/admin-beta.js"));
 check("admin beta is noindexed", admin.includes('name="robots"') && admin.includes("noindex,nofollow"));
 check("robots.txt disallows admin beta", robotsTxt.includes("Disallow: /admin-beta"));
 check("admin beta has bootstrap form", admin.includes("adminBootstrapForm"));
+check("admin beta captures initial AI target terms", admin.includes('name="targetTerms"') && adminJs.includes('targetTerms: listFromTextarea(form.get("targetTerms"))'));
 check("admin beta captures launch contact context", admin.includes("ownerName") && admin.includes("installMethod") && admin.includes("Operator notes") && adminJs.includes("form.get(\"ownerName\")") && adminJs.includes("form.get(\"installMethod\")"));
 check("admin beta has import form", admin.includes("adminImportForm"));
 check("admin beta import captures run metadata", admin.includes("name=\"runAt\"") && admin.includes("name=\"confidence\"") && admin.includes("name=\"persona\""));

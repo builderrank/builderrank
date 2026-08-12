@@ -28,6 +28,7 @@ export default async function handler(request, response) {
       if (business?.id) {
         await ensureIntakeJobTypes(business.id, lead.jobTypes);
         await ensureIntakeCompetitors(business.id, parseCompetitors(lead.competitors));
+        await ensureIntakeTargetTerms(business, lead.targetTerms);
       }
     }
 
@@ -73,6 +74,7 @@ async function upsertIntakeBusiness(lead) {
       billingEmail: lead.billingEmail,
       dashboardUsers: lead.dashboardUsers,
       primaryGoal: lead.primaryGoal,
+      targetTerms: lead.targetTerms,
       jobTypes: lead.jobTypes,
       competitors: lead.competitors,
       installMethod: lead.installMethod,
@@ -153,6 +155,18 @@ async function ensureIntakeCompetitors(businessId, competitors) {
   }
 }
 
+async function ensureIntakeTargetTerms(business, targetTerms) {
+  if (!targetTerms.length) return;
+  const jobType = (await selectSupabaseRows("br_job_types", { select: "id", business_id: `eq.${business.id}`, active: "eq.true", order: "priority.asc", limit: "1" }))[0];
+  const existing = await selectSupabaseRows("br_target_terms", { select: "id,phrase,status", business_id: `eq.${business.id}`, status: "neq.archived", limit: "10" });
+  const known = new Set(existing.map((row) => normalizeKey(row.phrase)));
+  for (let index = 0; index < targetTerms.length; index += 1) {
+    const phrase = targetTerms[index];
+    if (known.has(normalizeKey(phrase))) continue;
+    await insertSupabaseRow("br_target_terms", { business_id: business.id, job_type_id: jobType?.id || null, phrase, target_market: business.market, priority: index + 1, status: "active" });
+  }
+}
+
 function normalizeBetaLead(body) {
   const intakeType = safeTrim(body.intakeType) === "signed_client" ? "signed_client" : "beta_request";
   const email = safeTrim(body.email).toLowerCase();
@@ -163,6 +177,7 @@ function normalizeBetaLead(body) {
   const jobTypes = listFromUnknown(body.jobTypes || body.services || jobType).slice(0, 12);
   const contractStatus = safeTrim(body.contractStatus);
   const contractTerm = safeTrim(body.contractTerm);
+  const targetTerms = listFromUnknown(body.targetTerms || [body.targetTerm1, body.targetTerm2]).map((item) => item.slice(0, 100)).filter((item) => item.length >= 3).slice(0, 2);
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error("A valid email is required.");
@@ -207,6 +222,7 @@ function normalizeBetaLead(body) {
     primaryTrade: jobType.slice(0, 120),
     jobType: jobType.slice(0, 120),
     jobTypes: jobTypes.length ? jobTypes.map((item) => item.slice(0, 120)) : [jobType.slice(0, 120)],
+    targetTerms,
     market: market.slice(0, 120),
     competitors: safeTrim(body.competitors).slice(0, 1000),
     primaryGoal: safeTrim(body.primaryGoal).slice(0, 700),

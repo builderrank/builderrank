@@ -42,6 +42,17 @@ export default async function handler(request, response) {
 
   try {
     const body = await readJsonBody(request);
+    const result = await importVisibilityBatch(body);
+    response.status(202).json({ ok: true, ...result });
+  } catch (error) {
+    response.status(error.statusCode || 400).json({
+      error: "Could not import AI visibility batch.",
+      detail: error.message,
+    });
+  }
+}
+
+export async function importVisibilityBatch(body) {
     const batch = normalizeBatch(body);
     const business = await findBusiness(batch.siteId);
     const prompts = await loadPrompts(business.id);
@@ -56,8 +67,7 @@ export default async function handler(request, response) {
       imported.push({ promptRunId: promptRun.id, promptId: prompt.id, jobTypeId: prompt.job_type_id || null, mentionId: mention.id, sources: sources.length });
     }
 
-    response.status(202).json({
-      ok: true,
+    return {
       business: {
         id: business.id,
         name: business.name,
@@ -65,13 +75,7 @@ export default async function handler(request, response) {
       },
       importedRuns: imported.length,
       imported,
-    });
-  } catch (error) {
-    response.status(error.statusCode || 400).json({
-      error: "Could not import AI visibility batch.",
-      detail: error.message,
-    });
-  }
+    };
 }
 
 async function findBusiness(siteId) {
@@ -158,6 +162,11 @@ async function upsertPromptRun(promptId, run) {
       run_status: "complete",
       raw_response: run.rawResponse || {},
       answer_text: run.answerText || "",
+      measurement_mode: run.measurementMode,
+      consumer_surface: run.consumerSurface || null,
+      verified_at: run.verifiedAt,
+      verified_location: run.verifiedLocation || null,
+      verifier_context: run.verifierContext || {},
       run_at: run.runAt,
       completed_at: run.completedAt || new Date().toISOString(),
     },
@@ -177,6 +186,8 @@ async function upsertMention(businessId, promptRunId, run) {
       rank_position: run.rankPosition || null,
       sentiment: run.sentiment || null,
       confidence: run.confidence,
+      service_accuracy: run.serviceAccuracy,
+      geo_accuracy: run.geoAccuracy,
     },
     "prompt_run_id,business_id",
   );
@@ -247,8 +258,25 @@ function normalizeRun(value) {
     rankPosition: normalizeRank(value.rankPosition || value.rank),
     sentiment: safeTrim(value.sentiment).slice(0, 60),
     confidence: normalizeConfidence(value.confidence, Boolean(value.mentioned)),
+    measurementMode: normalizeMeasurementMode(value.measurementMode || value.mode),
+    consumerSurface: safeTrim(value.consumerSurface || value.surface).slice(0, 80),
+    verifiedAt: value.verifiedAt ? normalizeDate(value.verifiedAt) : null,
+    verifiedLocation: safeTrim(value.verifiedLocation || value.locationContext).slice(0, 180),
+    verifierContext: isPlainObject(value.verifierContext) ? value.verifierContext : {},
+    serviceAccuracy: normalizeAccuracy(value.serviceAccuracy),
+    geoAccuracy: normalizeAccuracy(value.geoAccuracy),
     sources: normalizeSources(value.sources || value.citations),
   };
+}
+
+function normalizeMeasurementMode(value) {
+  return safeTrim(value).toLowerCase() === "consumer_verified" ? "consumer_verified" : "api_benchmark";
+}
+
+function normalizeAccuracy(value) {
+  if (value === "" || value == null) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(100, number)) : null;
 }
 
 function findJobType(jobTypes, value) {

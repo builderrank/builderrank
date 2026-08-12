@@ -296,6 +296,7 @@ const DASHBOARD_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Tq-L9aiYVbdtij2JL3oW3
 
 const pageCopy = {
   visibility: ["Visibility Blueprint", "How often this contractor or service business appears in AI-generated answers across platforms."],
+  meta: ["Meta AI", "How this business appears when homeowners ask Meta AI for contractors and service providers across Instagram and Facebook."],
   competition: ["Competition", "See how this business ranks against local competitors based on mention rate and average AI position."],
   sources: ["Sources", "Websites, directories, GBP profiles, and review pages that AI uses when recommending local service businesses."],
   citations: ["Citations", "Prompt-level evidence showing when the direct website, GBP, or directories were cited."],
@@ -350,6 +351,23 @@ const metricHelp = {
   "Content Gap": "The page improvement most likely to help AI understand and recommend this service.",
   "Top Intent": "The job type or buying intent inferred from page URL, CTA text, source, or event metadata.",
   "Lead Rate": "Lead events divided by sessions for this row.",
+  "Meta Visibility Score": "A 0–100 score weighted across prompt coverage, recommendation prominence, service and location accuracy, competitive share of voice, and sentiment accuracy.",
+  "Prompt Coverage": "The percentage of monitored Meta AI prompts in which the customer business is mentioned.",
+  "Average Position": "The average order in which Meta AI recommends the business when it appears. A position closer to #1 is better.",
+  "Share of Voice": "The customer's portion of observed recommendations compared with tracked local competitors in the same Meta answers.",
+  "Verified Instagram": "The number of consumer Meta AI answers manually or operationally verified inside Instagram, kept separate from API benchmark runs.",
+  "Measurement Health": "Whether Builder Rank has enough fresh API benchmark and verified consumer observations to make the Meta report dependable.",
+  "API benchmark runs": "Repeatable prompts run through Meta's developer model API. These are useful for trends but are not claimed as exact Instagram answers.",
+  "Consumer verifications": "Answers observed on an identified consumer surface such as Instagram or Facebook, with timestamp and context recorded.",
+  "Service/location accuracy": "How correctly Meta AI associates the business with its actual services and service area.",
+  "Source strength": "A diagnostic based on cited sources and the proportion of direct business evidence such as the company website and profiles.",
+  "Prompt Category Coverage": "Mention performance grouped by discovery, comparison, reputation, service, location, high-intent, branded, and unbranded questions.",
+  "Meta Prompt Results": "The individual Meta prompts, measurement mode, mention result, position, description, and captured evidence.",
+  "Evidence Gaps": "Specific missing or inconsistent signals that may prevent Meta AI from understanding and recommending the business.",
+  "Meta Optimization Center": "Prioritized profile, website, schema, content, review, and citation recommendations designed to strengthen Meta evidence.",
+  "Make Changes": "A controlled workflow for reviewing, approving, implementing, and rechecking Meta visibility recommendations. Nothing is auto-published.",
+  "AI Target Terms": "One or two customer-selected service or job phrases that Builder Rank monitors across ChatGPT, Gemini, and Claude and turns into an optimization plan.",
+  "Make Changes Across AI": "A customer-approved workflow for turning ChatGPT, Gemini, and Claude visibility gaps into website, schema, content, profile, and citation work.",
 };
 
 const jobTypeSelect = document.querySelector("#jobTypeSelect");
@@ -418,10 +436,16 @@ const journeyDiscoveryMetric = document.querySelector("#journeyDiscoveryMetric")
 const journeyQualifiedMetric = document.querySelector("#journeyQualifiedMetric");
 const journeyLeadMetric = document.querySelector("#journeyLeadMetric");
 const journeyBookedMetric = document.querySelector("#journeyBookedMetric");
+const targetTermForm = document.querySelector("#targetTermForm");
+const targetTermStatus = document.querySelector("#targetTermStatus");
+const targetTermJobType = document.querySelector("#targetTermJobType");
 
 let activeScenarioKey = jobTypeSelect?.value || "bathroom";
 let appliedActions = [];
 let dashboardSupabaseClient = null;
+let currentDashboardPayload = null;
+let activeAiChangePlatform = "chatgpt";
+let currentAiChangeState = { platforms: [], recommendations: [], demo: true };
 
 function renderDashboardScenario() {
   const scenario = dashboardScenarios[activeScenarioKey] || dashboardScenarios.bathroom;
@@ -508,6 +532,13 @@ function renderDashboardScenario() {
   renderNextBestMoves(nextBestMovesForScenario(scenario));
   renderBuilderActions(scenario);
   renderDeployedChanges();
+  renderMetaVisibility(demoMetaVisibility(scenario));
+  renderTargetTerms(demoTargetTerms(scenario), [], true);
+  renderAiChangeCenter([
+    { platform: "ChatGPT", mentionRate: scenario.mentions - 2, runs: 8 },
+    { platform: "Gemini", mentionRate: scenario.mentions + 3, runs: 8 },
+    { platform: "Claude", mentionRate: scenario.mentions + 1, runs: 8 },
+  ], scenario.actions.slice(0, 3).map((row) => ({ priority: "high", status: "open", title: row[0], body: row[2] })), true);
 }
 
 function initializeMetricHelp() {
@@ -518,6 +549,10 @@ function initializeMetricHelp() {
     ".connected-kpi span",
     ".connected-table-card th",
     ".connected-controls button",
+    ".meta-score-grid span",
+    ".meta-health-list span",
+    ".meta-change-center h2",
+    ".target-term-cockpit h2",
   ].join(",");
 
   document.querySelectorAll(selector).forEach((element) => {
@@ -569,10 +604,14 @@ async function hydrateLiveDashboardData() {
 }
 
 function applyLiveDashboardData(payload) {
+  currentDashboardPayload = payload;
   const business = payload.business || {};
   const summary = payload.summary || {};
   const workspace = payload.workspace || {};
   const aiVisibility = payload.aiVisibility || {};
+  renderMetaVisibility(payload.metaVisibility || {});
+  renderTargetTerms(payload.targetTerms || [], payload.jobTypes || [], false);
+  renderAiChangeCenter(aiVisibility.platforms || [], payload.recommendations || [], false);
   const readiness = workspace.readiness || {};
 
   showDashboardNotice(
@@ -736,6 +775,173 @@ function applyLiveDashboardData(payload) {
   renderLiveReviewTasks(recommendations);
   renderLiveReports(payload.reports || []);
   initializeMetricHelp();
+}
+
+function demoMetaVisibility(scenario) {
+  return {
+    status: "active",
+    score: Math.max(45, scenario.score - 8),
+    promptCoverage: Math.max(35, scenario.mentions - 4),
+    averagePosition: Number(String(scenario.rank).replace(/[^0-9.]/g, "")) || 2.8,
+    shareOfVoice: 41,
+    serviceGeoAccuracy: 82,
+    benchmarkRuns: 12,
+    verifiedRuns: 2,
+    lastVerifiedAt: new Date().toISOString(),
+    sourceStrength: { score: 68 },
+    categories: [
+      { category: "discovery", runs: 5, mentionRate: 60 },
+      { category: "comparison", runs: 3, mentionRate: 67 },
+      { category: "reputation", runs: 2, mentionRate: 50 },
+      { category: "service", runs: 4, mentionRate: 75 },
+      { category: "location", runs: 3, mentionRate: 67 },
+    ],
+    promptResults: (scenario.citations || []).map((row, index) => ({
+      prompt: row[0],
+      mode: index === 0 ? "consumer_verified" : "api_benchmark",
+      surface: index === 0 ? "Instagram" : "Meta Model API",
+      mentioned: row[1] === "Yes",
+      rankPosition: row[2] === "-" ? null : Number(String(row[2]).replace("#", "")),
+      description: index === 0 ? "Recommended as a local option with relevant project experience." : row[4],
+      sources: row[3] ? [{ domain: row[3], cited: true }] : [],
+    })),
+    evidenceGaps: [
+      { priority: "high", title: "Instagram and website service language is inconsistent", detail: "Align the professional profile, service pages, schema, and project proof around the selected profit center and market." },
+      { priority: "medium", title: "Consumer verification coverage is limited", detail: "Verify discovery, comparison, reputation, service, and location prompts inside Instagram Meta AI." },
+    ],
+    recommendations: [
+      { priority: "high", status: "open", title: "Align Instagram and Facebook business identity", body: "Use the same business name, category, services, market, phone, and website identity across both profiles." },
+      { priority: "high", status: "open", title: "Publish Meta-readable project proof", body: "Add service and neighborhood context to website projects and corresponding social posts." },
+    ],
+  };
+}
+
+function renderMetaVisibility(meta = {}) {
+  setText("#metaVisibilityScore", meta.score ?? "-");
+  setText("#metaPromptCoverage", formatRate(meta.promptCoverage));
+  setText("#metaAveragePosition", meta.averagePosition ? `#${meta.averagePosition}` : "-");
+  setText("#metaShareOfVoice", formatRate(meta.shareOfVoice));
+  setText("#metaVerifiedRuns", meta.verifiedRuns ?? 0);
+  setText("#metaVerifiedAt", meta.lastVerifiedAt ? `Last verified ${formatMetaDate(meta.lastVerifiedAt)}` : "No consumer verification yet");
+  setText("#metaBenchmarkRuns", meta.benchmarkRuns ?? 0);
+  setText("#metaConsumerRuns", meta.verifiedRuns ?? 0);
+  setText("#metaAccuracyMetric", formatRate(meta.serviceGeoAccuracy));
+  setText("#metaSourceStrength", formatRate(meta.sourceStrength?.score));
+  setText("#metaMeasurementStatus", meta.status === "active" ? "Meta monitoring active" : "Waiting for first Meta run");
+
+  const categoryRoot = document.querySelector("#metaCategoryRows");
+  if (categoryRoot) categoryRoot.innerHTML = (meta.categories || []).length
+    ? meta.categories.map((row) => `<div><span>${escapeHtml(metaTitleCase(row.category))}</span><strong>${formatRate(row.mentionRate)}</strong><small>${row.runs} run${row.runs === 1 ? "" : "s"}</small></div>`).join("")
+    : '<p class="connected-empty-copy">Import Meta AI results to populate category coverage.</p>';
+
+  renderRowsOrEmpty("#metaPromptRows", meta.promptResults || [], (row) => [
+    escapeHtml(row.prompt),
+    `<span class="meta-mode-pill ${row.mode === "consumer_verified" ? "verified" : "benchmark"}">${row.mode === "consumer_verified" ? "Verified" : "Benchmark"}</span><br><small>${escapeHtml(row.surface || "Meta AI")}</small>`,
+    row.mentioned ? '<span class="pill teal">Yes</span>' : '<span class="pill pink">No</span>',
+    row.rankPosition ? `#${row.rankPosition}` : "-",
+    escapeHtml(row.description || "No description captured"),
+    escapeHtml((row.sources || []).map((source) => source.domain).filter(Boolean).join(", ") || "No source captured"),
+  ], "No Meta results yet. Run an API benchmark or add a verified Instagram result.", 6, { raw: true });
+
+  renderMetaActions("#metaEvidenceGaps", meta.evidenceGaps || [], "No Meta evidence gaps detected yet.");
+  renderMetaActions("#metaRecommendationRows", meta.recommendations || [], "Meta recommendations will appear after the first run.");
+  renderMetaChangeCenter(meta.recommendations || []);
+  initializeMetricHelp();
+}
+
+function setText(selector, value) {
+  const element = document.querySelector(selector);
+  if (element) element.textContent = value;
+}
+
+function renderMetaActions(selector, rows, emptyMessage) {
+  const root = document.querySelector(selector);
+  if (!root) return;
+  root.innerHTML = rows.length
+    ? rows.map((row) => `<article><span>${escapeHtml(metaTitleCase(row.priority || "medium"))}</span><strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.detail || row.body || "")}</p></article>`).join("")
+    : `<p class="connected-empty-copy">${escapeHtml(emptyMessage)}</p>`;
+}
+
+function renderMetaChangeCenter(recommendations) {
+  const root = document.querySelector("#metaChangeRows");
+  if (!root) return;
+  const rows = recommendations || [];
+  const completed = rows.filter((row) => row.status === "complete").length;
+  setText("#metaChangesCompleted", completed);
+  if (!rows.length) {
+    root.innerHTML = '<div class="meta-change-empty"><strong>No customer-specific changes yet</strong><p>Run the first Meta benchmark or import a verified Instagram result. Builder Rank will turn the resulting evidence gaps into reviewable recommendations here.</p></div>';
+    return;
+  }
+  root.innerHTML = rows.map((row, index) => {
+    const state = row.status === "complete" ? "complete" : row.status === "in_progress" ? "in_progress" : "open";
+    const buttonLabel = state === "complete" ? "Live" : state === "in_progress" ? "Mark Live" : "Approve & Start";
+    const nextStatus = state === "in_progress" ? "complete" : "in_progress";
+    const liveControl = row.id
+      ? `data-recommendation-id="${escapeHtml(row.id)}" data-next-status="${nextStatus}"`
+      : `data-meta-demo-change="${index}"`;
+    return `<article class="meta-change-item is-${state}"><div class="meta-change-status"><span>${escapeHtml(metaTitleCase(row.priority || "medium"))}</span><i></i></div><div><strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.body || row.detail || "")}</p><small>${state === "complete" ? "Completed and ready for a Meta recheck." : state === "in_progress" ? "Your team is working on this recommendation." : "Recommended from current Meta evidence gaps."}</small></div><button type="button" ${liveControl} ${state === "complete" ? "disabled" : ""}>${buttonLabel}</button></article>`;
+  }).join("");
+}
+
+function metaTitleCase(value) {
+  return String(value || "").replace(/[_-]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatMetaDate(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "recently" : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function demoTargetTerms(scenario) {
+  return [
+    { id: "demo-1", phrase: scenario.label, market: marketSelect?.value || "Denver, CO", status: "active", jobTypeLabel: scenario.label, prompts: 3, runs: 12, mentionRate: scenario.mentions, averagePosition: Number(String(scenario.rank).replace(/[^0-9.]/g, "")), openChanges: 2, platforms: [{ platform: "chatgpt", mentionRate: scenario.mentions - 2 }, { platform: "gemini", mentionRate: scenario.mentions + 3 }, { platform: "claude", mentionRate: scenario.mentions + 1 }] },
+    { id: "demo-2", phrase: scenario.attributes?.[0]?.[0] || "high-value service", market: marketSelect?.value || "Denver, CO", status: "active", jobTypeLabel: scenario.label, prompts: 3, runs: 9, mentionRate: Math.max(0, scenario.mentions - 9), averagePosition: 3.1, openChanges: 1, platforms: [{ platform: "chatgpt", mentionRate: scenario.mentions - 12 }, { platform: "gemini", mentionRate: scenario.mentions - 7 }, { platform: "claude", mentionRate: scenario.mentions - 8 }] },
+  ];
+}
+
+function renderTargetTerms(terms, jobTypes = [], demo = false) {
+  const root = document.querySelector("#targetTermRows");
+  if (!root) return;
+  const activeCount = terms.filter((term) => term.status === "active").length;
+  setText("#targetTermActiveCount", `${activeCount} / 2`);
+  if (targetTermJobType) targetTermJobType.innerHTML = '<option value="">All services</option>' + jobTypes.map((jobType) => `<option value="${escapeHtml(jobType.id)}">${escapeHtml(jobType.label)}</option>`).join("");
+  const submit = targetTermForm?.querySelector("button[type='submit']");
+  if (submit) submit.disabled = activeCount >= 2;
+  root.innerHTML = terms.length ? terms.map((term) => {
+    const platformByKey = new Map((term.platforms || []).map((row) => [String(row.platform).toLowerCase(), row]));
+    const platformCells = ["chatgpt", "gemini", "claude"].map((platform) => `<div><span>${metaTitleCase(platform)}</span><strong>${formatRate(platformByKey.get(platform)?.mentionRate)}</strong></div>`).join("");
+    const action = demo ? "" : `<button type="button" data-target-term-id="${escapeHtml(term.id)}" data-target-term-status="${term.status === "active" ? "paused" : "active"}">${term.status === "active" ? "Pause target" : "Resume target"}</button>`;
+    return `<article class="target-term-card ${term.status === "paused" ? "is-paused" : ""}"><div class="target-term-card-head"><span>${escapeHtml(term.status)} · ${escapeHtml(term.jobTypeLabel || "All services")}</span><strong>${term.openChanges || 0} open changes</strong></div><h3>${escapeHtml(term.phrase)}</h3><p>${escapeHtml(term.market || "Customer market")} · ${term.prompts || 0} prompts · ${term.runs || 0} measured runs · Avg. ${term.averagePosition ? `#${term.averagePosition}` : "waiting"}</p><div class="target-term-platforms">${platformCells}</div>${action}</article>`;
+  }).join("") : '<div class="meta-change-empty"><strong>Choose the first AI Target Term</strong><p>Start with the service and market phrase most closely tied to the jobs this customer wants to win.</p></div>';
+}
+
+function renderAiChangeCenter(platforms, recommendations, demo = false) {
+  currentAiChangeState = { platforms, recommendations, demo };
+  document.querySelectorAll("[data-ai-platform]").forEach((button) => button.classList.toggle("is-active", button.dataset.aiPlatform === activeAiChangePlatform));
+  const platform = platforms.find((row) => normalizePlatformKey(row.platform) === activeAiChangePlatform) || {};
+  const label = activeAiChangePlatform === "chatgpt" ? "ChatGPT" : metaTitleCase(activeAiChangePlatform);
+  setText("#aiChangePlatformTitle", `${label} improvement plan`);
+  setText("#aiChangePlatformMetric", platform.mentionRate == null ? "Waiting for live checks" : `${formatRate(platform.mentionRate)} mention rate · ${platform.runs || 0} runs`);
+  const rows = recommendations.filter((row) => !String(row.source || "").toLowerCase().includes("meta")).slice(0, 4);
+  const root = document.querySelector("#aiChangeRows");
+  if (!root) return;
+  if (!rows.length) {
+    root.innerHTML = '<div class="meta-change-empty"><strong>No platform recommendations yet</strong><p>Add a Target Term or import the first ChatGPT, Gemini, and Claude checks to generate customer-specific work.</p></div>';
+    return;
+  }
+  root.innerHTML = rows.map((row, index) => {
+    const state = row.status === "complete" ? "complete" : row.status === "in_progress" ? "in_progress" : "open";
+    const buttonLabel = state === "complete" ? "Live" : state === "in_progress" ? "Mark Live" : "Approve & Start";
+    const control = row.id ? `data-recommendation-id="${escapeHtml(row.id)}" data-next-status="${state === "in_progress" ? "complete" : "in_progress"}"` : `data-ai-demo-change="${index}"`;
+    return `<article class="meta-change-item is-${state}"><div class="meta-change-status"><span>${escapeHtml(metaTitleCase(row.priority || "medium"))}</span><i></i></div><div><strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.body || row.detail || "")}</p><small>Designed to improve evidence used by ${label}; recheck after the approved work is live.</small></div><button type="button" ${control} ${state === "complete" ? "disabled" : ""}>${buttonLabel}</button></article>`;
+  }).join("");
+}
+
+function normalizePlatformKey(value) {
+  const platform = String(value || "").toLowerCase();
+  if (platform.includes("gemini")) return "gemini";
+  if (platform.includes("claude")) return "claude";
+  return "chatgpt";
 }
 
 function updateCommandStrip(payload) {
@@ -1193,13 +1399,13 @@ function renderRows(selector, rows, options = {}) {
   }).join("");
 }
 
-function renderRowsOrEmpty(selector, rows, mapRow, message, columnCount) {
+function renderRowsOrEmpty(selector, rows, mapRow, message, columnCount, options = {}) {
   if (!rows?.length) {
     renderEmptyRow(selector, message, columnCount);
     return;
   }
 
-  renderRows(selector, rows.map(mapRow), { raw: false });
+  renderRows(selector, rows.map(mapRow), { raw: Boolean(options.raw) });
 }
 
 function renderEmptyRow(selector, message, columnCount) {
@@ -1384,11 +1590,104 @@ dateRangeSelect?.addEventListener("change", () => {
   void hydrateLiveDashboardData();
 });
 
+targetTermForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(targetTermForm);
+  const phrase = String(form.get("phrase") || "").trim();
+  if (!phrase) return;
+  const token = await getDashboardAccessToken();
+  if (!token) {
+    if (targetTermStatus) targetTermStatus.textContent = "Sign in to add customer Target Terms.";
+    return;
+  }
+  const button = targetTermForm.querySelector("button[type='submit']");
+  button.disabled = true;
+  if (targetTermStatus) targetTermStatus.textContent = `Creating monitored prompts and an optimization plan for “${phrase}”...`;
+  try {
+    const response = await fetch("/api/target-terms", { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ siteId: selectedSiteIdFromUrl() || currentDashboardPayload?.business?.site_id, phrase, jobTypeId: form.get("jobTypeId"), market: currentDashboardPayload?.business?.market || marketSelect?.value }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.detail || payload.error || "Could not add this Target Term.");
+    targetTermForm.reset();
+    if (targetTermStatus) targetTermStatus.textContent = `Target added. Builder Rank created ${payload.generated?.prompts || 0} monitored prompts and ${payload.generated?.recommendations || 0} optimization task.`;
+    await hydrateLiveDashboardData();
+  } catch (error) {
+    if (targetTermStatus) targetTermStatus.textContent = error.message;
+  } finally {
+    button.disabled = (currentDashboardPayload?.targetTerms || []).filter((term) => term.status === "active").length >= 2;
+  }
+});
+
 document.addEventListener("click", (event) => {
+  const aiPlatformButton = event.target.closest("[data-ai-platform]");
+  if (aiPlatformButton) {
+    activeAiChangePlatform = aiPlatformButton.dataset.aiPlatform;
+    renderAiChangeCenter(currentAiChangeState.platforms, currentAiChangeState.recommendations, currentAiChangeState.demo);
+    return;
+  }
+  const targetTermButton = event.target.closest("[data-target-term-id]");
+  if (targetTermButton) {
+    void updateTargetTermStatus(targetTermButton);
+    return;
+  }
+  const jumpButton = event.target.closest("[data-dashboard-jump]");
+  if (jumpButton) {
+    setActiveTab(jumpButton.dataset.dashboardJump);
+    return;
+  }
+  const metaRecommendationButton = event.target.closest("#metaChangeRows [data-recommendation-id]");
+  if (metaRecommendationButton) {
+    void updateLiveRecommendation(metaRecommendationButton);
+    return;
+  }
+  const aiRecommendationButton = event.target.closest("#aiChangeRows [data-recommendation-id]");
+  if (aiRecommendationButton) {
+    void updateLiveRecommendation(aiRecommendationButton);
+    return;
+  }
+  const demoChangeButton = event.target.closest("[data-meta-demo-change], [data-ai-demo-change]");
+  if (demoChangeButton) {
+    const article = demoChangeButton.closest("article");
+    if (demoChangeButton.dataset.demoState === "in_progress") {
+      demoChangeButton.textContent = "Live";
+      demoChangeButton.disabled = true;
+      article?.classList.remove("is-in_progress");
+      article?.classList.add("is-complete");
+      const detail = article?.querySelector("small");
+      if (detail) detail.textContent = "Completed and ready for a Meta recheck.";
+      const completedMetric = document.querySelector("#metaChangesCompleted");
+      if (completedMetric) completedMetric.textContent = String(numberFromFormatted(completedMetric.textContent) + 1);
+    } else {
+      demoChangeButton.dataset.demoState = "in_progress";
+      demoChangeButton.textContent = "Mark Live";
+      article?.classList.add("is-in_progress");
+      const detail = article?.querySelector("small");
+      if (detail) detail.textContent = "Approved. Your team is working on this recommendation.";
+    }
+    return;
+  }
   const button = event.target.closest("[data-export-table]");
   if (!button) return;
   exportTableToCsv(button.dataset.exportTable, button.dataset.exportName || "builder-rank-export");
 });
+
+async function updateTargetTermStatus(button) {
+  const token = await getDashboardAccessToken();
+  if (!token) return;
+  const original = button.textContent;
+  button.disabled = true;
+  button.textContent = "Saving...";
+  try {
+    const response = await fetch("/api/target-terms", { method: "PATCH", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ siteId: selectedSiteIdFromUrl() || currentDashboardPayload?.business?.site_id, targetTermId: button.dataset.targetTermId, status: button.dataset.targetTermStatus }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.detail || payload.error || "Could not update this Target Term.");
+    if (targetTermStatus) targetTermStatus.textContent = `“${payload.targetTerm?.phrase || "Target term"}” is now ${payload.targetTerm?.status || "updated"}.`;
+    await hydrateLiveDashboardData();
+  } catch (error) {
+    if (targetTermStatus) targetTermStatus.textContent = error.message;
+    button.disabled = false;
+    button.textContent = original;
+  }
+}
 
 builderActionList?.addEventListener("click", (event) => {
   const recommendationButton = event.target.closest("[data-recommendation-id]");

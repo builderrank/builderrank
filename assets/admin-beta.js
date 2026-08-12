@@ -15,6 +15,7 @@ const workspaceResult = document.querySelector("#adminWorkspaceResult");
 const readinessChecklist = document.querySelector("#adminReadinessChecklist");
 const fillSampleIntakeButton = document.querySelector("#adminFillSampleIntake");
 const fillPromptTemplateButton = document.querySelector("#adminFillPromptTemplate");
+const runMetaBenchmarkButton = document.querySelector("#adminRunMetaBenchmark");
 const launchReadinessRefreshButton = document.querySelector("#adminLaunchReadinessRefresh");
 const launchReadinessSummary = document.querySelector("#adminLaunchReadinessSummary");
 const launchReadinessChecks = document.querySelector("#adminLaunchReadinessChecks");
@@ -49,6 +50,7 @@ bootstrapForm?.addEventListener("submit", async (event) => {
     siteId: form.get("siteId"),
     jobTypes: listFromTextarea(form.get("jobTypes")),
     competitors: listFromTextarea(form.get("competitors")),
+    targetTerms: listFromTextarea(form.get("targetTerms")).slice(0, 2),
     notes: form.get("notes"),
   };
 
@@ -66,12 +68,18 @@ importForm?.addEventListener("submit", async (event) => {
         prompt: form.get("prompt"),
         jobType: form.get("jobType"),
         platform: form.get("platform"),
+        measurementMode: form.get("measurementMode"),
+        consumerSurface: form.get("consumerSurface"),
         model: form.get("model"),
         runAt: form.get("runAt"),
         mentioned: form.get("mentioned") === "on",
         rankPosition: form.get("rankPosition"),
         confidence: form.get("confidence"),
         sentiment: form.get("sentiment"),
+        verifiedLocation: form.get("verifiedLocation"),
+        verifiedAt: form.get("measurementMode") === "consumer_verified" ? new Date().toISOString() : null,
+        serviceAccuracy: form.get("serviceAccuracy"),
+        geoAccuracy: form.get("geoAccuracy"),
         persona: form.get("persona"),
         intent: form.get("intent"),
         mentionText: form.get("mentionText"),
@@ -117,6 +125,7 @@ fillSampleIntakeButton?.addEventListener("click", () => {
   setFormValue(bootstrapForm, "siteId", "br_front_range_remodels");
   setFormValue(bootstrapForm, "jobTypes", "Bathroom remodeling\nKitchen remodeling\nBasement finishing");
   setFormValue(bootstrapForm, "competitors", "Mile High Bath Co.\nSummit Remodel Group\nDenver Design Build\nUrban Tile & Bath");
+  setFormValue(bootstrapForm, "targetTerms", "bathroom remodeler Denver\nwalk-in shower contractor");
   setFormValue(bootstrapForm, "notes", "Friendly beta customer. Wants more bathroom and kitchen projects. Marketing contact can install the WordPress plugin.");
 });
 
@@ -129,6 +138,7 @@ fillPromptTemplateButton?.addEventListener("click", () => {
   const domain = domainFromUrl(website) || "front-range-remodels.com";
   setFormValue(importForm, "siteId", siteId);
   setFormValue(importForm, "platform", "ChatGPT");
+  setFormValue(importForm, "measurementMode", "api_benchmark");
   setFormValue(importForm, "model", "gpt-5.2");
   setFormValue(importForm, "jobType", jobType);
   setFormValue(importForm, "runAt", new Date().toISOString().slice(0, 10));
@@ -141,6 +151,42 @@ fillPromptTemplateButton?.addEventListener("click", () => {
   setFormValue(importForm, "answerText", "Paste the AI answer here. Capture whether the customer appears, what competitors appear, and which sources the model references.");
   setFormValue(importForm, "mentionText", "Customer was mentioned as a local option with relevant project proof.");
   setFormValue(importForm, "sources", `${domain}|${website}|direct_site|cited\ngoogle.com/maps|https://google.com/maps|gbp|cited\nhouzz.com|https://www.houzz.com/|directory|not_cited`);
+});
+
+runMetaBenchmarkButton?.addEventListener("click", async () => {
+  if (!importForm) return;
+  const siteId = String(importForm.elements.siteId?.value || bootstrapForm?.elements.siteId?.value || "").trim();
+  if (!siteId) {
+    if (importResult) importResult.textContent = "Enter the customer Site ID before running the Meta benchmark.";
+    return;
+  }
+  if (!adminToken) {
+    if (importResult) importResult.textContent = "Enter ADMIN_API_TOKEN first.";
+    return;
+  }
+  runMetaBenchmarkButton.disabled = true;
+  runMetaBenchmarkButton.textContent = "Running Meta...";
+  if (importResult) importResult.textContent = "Running the configured customer prompt set through Meta Model API. This may take a minute.";
+  try {
+    const response = await fetch("/api/run-meta-benchmark", {
+      method: "POST",
+      headers: { "x-builderrank-admin-token": adminToken, "content-type": "application/json" },
+      body: JSON.stringify({ siteId, limit: 5 }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const missing = Array.isArray(data.missing) && data.missing.length ? ` Missing: ${data.missing.join(", ")}.` : "";
+      throw new Error(`${data.detail || data.error || "Could not run Meta benchmark."}${missing}`);
+    }
+    const partial = data.failedRuns ? ` ${data.failedRuns} prompt${data.failedRuns === 1 ? "" : "s"} could not be completed; successful results were still saved.` : "";
+    if (importResult) importResult.textContent = `Meta benchmark complete: ${data.importedRuns || 0} prompt runs imported with ${data.model || "the configured model"}.${partial}`;
+    void loadAdminWorkspaces();
+  } catch (error) {
+    if (importResult) importResult.textContent = error.message;
+  } finally {
+    runMetaBenchmarkButton.disabled = false;
+    runMetaBenchmarkButton.textContent = "Run Meta Benchmark";
+  }
 });
 
 trackTestForm?.addEventListener("submit", async (event) => {

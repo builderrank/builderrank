@@ -4,6 +4,7 @@ import {
   selectSupabaseRows,
   supabaseServiceConfigured,
 } from "./_shared.js";
+import { summarizeMetaVisibility } from "./_meta-visibility.js";
 
 export default async function handler(request, response) {
   if (request.method !== "GET") {
@@ -56,6 +57,7 @@ export default async function handler(request, response) {
       mentions,
       aiSources,
       recommendations,
+      targetTerms,
       reports,
     ] = await Promise.all([
       selectSupabaseRows("br_website_events", {
@@ -79,14 +81,14 @@ export default async function handler(request, response) {
         limit: "25",
       }),
       selectSupabaseRows("br_prompts", {
-        select: "id,job_type_id,prompt_text,persona,intent,active,created_at",
+        select: "id,job_type_id,target_term_id,prompt_text,persona,intent,active,created_at",
         business_id: `eq.${business.id}`,
         active: "eq.true",
         order: "created_at.desc",
         limit: "75",
       }),
       selectSupabaseRows("br_ai_mentions", {
-        select: "id,prompt_run_id,mentioned,mention_text,rank_position,sentiment,confidence,created_at",
+        select: "id,prompt_run_id,mentioned,mention_text,rank_position,sentiment,confidence,service_accuracy,geo_accuracy,created_at",
         business_id: `eq.${business.id}`,
         created_at: `gte.${since}`,
         order: "created_at.desc",
@@ -100,16 +102,23 @@ export default async function handler(request, response) {
         limit: "250",
       }),
       selectSupabaseRows("br_recommendations", {
-        select: "id,job_type_id,priority,title,body,status,source,created_at,completed_at",
+        select: "id,job_type_id,target_term_id,priority,title,body,status,source,created_at,completed_at",
         business_id: `eq.${business.id}`,
         order: "created_at.desc",
         limit: "25",
+      }),
+      selectSupabaseRows("br_target_terms", {
+        select: "id,job_type_id,phrase,target_market,priority,status,created_at,updated_at",
+        business_id: `eq.${business.id}`,
+        status: "neq.archived",
+        order: "priority.asc,created_at.asc",
+        limit: "10",
       }),
       loadSavedReports(user.id, business),
     ]);
     const promptRuns = prompts.length
       ? await selectSupabaseRows("br_prompt_runs", {
-        select: "id,prompt_id,platform,model,run_status,answer_text,run_at,completed_at",
+        select: "id,prompt_id,platform,model,run_status,answer_text,measurement_mode,consumer_surface,verified_at,verified_location,verifier_context,run_at,completed_at",
         prompt_id: inFilter(prompts.map((prompt) => prompt.id)),
         run_at: `gte.${since}`,
         order: "run_at.desc",
@@ -119,8 +128,10 @@ export default async function handler(request, response) {
 
     const workspace = summarizeWorkspace({ jobTypes, competitors, prompts, recommendations });
     const aiVisibility = summarizeAiVisibility({ prompts, promptRuns, mentions, jobTypes });
+    const metaVisibility = summarizeMetaVisibility({ prompts, runs: promptRuns, mentions, sources: aiSources, competitors, recommendations });
     const summary = summarizeEvents(events, business);
     const formattedRecommendations = formatRecommendations(recommendations, jobTypes);
+    const formattedTargetTerms = summarizeTargetTerms({ targetTerms, prompts, promptRuns, mentions, recommendations, jobTypes });
     const pages = rollupPages(events);
     const jobIntents = rollupJobIntents(events);
     const ctas = rollupCtas(events);
@@ -135,8 +146,10 @@ export default async function handler(request, response) {
       jobTypes: formatJobTypes(jobTypes),
       competitors: formatCompetitors(competitors, promptRuns, business),
       aiVisibility,
+      metaVisibility,
       citations: rollupCitations({ prompts, promptRuns, mentions, aiSources }),
       recommendations: formattedRecommendations,
+      targetTerms: formattedTargetTerms,
       summary,
       events: rollupEvents(events),
       leads: rollupLeads(events),
@@ -438,6 +451,7 @@ function formatRecommendations(recommendations, jobTypes = []) {
   return recommendations.map((row) => ({
     id: row.id,
     jobTypeId: row.job_type_id || "",
+    targetTermId: row.target_term_id || "",
     jobTypeLabel: jobTypeById.get(row.job_type_id)?.label || "",
     priority: row.priority,
     title: row.title,
@@ -446,6 +460,44 @@ function formatRecommendations(recommendations, jobTypes = []) {
     source: row.source,
     createdAt: row.created_at,
   }));
+}
+
+export function summarizeTargetTerms({ targetTerms = [], prompts = [], promptRuns = [], mentions = [], recommendations = [], jobTypes = [] }) {
+  const jobTypeById = new Map(jobTypes.map((row) => [row.id, row]));
+  const runByPrompt = new Map();
+  promptRuns.forEach((run) => {
+    const rows = runByPrompt.get(run.prompt_id) || [];
+    rows.push(run);
+    runByPrompt.set(run.prompt_id, rows);
+  });
+  const mentionByRun = new Map(mentions.map((row) => [row.prompt_run_id, row]));
+  return targetTerms.map((term) => {
+    const termPrompts = prompts.filter((prompt) => prompt.target_term_id === term.id || normalizeText(prompt.prompt_text).includes(normalizeText(term.phrase)));
+    const runs = termPrompts.flatMap((prompt) => runByPrompt.get(prompt.id) || []).filter((run) => run.run_status === "complete" || run.completed_at || run.answer_text);
+    const runMentions = runs.map((run) => ({ run, mention: mentionByRun.get(run.id) })).filter((row) => row.mention);
+    const mentioned = runMentions.filter((row) => row.mention.mentioned);
+    const ranks = mentioned.map((row) => Number(row.mention.rank_position)).filter((value) => Number.isFinite(value) && value > 0);
+    const platforms = ["chatgpt", "gemini", "claude"].map((key) => {
+      const rows = runMentions.filter((row) => normalizePlatform(row.run.platform) === key);
+      return { platform: key, runs: rows.length, mentionRate: rows.length ? Math.round(rows.filter((row) => row.mention.mentioned).length / rows.length * 100) : null };
+    });
+    return {
+      id: term.id,
+      phrase: term.phrase,
+      market: term.target_market || "",
+      priority: term.priority,
+      status: term.status,
+      jobTypeId: term.job_type_id || "",
+      jobTypeLabel: jobTypeById.get(term.job_type_id)?.label || "All services",
+      prompts: termPrompts.length,
+      runs: runs.length,
+      mentionRate: runMentions.length ? Math.round(mentioned.length / runMentions.length * 100) : null,
+      averagePosition: ranks.length ? Number((ranks.reduce((sum, value) => sum + value, 0) / ranks.length).toFixed(1)) : null,
+      platforms,
+      openChanges: recommendations.filter((row) => row.target_term_id === term.id && row.status !== "complete").length,
+      createdAt: term.created_at,
+    };
+  });
 }
 
 function formatReports(reports) {

@@ -9,6 +9,7 @@ import healthHandler from "./health.js";
 import hubspotAccountHandler from "./hubspot-account.js";
 import hubspotReportHandler from "./hubspot-report.js";
 import importAiVisibilityHandler from "./import-ai-visibility.js";
+import runMetaBenchmarkHandler from "./run-meta-benchmark.js";
 import launchReadinessHandler from "./launch-readiness.js";
 import notFoundHandler from "./not-found.js";
 import paymentConfigHandler from "./payment-config.js";
@@ -19,6 +20,7 @@ import supabaseKeepaliveHandler from "./supabase-keepalive.js";
 import trackHandler from "./track.js";
 import trackingHealthHandler from "./tracking-health.js";
 import updateRecommendationHandler from "./update-recommendation.js";
+import targetTermsHandler from "./target-terms.js";
 
 const handlers = new Map([
   ["/api/admin-workspaces", adminWorkspacesHandler],
@@ -32,6 +34,7 @@ const handlers = new Map([
   ["/api/hubspot-account", hubspotAccountHandler],
   ["/api/hubspot-report", hubspotReportHandler],
   ["/api/import-ai-visibility", importAiVisibilityHandler],
+  ["/api/run-meta-benchmark", runMetaBenchmarkHandler],
   ["/api/launch-readiness", launchReadinessHandler],
   ["/api/payment-config", paymentConfigHandler],
   ["/api/payment-status", paymentStatusHandler],
@@ -41,6 +44,7 @@ const handlers = new Map([
   ["/api/track", trackHandler],
   ["/api/tracking-health", trackingHealthHandler],
   ["/api/update-recommendation", updateRecommendationHandler],
+  ["/api/target-terms", targetTermsHandler],
 ]);
 
 export default async function handler(request, response) {

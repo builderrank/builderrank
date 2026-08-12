@@ -10,6 +10,7 @@ const expectedTables = [
   "br_ai_sources",
   "br_website_events",
   "br_recommendations",
+  "br_target_terms",
 ];
 
 const expectedColumns = [
@@ -27,6 +28,7 @@ const expectedColumns = [
   ["br_competitors", "website_url"],
   ["br_competitors", "notes"],
   ["br_prompts", "job_type_id"],
+  ["br_prompts", "target_term_id"],
   ["br_prompt_runs", "answer_text"],
   ["br_prompt_runs", "completed_at"],
   ["br_ai_mentions", "rank_position"],
@@ -35,6 +37,9 @@ const expectedColumns = [
   ["br_website_events", "visitor_hash"],
   ["br_recommendations", "job_type_id"],
   ["br_recommendations", "completed_at"],
+  ["br_recommendations", "target_term_id"],
+  ["br_target_terms", "phrase"],
+  ["br_target_terms", "status"],
 ];
 
 const expectedIndexes = [
@@ -52,6 +57,7 @@ const expectedIndexes = [
   "br_website_events_site_event_received_idx",
   "br_website_events_site_source_received_idx",
   "br_recommendations_business_status_idx",
+  "br_target_terms_business_status_idx",
 ];
 
 const expectedPolicies = [
@@ -64,6 +70,7 @@ const expectedPolicies = [
   ["br_competitors", "br_competitors_select_own"],
   ["br_prompts", "br_prompts_select_own"],
   ["br_recommendations", "br_recommendations_select_own"],
+  ["br_target_terms", "br_target_terms_select_own"],
   ["br_website_events", "br_website_events_no_client_write"],
 ];
 

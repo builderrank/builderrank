@@ -16,6 +16,7 @@ onboardingForm?.addEventListener("submit", async (event) => {
   payload.intakeType = "signed_client";
   payload.onboardingSource = "client_onboarding_intake";
   payload.jobTypes = listFromTextarea(form.get("jobTypes"));
+  payload.targetTerms = [form.get("targetTerm1"), form.get("targetTerm2")].map((item) => String(item || "").trim()).filter(Boolean);
   payload.confirmed = form.get("confirmed") === "on";
 
   submitButton.disabled = true;

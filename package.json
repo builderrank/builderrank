@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "test": "node --test",
     "customer:validate": "node scripts/validate-beta-customer.mjs",
     "customer:handoff": "node scripts/beta-customer-handoff.mjs",
     "customer:dry-run": "node scripts/beta-launch-dry-run.mjs",

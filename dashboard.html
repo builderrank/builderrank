@@ -52,6 +52,7 @@
         <div class="connected-sidebar-group">
           <p>Connect AI</p>
           <button class="connected-nav-button is-active" type="button" data-dashboard-tab="visibility">Visibility Blueprint</button>
+          <button type="button" data-dashboard-tab="meta">Meta AI <span class="connected-nav-badge">FB + IG</span></button>
           <button type="button" data-dashboard-tab="competition">Competition</button>
           <button type="button" data-dashboard-tab="sources">Sources</button>
           <button type="button" data-dashboard-tab="citations">Citations</button>
@@ -216,6 +217,63 @@
               </thead>
               <tbody id="attributeMetricRows"></tbody>
             </table>
+          </section>
+
+          <section class="target-term-cockpit">
+            <div class="target-term-head">
+              <div><span class="meta-channel-kicker">Customer-controlled optimization</span><h2>AI Target Terms</h2><p>Choose one or two high-value services or job phrases. Builder Rank creates monitored prompts, measures visibility across ChatGPT, Gemini, and Claude, and builds an approval-based optimization plan.</p></div>
+              <div class="target-term-limit"><strong id="targetTermActiveCount">0 / 2</strong><span>active targets</span></div>
+            </div>
+            <form id="targetTermForm" class="target-term-form">
+              <label><span>Term or job phrase</span><input name="phrase" maxlength="100" placeholder="e.g. walk-in shower contractor" required /></label>
+              <label><span>Profit center</span><select name="jobTypeId" id="targetTermJobType"><option value="">All services</option></select></label>
+              <button type="submit">Add Target</button>
+            </form>
+            <p id="targetTermStatus" class="target-term-status" role="status"></p>
+            <div id="targetTermRows" class="target-term-list"></div>
+          </section>
+
+          <section class="meta-change-center ai-change-center">
+            <div class="meta-change-head">
+              <div><span class="meta-channel-kicker">Guided improvement workflow</span><h2>Make Changes Across AI</h2><p>Approve specific website, schema, content, profile, and citation improvements, then recheck the selected AI platform after the work is live.</p></div>
+              <div id="aiPlatformTabs" class="ai-platform-tabs" aria-label="AI platform workflow"><button type="button" class="is-active" data-ai-platform="chatgpt">ChatGPT</button><button type="button" data-ai-platform="gemini">Gemini</button><button type="button" data-ai-platform="claude">Claude</button></div>
+            </div>
+            <div class="ai-platform-summary"><strong id="aiChangePlatformTitle">ChatGPT improvement plan</strong><span id="aiChangePlatformMetric">Waiting for live checks</span></div>
+            <div class="meta-change-steps" aria-label="AI change workflow"><span><b>1</b> Review evidence</span><span><b>2</b> Approve recommendation</span><span><b>3</b> Update the website</span><span><b>4</b> Recheck the platform</span></div>
+            <div id="aiChangeRows" class="meta-change-list" aria-live="polite"></div>
+            <div class="meta-change-footer"><p><strong>What customers control:</strong> target services, approval, priority, and completion. Builder Rank tracks the effect; website access and publishing remain permission-based.</p><button type="button" data-dashboard-jump="actions">Open full Punch List</button></div>
+          </section>
+        </section>
+
+        <section class="connected-tab-page" data-dashboard-page="meta">
+          <section class="meta-channel-hero">
+            <div><span class="meta-channel-kicker">Facebook + Instagram discovery</span><h2>Meta AI Visibility</h2><p>Monitor whether Meta AI recommends this business, what it says, who outranks it, and which evidence should be improved next.</p></div>
+            <div class="meta-mode-legend"><span><i class="meta-mode-dot benchmark"></i> Meta API benchmark</span><span><i class="meta-mode-dot verified"></i> Verified Instagram result</span></div>
+          </section>
+          <section class="meta-score-grid">
+            <article><span>Meta Visibility Score</span><strong id="metaVisibilityScore">-</strong><small>Coverage, prominence, accuracy, share of voice, and sentiment</small></article>
+            <article><span>Prompt Coverage</span><strong id="metaPromptCoverage">-</strong><small>Tracked prompts mentioning this business</small></article>
+            <article><span>Average Position</span><strong id="metaAveragePosition">-</strong><small>When the business is recommended</small></article>
+            <article><span>Share of Voice</span><strong id="metaShareOfVoice">-</strong><small>Customer mentions vs tracked competitors</small></article>
+            <article><span>Verified Instagram</span><strong id="metaVerifiedRuns">0</strong><small id="metaVerifiedAt">No consumer verification yet</small></article>
+          </section>
+          <section class="connected-card-grid two-up">
+            <article class="connected-card"><div class="card-topline"><h2>Measurement Health</h2><span id="metaMeasurementStatus">Waiting for first Meta run</span></div><div class="meta-health-list"><div><span>API benchmark runs</span><strong id="metaBenchmarkRuns">0</strong></div><div><span>Consumer verifications</span><strong id="metaConsumerRuns">0</strong></div><div><span>Service/location accuracy</span><strong id="metaAccuracyMetric">-</strong></div><div><span>Source strength</span><strong id="metaSourceStrength">-</strong></div></div><p class="meta-disclosure">Benchmark results are repeatable developer-API measurements. Verified results are separately captured from the consumer Meta AI experience inside Instagram or Facebook.</p></article>
+            <article class="connected-card"><div class="card-topline"><h2>Prompt Category Coverage</h2><span>Discovery to reputation</span></div><div id="metaCategoryRows" class="meta-category-list"></div></article>
+          </section>
+          <section class="connected-table-card"><div class="card-topline"><h2>Meta Prompt Results</h2><button type="button" data-export-table="metaPromptRows" data-export-name="builder-rank-meta-ai-visibility">Export</button></div><table><thead><tr><th>Prompt</th><th>Mode / surface</th><th>Mentioned</th><th>Position</th><th>What Meta says</th><th>Evidence</th></tr></thead><tbody id="metaPromptRows"></tbody></table></section>
+          <section class="connected-card-grid two-up">
+            <article class="connected-card"><div class="card-topline"><h2>Evidence Gaps</h2><span>Why prompts may be missed</span></div><div id="metaEvidenceGaps" class="meta-action-list"></div></article>
+            <article class="connected-card"><div class="card-topline"><h2>Meta Optimization Center</h2><span>Customer-approved controls</span></div><div id="metaRecommendationRows" class="meta-action-list"></div></article>
+          </section>
+          <section class="meta-change-center">
+            <div class="meta-change-head">
+              <div><span class="meta-channel-kicker">Guided improvement workflow</span><h2>Make Changes</h2><p>Turn Meta visibility gaps into clear, reviewable updates. Builder Rank recommends the change; your team decides when to start and mark it live.</p></div>
+              <div class="meta-change-progress" aria-live="polite"><strong id="metaChangesCompleted">0</strong><span>changes live</span></div>
+            </div>
+            <div class="meta-change-steps" aria-label="Meta change workflow"><span><b>1</b> Review evidence</span><span><b>2</b> Approve recommendation</span><span><b>3</b> Make the update</span><span><b>4</b> Recheck Meta AI</span></div>
+            <div id="metaChangeRows" class="meta-change-list" aria-live="polite"></div>
+            <div class="meta-change-footer"><p><strong>Safety first:</strong> Builder Rank does not automatically publish profile or website edits. Changes remain recommendations until your team approves and completes them.</p><button type="button" data-dashboard-jump="actions">Open full Punch List</button></div>
           </section>
         </section>
 
