@@ -2154,18 +2154,16 @@ button {
   vertical-align: middle;
 }
 
-.metric-help::after {
-  position: absolute;
-  z-index: 30;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  width: min(280px, 70vw);
+.metric-help-tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: min(320px, calc(100vw - 24px));
+  box-sizing: border-box;
   border: 1px solid #e0ded7;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #171717;
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
   color: #ffffff;
-  content: attr(data-help);
   font-size: 0.78rem;
   font-weight: 700;
   line-height: 1.42;
@@ -2173,14 +2171,37 @@ button {
   padding: 12px;
   pointer-events: none;
   text-transform: none;
-  transform: translate(-50%, 6px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  visibility: hidden;
 }
 
-.metric-help:hover::after,
-.metric-help:focus-visible::after {
+.metric-help-tooltip.is-visible {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.metric-help-tooltip::before {
+  position: absolute;
+  left: var(--tooltip-arrow-left, 50%);
+  width: 10px;
+  height: 10px;
+  background: #171717;
+  content: "";
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.metric-help-tooltip[data-placement="below"]::before {
+  top: -5px;
+  border-left: 1px solid #e0ded7;
+  border-top: 1px solid #e0ded7;
+}
+
+.metric-help-tooltip[data-placement="above"]::before {
+  bottom: -5px;
+  border-bottom: 1px solid #e0ded7;
+  border-right: 1px solid #e0ded7;
 }
 
 .connected-dashboard-body {

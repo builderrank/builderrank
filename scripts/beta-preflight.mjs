@@ -391,6 +391,7 @@ check("dashboard renders source lead signal", dashboard.includes("Lead Signal") 
 check("dashboard exports table CSV", dashboardJs.includes("exportTableToCsv") && dashboardJs.includes("escapeCsvCell"));
 check("dashboard has dedicated Meta AI workspace", dashboard.includes('data-dashboard-page="meta"') && dashboard.includes("metaVisibilityScore") && dashboard.includes("metaPromptRows"));
 check("dashboard explains Meta AI metrics", dashboardJs.includes('"Meta Visibility Score"') && dashboardJs.includes('"Measurement Health"') && dashboardJs.includes('"Make Changes"') && dashboardJs.includes("initializeMetricHelp"));
+check("dashboard info bubbles use viewport-safe tooltip layer", dashboardJs.includes("metricHelpTooltip") && dashboardJs.includes("showMetricHelpTooltip") && dashboardJs.includes("aria-expanded") && dashboardJs.includes("placeBelow") && dashboardJs.includes("window.innerWidth"));
 check("dashboard has guided Meta change workflow", dashboard.includes("metaChangeRows") && dashboard.includes("Review evidence") && dashboard.includes("Recheck Meta AI") && dashboardJs.includes("renderMetaChangeCenter"));
 check("dashboard keeps Meta changes approval-based", dashboard.includes("does not automatically publish") && dashboardJs.includes("data-next-status"));
 check("dashboard never substitutes demo Meta recommendations for live empty data", dashboardJs.includes("No customer-specific changes yet") && !dashboardJs.includes('const rows = recommendations.length ? recommendations : ['));

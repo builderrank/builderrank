@@ -564,10 +564,84 @@ function initializeMetricHelp() {
     button.type = "button";
     button.className = "metric-help";
     button.setAttribute("aria-label", `${label}: ${help}`);
+    button.setAttribute("aria-expanded", "false");
     button.dataset.help = help;
     button.textContent = "i";
     element.append(" ", button);
   });
+  initializeMetricHelpTooltip();
+}
+
+function initializeMetricHelpTooltip() {
+  let tooltip = document.querySelector("#metricHelpTooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = "metricHelpTooltip";
+    tooltip.className = "metric-help-tooltip";
+    tooltip.setAttribute("role", "tooltip");
+    document.body.append(tooltip);
+  }
+
+  document.querySelectorAll(".metric-help").forEach((button) => {
+    button.setAttribute("aria-describedby", tooltip.id);
+    if (button.dataset.tooltipReady === "true") return;
+    button.dataset.tooltipReady = "true";
+    button.addEventListener("mouseenter", () => showMetricHelpTooltip(button));
+    button.addEventListener("mouseleave", () => hideMetricHelpTooltip(button));
+    button.addEventListener("focus", () => showMetricHelpTooltip(button));
+    button.addEventListener("blur", () => hideMetricHelpTooltip(button));
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      showMetricHelpTooltip(button);
+    });
+  });
+
+  if (document.body.dataset.metricTooltipEvents !== "true") {
+    document.body.dataset.metricTooltipEvents = "true";
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".metric-help")) hideMetricHelpTooltip();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") hideMetricHelpTooltip();
+    });
+    window.addEventListener("scroll", () => hideMetricHelpTooltip(), { passive: true });
+    window.addEventListener("resize", () => hideMetricHelpTooltip(), { passive: true });
+  }
+}
+
+function showMetricHelpTooltip(button) {
+  const tooltip = document.querySelector("#metricHelpTooltip");
+  const help = button?.dataset.help;
+  if (!tooltip || !help) return;
+  document.querySelectorAll(".metric-help[aria-expanded='true']").forEach((item) => item.setAttribute("aria-expanded", "false"));
+  if (!button.dataset.tooltipId) button.dataset.tooltipId = `metric-help-${Math.random().toString(36).slice(2, 9)}`;
+  tooltip.textContent = help;
+  tooltip.dataset.owner = button.dataset.tooltipId;
+  tooltip.classList.add("is-visible");
+  button.setAttribute("aria-expanded", "true");
+
+  const anchor = button.getBoundingClientRect();
+  const box = tooltip.getBoundingClientRect();
+  const gap = 10;
+  const edge = 12;
+  const placeBelow = anchor.top < box.height + gap + edge;
+  const top = placeBelow ? anchor.bottom + gap : anchor.top - box.height - gap;
+  const idealLeft = anchor.left + anchor.width / 2 - box.width / 2;
+  const left = Math.max(edge, Math.min(idealLeft, window.innerWidth - box.width - edge));
+  const arrowLeft = Math.max(12, Math.min(anchor.left + anchor.width / 2 - left, box.width - 12));
+  tooltip.style.left = `${Math.round(left)}px`;
+  tooltip.style.top = `${Math.round(Math.max(edge, top))}px`;
+  tooltip.style.setProperty("--tooltip-arrow-left", `${Math.round(arrowLeft)}px`);
+  tooltip.dataset.placement = placeBelow ? "below" : "above";
+}
+
+function hideMetricHelpTooltip(owner) {
+  const tooltip = document.querySelector("#metricHelpTooltip");
+  if (!tooltip) return;
+  if (owner?.dataset.tooltipId && tooltip.dataset.owner !== owner.dataset.tooltipId) return;
+  tooltip.classList.remove("is-visible");
+  document.querySelectorAll(".metric-help[aria-expanded='true']").forEach((item) => item.setAttribute("aria-expanded", "false"));
+  delete tooltip.dataset.owner;
 }
 
 function normalizeHelpLabel(value) {
