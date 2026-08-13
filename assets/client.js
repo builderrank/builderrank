@@ -575,6 +575,7 @@ async function createSupabaseAccount(profile, password, statusElement) {
     password,
     options: {
       data: profile,
+      emailRedirectTo: `${window.location.origin}/run-report`,
     },
   });
 
