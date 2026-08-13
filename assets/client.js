@@ -584,8 +584,11 @@ async function createSupabaseAccount(profile, password, statusElement) {
     if (/already|registered|exists/i.test(message)) {
       const signInResult = await builderRankSupabase.auth.signInWithPassword({ email: profile.email, password });
       if (signInResult.error) throw signInResult.error;
-      saveAccountProfile(signInResult.data.user.email, signInResult.data.user.user_metadata);
-      return { mode: "signed-in", user: signInResult.data.user };
+      const updateResult = await builderRankSupabase.auth.updateUser({ data: profile });
+      if (updateResult.error) throw updateResult.error;
+      const user = updateResult.data?.user || signInResult.data.user;
+      saveAccountProfile(user.email, profile);
+      return { mode: "signed-in", user };
     }
 
     throw signUpResult.error;
