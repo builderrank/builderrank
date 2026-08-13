@@ -1,4 +1,5 @@
 import { insertSupabaseRow, readJsonBody, selectSupabaseRows, supabaseServiceConfigured, updateSupabaseRows } from "./_shared.js";
+import { sendOperatorNotification } from "./_operator-notifications.js";
 
 const allowedMethods = new Set(["POST", "OPTIONS"]);
 
@@ -30,6 +31,11 @@ export default async function handler(request, response) {
         await ensureIntakeCompetitors(business.id, parseCompetitors(lead.competitors));
         await ensureIntakeTargetTerms(business, lead.targetTerms);
       }
+      try {
+        await sendOperatorNotification({ type: "intake", dedupeKey: `intake:${lead.email}:${lead.requestedAt}`, subject: `New Builder Rank ${lead.intakeType === "signed_client" ? "client onboarding" : "beta request"}: ${lead.company}`, heading: "A new customer submitted Builder Rank onboarding", businessId: business?.id || null, fields: [
+          { label: "Company", value: lead.company }, { label: "Contact", value: lead.ownerName }, { label: "Email", value: lead.email }, { label: "Phone", value: lead.phone }, { label: "Website", value: lead.website }, { label: "Market", value: lead.market }, { label: "Primary trade", value: lead.primaryTrade }, { label: "Plan", value: lead.plan },
+        ] });
+      } catch (notificationError) { console.warn("Operator intake notification failed", notificationError.message); }
     }
 
     response.status(202).json({

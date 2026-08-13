@@ -20,6 +20,12 @@ const launchReadinessRefreshButton = document.querySelector("#adminLaunchReadine
 const launchReadinessSummary = document.querySelector("#adminLaunchReadinessSummary");
 const launchReadinessChecks = document.querySelector("#adminLaunchReadinessChecks");
 const launchReadinessResult = document.querySelector("#adminLaunchReadinessResult");
+const usageRefreshButton = document.querySelector("#adminUsageRefresh");
+const usageSummary = document.querySelector("#adminUsageSummary");
+const usageRows = document.querySelector("#adminUsageRows");
+const activityFeed = document.querySelector("#adminActivityFeed");
+const recheckFeed = document.querySelector("#adminRecheckFeed");
+const usageResult = document.querySelector("#adminUsageResult");
 
 let adminToken = "";
 
@@ -33,6 +39,57 @@ tokenForm?.addEventListener("submit", (event) => {
   tokenInput.value = "";
   tokenStatus.textContent = adminToken ? "Admin token ready for this page session." : "Enter ADMIN_API_TOKEN before calling admin endpoints.";
   if (adminToken) void loadAdminWorkspaces();
+  if (adminToken) void loadAdminUsage();
+});
+
+usageRefreshButton?.addEventListener("click", () => void loadAdminUsage());
+
+async function loadAdminUsage() {
+  if (!adminToken) { if (usageResult) usageResult.textContent = "Enter ADMIN_API_TOKEN first."; return; }
+  usageRefreshButton.disabled = true;
+  usageRefreshButton.textContent = "Refreshing…";
+  try {
+    const response = await fetch("/api/admin-usage?days=30", { headers: { "x-builderrank-admin-token": adminToken } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "Could not load usage.");
+    renderUsageDashboard(data);
+    if (usageResult) usageResult.textContent = `Private report refreshed ${new Date().toLocaleString()}. ${data.summary.customers} customer workspaces included.`;
+  } catch (error) { if (usageResult) usageResult.textContent = error.message; }
+  finally { usageRefreshButton.disabled = false; usageRefreshButton.textContent = "Refresh usage"; }
+}
+
+function renderUsageDashboard(data) {
+  const summary = data.summary || {};
+  usageSummary.innerHTML = [
+    [summary.creditsCharged || 0, "credits charged", "Successful platform prompt checks in 30 days"],
+    [summary.rechecks || 0, "rechecks", `${summary.failedOrPartial || 0} failed or partial batches`],
+    [summary.sessions || 0, "dashboard sessions", "Deduplicated to one session per 15 minutes"],
+    [summary.customerChanges || 0, "customer changes", "Target Terms and recommendation workflow updates"],
+  ].map(([value, label, detail]) => `<article><strong>${value}</strong><span>${escapeHtml(label)}</span><p>${escapeHtml(detail)}</p></article>`).join("");
+  usageRows.innerHTML = (data.customers || []).map((row) => `<tr>
+    <td><strong>${escapeHtml(row.name)}</strong><br><code>${escapeHtml(row.siteId || "No Site ID")}</code></td>
+    <td><strong>${row.credits.remaining} / ${row.credits.total}</strong><br><span>${row.credits.used} used this cycle</span></td>
+    <td>${row.usage.rechecks} batches · ${row.usage.charged} charged<br><span>${row.usage.failures} failed/partial</span></td>
+    <td>${row.usage.sessions} sessions · ${row.usage.changes} changes<br><span>${row.usage.lastActiveAt ? relativeTime(row.usage.lastActiveAt) : "No recorded activity"}</span></td>
+    <td>${row.limits.enabled ? "Enabled" : "Paused"}<br><span>${row.limits.batch}/batch · ${row.limits.daily}/day · ${row.limits.cooldownMinutes}m</span></td>
+    <td><button type="button" data-usage-business="${escapeHtml(row.businessId)}" data-usage-enabled="${row.limits.enabled}">${row.limits.enabled ? "Pause rechecks" : "Enable rechecks"}</button></td>
+  </tr>`).join("") || '<tr><td colspan="6">No customer workspaces found.</td></tr>';
+  activityFeed.innerHTML = feedCards(data.recentActivity || [], (row) => [row.event_label || row.event_type, row.created_at]);
+  recheckFeed.innerHTML = feedCards(data.recentBatches || [], (row) => [`${row.status} · ${row.charged_credits || 0}/${row.estimated_credits} credits · ${(row.platforms || []).join(", ")}`, row.created_at]);
+}
+
+function feedCards(rows, format) { return rows.slice(0, 12).map((row) => { const [label, time] = format(row); return `<article><strong>${escapeHtml(label)}</strong><span>${escapeHtml(relativeTime(time))}</span></article>`; }).join("") || "<p>No activity recorded yet.</p>"; }
+
+usageRows?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-usage-business]");
+  if (!button || !adminToken) return;
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/admin-usage", { method: "PATCH", headers: { "x-builderrank-admin-token": adminToken, "content-type": "application/json" }, body: JSON.stringify({ businessId: button.dataset.usageBusiness, customer_rechecks_enabled: button.dataset.usageEnabled !== "true" }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "Could not change safeguard.");
+    await loadAdminUsage();
+  } catch (error) { if (usageResult) usageResult.textContent = error.message; button.disabled = false; }
 });
 
 bootstrapForm?.addEventListener("submit", async (event) => {

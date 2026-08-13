@@ -7,6 +7,7 @@ import {
   sendJson,
 } from "./_shared.js";
 import { assertReportRunAllowed } from "./report-eligibility.js";
+import { sendOperatorNotification } from "./_operator-notifications.js";
 
 export const config = {
   maxDuration: 60,
@@ -33,6 +34,12 @@ export default async function handler(request, response) {
     });
 
     const audit = await runAudit(body.website, body.market);
+    try {
+      const reference = String(body.checkoutReference || body.checkout_reference || `${user.id}:${audit.website}:${Date.now()}`).slice(0, 180);
+      await sendOperatorNotification({ type: "report", dedupeKey: `report:${reference}`, subject: `New Builder Rank report: ${audit.company || audit.website}`, heading: "A customer generated a new Builder Rank report", userId: user.id, fields: [
+        { label: "Customer", value: user.email }, { label: "Company", value: audit.company }, { label: "Website", value: audit.website }, { label: "Market", value: audit.market }, { label: "Score", value: audit.score }, { label: "Grade", value: audit.grade }, { label: "Generated", value: new Date().toISOString() },
+      ] });
+    } catch (notificationError) { console.warn("Operator report notification failed", notificationError.message); }
     sendJson(response, 200, audit);
   } catch (error) {
     sendJson(response, error.statusCode || 500, {

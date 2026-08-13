@@ -437,6 +437,11 @@ const journeyQualifiedMetric = document.querySelector("#journeyQualifiedMetric")
 const journeyLeadMetric = document.querySelector("#journeyLeadMetric");
 const journeyBookedMetric = document.querySelector("#journeyBookedMetric");
 const targetTermForm = document.querySelector("#targetTermForm");
+const aiRecheckButton = document.querySelector("#aiRecheckButton");
+const aiCreditPlatforms = document.querySelector("#aiCreditPlatforms");
+const aiRecheckStatus = document.querySelector("#aiRecheckStatus");
+let aiCreditState = null;
+let recheckConfirmationExpires = 0;
 const targetTermStatus = document.querySelector("#targetTermStatus");
 const targetTermJobType = document.querySelector("#targetTermJobType");
 
@@ -685,6 +690,7 @@ function applyLiveDashboardData(payload) {
   const aiVisibility = payload.aiVisibility || {};
   renderMetaVisibility(payload.metaVisibility || {});
   renderTargetTerms(payload.targetTerms || [], payload.jobTypes || [], false);
+  void loadAiCreditSummary();
   renderAiChangeCenter(aiVisibility.platforms || [], payload.recommendations || [], false);
   const readiness = workspace.readiness || {};
 
@@ -987,7 +993,79 @@ function renderTargetTerms(terms, jobTypes = [], demo = false) {
     const action = demo ? "" : `<button type="button" data-target-term-id="${escapeHtml(term.id)}" data-target-term-status="${term.status === "active" ? "paused" : "active"}">${term.status === "active" ? "Pause target" : "Resume target"}</button>`;
     return `<article class="target-term-card ${term.status === "paused" ? "is-paused" : ""}"><div class="target-term-card-head"><span>${escapeHtml(term.status)} · ${escapeHtml(term.jobTypeLabel || "All services")}</span><strong>${term.openChanges || 0} open changes</strong></div><h3>${escapeHtml(term.phrase)}</h3><p>${escapeHtml(term.market || "Customer market")} · ${term.prompts || 0} prompts · ${term.runs || 0} measured runs · Avg. ${term.averagePosition ? `#${term.averagePosition}` : "waiting"}</p><div class="target-term-platforms">${platformCells}</div>${action}</article>`;
   }).join("") : '<div class="meta-change-empty"><strong>Choose the first AI Target Term</strong><p>Start with the service and market phrase most closely tied to the jobs this customer wants to win.</p></div>';
+  updateAiCreditEstimate();
 }
+
+async function loadAiCreditSummary() {
+  const token = await getDashboardAccessToken();
+  const siteId = selectedSiteIdFromUrl() || currentDashboardPayload?.business?.site_id;
+  if (!token || !siteId) return;
+  try {
+    const response = await fetch(`/api/ai-credits?siteId=${encodeURIComponent(siteId)}`, { headers: { authorization: `Bearer ${token}` } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "Could not load credits.");
+    aiCreditState = data;
+    setText("#aiCreditRemaining", `${data.credits.remaining} / ${data.credits.total}`);
+    const reset = new Date(data.credits.periodEnd).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    setText("#aiCreditPeriod", `${data.credits.used} used · resets ${reset}`);
+    document.querySelectorAll("#aiCreditPlatforms input").forEach((input) => {
+      const connection = data.connections?.[input.value];
+      input.disabled = !connection?.connected;
+      input.closest("label")?.classList.toggle("is-unavailable", !connection?.connected);
+      if (!connection?.connected) input.checked = false;
+      input.closest("label")?.setAttribute("title", connection?.connected ? `${connection.label} is connected` : `${connection?.label || input.value} connection is not configured`);
+    });
+    updateAiCreditEstimate();
+  } catch (error) {
+    if (aiRecheckStatus) aiRecheckStatus.textContent = error.message;
+  }
+}
+
+function selectedRecheckPlatforms() { return [...document.querySelectorAll("#aiCreditPlatforms input:checked")].map((input) => input.value); }
+function activeTargetTerms() { return (currentDashboardPayload?.targetTerms || []).filter((term) => term.status === "active"); }
+function updateAiCreditEstimate() {
+  const terms = activeTargetTerms();
+  const platforms = selectedRecheckPlatforms();
+  const promptCount = terms.reduce((sum, term) => sum + Math.max(0, Number(term.prompts || 3)), 0);
+  const estimated = promptCount * platforms.length;
+  setText("#aiCreditEstimate", `${estimated} credit${estimated === 1 ? "" : "s"}`);
+  const c = aiCreditState?.credits;
+  setText("#aiCreditSafeguards", c ? `Hard caps: ${c.perBatchLimit}/recheck · ${c.dailyLimit}/day · ${c.cooldownMinutes} min cooldown` : "Server-side limits apply before any model request");
+  if (aiRecheckButton) aiRecheckButton.disabled = !terms.length || !platforms.length || !c?.enabled || estimated > Number(c?.remaining || 0) || estimated > Number(c?.perBatchLimit || 24);
+  return { terms, platforms, estimated };
+}
+
+aiCreditPlatforms?.addEventListener("change", () => { recheckConfirmationExpires = 0; if (aiRecheckButton) aiRecheckButton.textContent = "Review Recheck"; updateAiCreditEstimate(); });
+aiRecheckButton?.addEventListener("click", async () => {
+  const selection = updateAiCreditEstimate();
+  if (!selection.estimated) return;
+  if (Date.now() > recheckConfirmationExpires) {
+    recheckConfirmationExpires = Date.now() + 15000;
+    aiRecheckButton.textContent = `Confirm & Spend Up To ${selection.estimated}`;
+    if (aiRecheckStatus) aiRecheckStatus.textContent = `${selection.terms.length} target${selection.terms.length === 1 ? "" : "s"} × ${selection.platforms.length} platform${selection.platforms.length === 1 ? "" : "s"} × monitored prompts. Failed calls will be refunded. Click again to confirm.`;
+    return;
+  }
+  const token = await getDashboardAccessToken();
+  if (!token) return;
+  aiRecheckButton.disabled = true;
+  aiRecheckButton.textContent = "Running AI Recheck…";
+  if (aiRecheckStatus) aiRecheckStatus.textContent = "Credits reserved. Checking each platform; only successful prompt responses will be charged.";
+  try {
+    const idempotencyKey = `recheck_${Date.now()}_${crypto.randomUUID().replaceAll("-", "")}`;
+    const response = await fetch("/api/ai-credits", { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ siteId: selectedSiteIdFromUrl() || currentDashboardPayload?.business?.site_id, targetTermIds: selection.terms.map((term) => term.id), platforms: selection.platforms, idempotencyKey }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "AI recheck could not be completed.");
+    aiCreditState = { ...aiCreditState, credits: data.credits };
+    if (aiRecheckStatus) aiRecheckStatus.textContent = `${data.successfulRuns || 0} checks saved · ${data.chargedCredits || 0} credits charged${data.refundedCredits ? ` · ${data.refundedCredits} automatically refunded` : ""}.`;
+    await hydrateLiveDashboardData();
+  } catch (error) {
+    if (aiRecheckStatus) aiRecheckStatus.textContent = error.message;
+  } finally {
+    recheckConfirmationExpires = 0;
+    aiRecheckButton.textContent = "Review Recheck";
+    updateAiCreditEstimate();
+  }
+});
 
 function renderAiChangeCenter(platforms, recommendations, demo = false) {
   currentAiChangeState = { platforms, recommendations, demo };

@@ -231,6 +231,18 @@
             </form>
             <p id="targetTermStatus" class="target-term-status" role="status"></p>
             <div id="targetTermRows" class="target-term-list"></div>
+            <div class="ai-credit-console" id="aiCreditConsole">
+              <div class="ai-credit-balance"><span>AI monitoring credits</span><strong id="aiCreditRemaining">—</strong><small id="aiCreditPeriod">Loading safeguards…</small></div>
+              <div class="ai-credit-controls">
+                <div><strong>Recheck platforms</strong><p>One credit = one Target Term prompt checked on one platform. Failed platform calls are automatically refunded.</p></div>
+                <div class="ai-credit-platforms" id="aiCreditPlatforms">
+                  <label><input type="checkbox" value="chatgpt" checked /> ChatGPT</label><label><input type="checkbox" value="gemini" checked /> Gemini</label><label><input type="checkbox" value="claude" checked /> Claude</label><label><input type="checkbox" value="meta" /> Meta AI</label>
+                </div>
+                <div class="ai-credit-estimate"><span>Estimated maximum</span><strong id="aiCreditEstimate">0 credits</strong><small id="aiCreditSafeguards">Select active targets and platforms</small></div>
+                <button type="button" id="aiRecheckButton">Review Recheck</button>
+              </div>
+              <p id="aiRecheckStatus" class="target-term-status" role="status"></p>
+            </div>
           </section>
 
           <section class="meta-change-center ai-change-center">

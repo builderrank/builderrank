@@ -5,6 +5,7 @@ import {
   supabaseServiceConfigured,
 } from "./_shared.js";
 import { summarizeMetaVisibility } from "./_meta-visibility.js";
+import { dashboardSessionKey, recordActivity } from "./_activity.js";
 
 export default async function handler(request, response) {
   if (request.method !== "GET") {
@@ -47,6 +48,8 @@ export default async function handler(request, response) {
       response.status(200).json({ ok: true, mode: "empty", business: business || null });
       return;
     }
+
+    void recordActivity({ businessId: business.id, userId: user.id, eventType: "dashboard_session", eventLabel: "Customer dashboard opened", entityType: "workspace", entityId: business.id, dedupeKey: dashboardSessionKey(business.id, user.id), metadata: { siteId: business.site_id } });
 
     const since = new Date(Date.now() - dateRangeDays * 24 * 60 * 60 * 1000).toISOString();
     const [

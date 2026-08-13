@@ -595,11 +595,18 @@ async function createSupabaseAccount(profile, password, statusElement) {
   }
 
   if (signUpResult.data?.session) {
+    void notifyOperatorOfSignup(signUpResult.data.user?.id);
     saveAccountProfile(signUpResult.data.user.email, signUpResult.data.user.user_metadata);
     return { mode: "signed-in", user: signUpResult.data.user };
   }
 
+  void notifyOperatorOfSignup(signUpResult.data?.user?.id);
   throw new Error("Account created. Check your email to confirm it, then sign in before claiming the free report.");
+}
+
+async function notifyOperatorOfSignup(userId) {
+  if (!userId) return;
+  try { await fetch("/api/signup-notification", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId }) }); } catch { /* Signup remains successful if the internal alert is unavailable. */ }
 }
 
 async function updateSupabaseAccountProfile(profile, statusElement) {

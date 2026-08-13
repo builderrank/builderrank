@@ -169,6 +169,26 @@ export async function selectSupabaseRows(table, query = {}) {
   return Array.isArray(data) ? data : [];
 }
 
+export async function callSupabaseRpc(functionName, payload = {}) {
+  requireSupabaseServiceRole();
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    const message = data?.message || data?.hint || `Could not call ${functionName}.`;
+    throw Object.assign(new Error(message), { statusCode: response.status, details: data });
+  }
+  return data;
+}
+
 export function extractBearerToken(request) {
   const authorization = request.headers.authorization || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);

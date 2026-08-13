@@ -7,6 +7,7 @@ import {
   supabaseServiceConfigured,
   updateSupabaseRows,
 } from "./_shared.js";
+import { recordActivity } from "./_activity.js";
 
 const allowedStatuses = new Set(["active", "paused", "archived"]);
 
@@ -44,6 +45,7 @@ export default async function handler(request, response) {
       }))[0];
       if (!term?.id) throw new Error("Target term could not be saved.");
       const generated = await seedTargetTermWork(business, term);
+      await recordActivity({ businessId: business.id, userId: user.id, eventType: "target_term_created", eventLabel: `Targeted “${term.phrase}”`, entityType: "target_term", entityId: term.id, metadata: { phrase: term.phrase, generated } });
       return response.status(201).json({ ok: true, targetTerm: formatTerm(term), generated });
     }
 
@@ -56,6 +58,7 @@ export default async function handler(request, response) {
       if (active.length >= 2) return response.status(409).json({ error: "Only two Target Terms can be active at once." });
     }
     const updated = (await updateSupabaseRows("br_target_terms", { id: `eq.${term.id}` }, { status, updated_at: new Date().toISOString() }))[0] || { ...term, status };
+    await recordActivity({ businessId: business.id, userId: user.id, eventType: "target_term_status_changed", eventLabel: `“${term.phrase}” changed to ${status}`, entityType: "target_term", entityId: term.id, metadata: { previousStatus: term.status, status } });
     return response.status(200).json({ ok: true, targetTerm: formatTerm(updated) });
   } catch (error) {
     return response.status(error.statusCode || 400).json({ error: "Could not update Target Terms.", detail: error.message });

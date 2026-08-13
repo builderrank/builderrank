@@ -6,6 +6,7 @@ import {
   supabaseServiceConfigured,
   updateSupabaseRows,
 } from "./_shared.js";
+import { recordActivity } from "./_activity.js";
 
 const allowedStatuses = new Set(["open", "in_progress", "complete"]);
 
@@ -65,6 +66,7 @@ export default async function handler(request, response) {
       completed_at: status === "complete" ? new Date().toISOString() : null,
     };
     const rows = await updateSupabaseRows("br_recommendations", { id: `eq.${recommendation.id}` }, payload);
+    await recordActivity({ businessId: business.id, userId: user.id, eventType: "recommendation_status_changed", eventLabel: `${recommendation.title}: ${recommendation.status} → ${status}`, entityType: "recommendation", entityId: recommendation.id, metadata: { previousStatus: recommendation.status, status, title: recommendation.title } });
 
     response.status(200).json({
       ok: true,

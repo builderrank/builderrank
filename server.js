@@ -15,8 +15,11 @@ import reportEligibilityHandler from "./api/report-eligibility.js";
 import { assertReportRunAllowed } from "./api/report-eligibility.js";
 import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
+import signupNotificationHandler from "./api/signup-notification.js";
 import supabaseKeepaliveHandler from "./api/supabase-keepalive.js";
 import adminWorkspacesHandler from "./api/admin-workspaces.js";
+import adminUsageHandler from "./api/admin-usage.js";
+import aiCreditsHandler from "./api/ai-credits.js";
 import betaIntakeHandler from "./api/beta-intake.js";
 import bootstrapWorkspaceHandler from "./api/bootstrap-workspace.js";
 import connectSiteHandler from "./api/connect-site.js";
@@ -72,6 +75,21 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/email-report") {
       await callApiHandler(emailReportHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/signup-notification") {
+      await callApiHandler(signupNotificationHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/admin-usage") {
+      await callApiHandler(adminUsageHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/ai-credits") {
+      await callApiHandler(aiCreditsHandler, request, response);
       return;
     }
 
