@@ -3117,7 +3117,7 @@ h3 {
 
 .audit-form {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
   margin-top: 18px;
@@ -3152,17 +3152,15 @@ h3 {
   gap: 8px;
 }
 
-/* Keep the three primary business fields on identical label/input baselines. */
-.url-field,
-.city-field,
-.phone-field {
-  grid-template-rows: auto 48px;
+/* Lock every intake field to the same column width and label/input baselines. */
+.audit-form > label {
+  grid-column: span 1;
+  grid-template-rows: 14px 48px;
   align-self: stretch;
 }
 
-.url-field input,
-.city-field input,
-.phone-field input {
+.audit-form > label input,
+.audit-form > label select {
   height: 48px;
   margin-bottom: 0;
 }
