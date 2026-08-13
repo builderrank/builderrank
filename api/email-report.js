@@ -96,7 +96,7 @@ function renderEmailHtml(report) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;max-width:640px">
       <h1 style="margin-bottom:8px">Your Builder Rank report is ready</h1>
-      <p>Thank you for purchasing a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.</p>
+      <p>Thank you for requesting a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.</p>
       <p><strong>${escapeHtml(report.company || "Contractor report")}</strong></p>
       <p>${escapeHtml(report.website || "")}${report.market ? ` · ${escapeHtml(report.market)}` : ""}</p>
       <p><strong>AI Health Score:</strong> ${escapeHtml(score)} · <strong>Grade:</strong> ${escapeHtml(grade)}</p>
@@ -116,7 +116,7 @@ function renderEmailText(report) {
 
   return [
     "Your Builder Rank report is ready",
-    "Thank you for purchasing a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.",
+    "Thank you for requesting a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.",
     report.company || "Contractor report",
     report.website || "",
     report.market || "",
