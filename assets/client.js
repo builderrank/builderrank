@@ -196,6 +196,8 @@ let hasGeneratedReport = false;
 
 const auditForm = document.querySelector("#auditForm");
 const emailInput = document.querySelector("#emailInput");
+const reportFirstNameInput = document.querySelector("#reportFirstNameInput");
+const reportLastNameInput = document.querySelector("#reportLastNameInput");
 const websiteInput = document.querySelector("#websiteInput");
 const marketInput = document.querySelector("#marketInput");
 const phoneInput = document.querySelector("#phoneInput");
@@ -307,7 +309,7 @@ promoCodeInputs.forEach((input) => {
   });
 });
 
-[websiteInput, marketInput, phoneInput].filter(Boolean).forEach((input) => {
+[reportFirstNameInput, reportLastNameInput, emailInput, websiteInput, marketInput, phoneInput].filter(Boolean).forEach((input) => {
   input.addEventListener("input", savePendingReportDraft);
 });
 
@@ -441,7 +443,9 @@ async function beginFreeReport() {
 
     const session = await getCurrentSession();
     if (!session?.access_token) {
-      if (auditStatus) auditStatus.textContent = "Log in or create an account before claiming the free report.";
+      savePendingReportDraft();
+      if (auditStatus) auditStatus.textContent = "Choose a password to save and generate your free report.";
+      openCreateAccountModal(emailInput?.value, { mode: "report", profile: getReportIntakeProfile() });
       return;
     }
 
@@ -491,13 +495,6 @@ async function validateReportIntake() {
     return false;
   }
 
-  if (!session?.user) {
-    if (auditStatus) auditStatus.textContent = "Log in or create an account before claiming the free report.";
-    reportLoginEmailInput?.focus();
-    return false;
-  }
-
-  if (emailInput) emailInput.value = session.user.email || "";
   if (!validateEmailField(emailInput, "Use a valid email address before claiming the free report.")) {
     return false;
   }
@@ -508,9 +505,20 @@ async function validateReportIntake() {
     return false;
   }
 
+  if (!session?.user) {
+    savePendingReportDraft();
+    if (auditStatus) auditStatus.textContent = "Choose a password to create your account and generate the report.";
+    openCreateAccountModal(emailInput?.value, { mode: "report", profile: getReportIntakeProfile() });
+    return false;
+  }
+
+  if (emailInput) emailInput.value = session.user.email || "";
+
   const profile = {
     ...(readAccountProfile() || {}),
     ...(session.user.user_metadata || {}),
+    first_name: reportFirstNameInput?.value.trim() || session.user.user_metadata?.first_name || "",
+    last_name: reportLastNameInput?.value.trim() || session.user.user_metadata?.last_name || "",
     email: session.user.email || "",
     phone: normalizePhone(phoneInput?.value || getProfilePhone(session.user.user_metadata)),
   };
@@ -630,7 +638,7 @@ function setCheckoutPreparing(isPreparing) {
     ? "Checking..."
     : checkoutConfirmed
       ? "Generate Report"
-      : "Claim Free Report";
+      : "Generate My Free Report";
 }
 
 function savePendingReport({ checkoutReference = readPendingReport()?.checkoutReference || "" } = {}) {
@@ -640,6 +648,8 @@ function savePendingReport({ checkoutReference = readPendingReport()?.checkoutRe
 
   const pendingReport = {
     email: emailInput?.value || readAccountEmail() || "",
+    firstName: reportFirstNameInput?.value.trim() || "",
+    lastName: reportLastNameInput?.value.trim() || "",
     accountCreated: Boolean(readAccountProfile()?.accountCreated),
     website: websiteInput?.value || "",
     market: normalizeMarket(marketInput?.value || ""),
@@ -667,6 +677,8 @@ function savePendingReportDraft() {
     const draft = {
       ...existing,
       email: emailInput?.value || readAccountEmail() || existing?.email || "",
+      firstName: reportFirstNameInput?.value.trim() || existing?.firstName || "",
+      lastName: reportLastNameInput?.value.trim() || existing?.lastName || "",
       accountCreated: Boolean(readAccountProfile()?.accountCreated || existing?.accountCreated),
       website: websiteInput?.value || "",
       market: marketInput?.value || "",
@@ -775,6 +787,8 @@ function hydrateCheckoutReturn() {
   }
 
   if (emailInput) emailInput.value = readAccountEmail() || emailInput.value;
+  if (reportFirstNameInput) reportFirstNameInput.value = pendingReport?.firstName || reportFirstNameInput.value;
+  if (reportLastNameInput) reportLastNameInput.value = pendingReport?.lastName || reportLastNameInput.value;
 
   if (pendingReport && isCheckoutReturn) {
     if (emailInput) emailInput.value = pendingReport.email || emailInput.value;
@@ -785,9 +799,9 @@ function hydrateCheckoutReturn() {
   }
 
   if (!isCheckoutReturn) {
-    if (auditSubmitButton) auditSubmitButton.textContent = "Claim Free Report";
+    if (auditSubmitButton) auditSubmitButton.textContent = "Generate My Free Report";
     if (auditStatus) {
-      auditStatus.textContent = "Log in or create an account, then complete the required fields to claim one free report.";
+      auditStatus.textContent = "Complete the fields above. We will create your free account before generating the report.";
     }
     return;
   }
@@ -1085,6 +1099,7 @@ function hydrateAuthFlows() {
     }
 
     const isProfileCompletion = createAccountMode === "complete";
+    const isReportSignup = createAccountMode === "report";
     if (!isProfileCompletion && createPasswordInput.value !== createPasswordConfirmInput.value) {
       createPasswordConfirmInput.setCustomValidity("Passwords must match.");
       createPasswordConfirmInput.reportValidity();
@@ -1117,14 +1132,24 @@ function hydrateAuthFlows() {
 
       closeCreateAccountModal();
       if (accountStatus) accountStatus.textContent = `Signed in as ${profile.email}.`;
-      if (auditStatus) auditStatus.textContent = "Free account complete. You can claim the free report now.";
+      if (auditStatus) auditStatus.textContent = isReportSignup
+        ? "Account created. Generating your free report..."
+        : "Free account complete. You can claim the free report now.";
       await refreshAuthState();
       void syncHubSpotAccount(profile);
+      if (isReportSignup) {
+        const session = await getCurrentSession();
+        if (session?.access_token) {
+          await beginFreeReport();
+        } else if (auditStatus) {
+          auditStatus.textContent = "Account saved. Sign in from Customer Login to generate your report.";
+        }
+      }
     } catch (error) {
       if (createAccountStatus) createAccountStatus.textContent = error.message || "Could not create the account.";
     } finally {
       submitButton.disabled = false;
-      submitButton.textContent = isProfileCompletion ? "Save Free Account" : "Create Account";
+      submitButton.textContent = isReportSignup ? "Create Account & Generate Report" : isProfileCompletion ? "Save Free Account" : "Create Account";
     }
   });
 
@@ -1170,18 +1195,19 @@ async function handleLogin(emailElement, passwordElement, statusElement, buttonE
 
 function openCreateAccountModal(prefillEmail = "", options = {}) {
   if (!createAccountModal) return;
-  createAccountMode = options.mode === "complete" ? "complete" : "signup";
+  createAccountMode = ["complete", "report"].includes(options.mode) ? options.mode : "signup";
   const profile = options.profile || readAccountProfile() || {};
   const isProfileCompletion = createAccountMode === "complete";
+  const isReportSignup = createAccountMode === "report";
   const title = createAccountModal.querySelector("#createAccountTitle");
   const eyebrow = createAccountModal.querySelector(".modal-topline .eyebrow");
   const submitButton = createAccountForm?.querySelector("button[type='submit']");
   const passwordLabel = createPasswordInput?.closest("label");
   const passwordConfirmLabel = createPasswordConfirmInput?.closest("label");
 
-  if (eyebrow) eyebrow.textContent = isProfileCompletion ? "Free Account" : "Create Account";
-  if (title) title.textContent = isProfileCompletion ? "Complete your free Builder Rank account" : "Set up your Builder Rank workspace";
-  if (submitButton) submitButton.textContent = isProfileCompletion ? "Save Free Account" : "Create Account";
+  if (eyebrow) eyebrow.textContent = isReportSignup ? "Save Your Report" : isProfileCompletion ? "Free Account" : "Create Account";
+  if (title) title.textContent = isReportSignup ? "Choose a password for your free account" : isProfileCompletion ? "Complete your free Builder Rank account" : "Set up your Builder Rank workspace";
+  if (submitButton) submitButton.textContent = isReportSignup ? "Create Account & Generate Report" : isProfileCompletion ? "Save Free Account" : "Create Account";
   if (passwordLabel) passwordLabel.hidden = isProfileCompletion;
   if (passwordConfirmLabel) passwordConfirmLabel.hidden = isProfileCompletion;
   if (createPasswordInput) {
@@ -1193,13 +1219,21 @@ function openCreateAccountModal(prefillEmail = "", options = {}) {
     createPasswordConfirmInput.value = "";
   }
 
+  [createEmailInput, createFirstNameInput, createLastNameInput, createPhoneInput, createCompanyInput, createCompanySizeInput, createTradeInput]
+    .forEach((input) => {
+      const label = input?.closest("label");
+      if (label) label.hidden = isReportSignup;
+    });
+  if (createCompanySizeInput) createCompanySizeInput.required = !isReportSignup;
+  if (createTradeInput) createTradeInput.required = !isReportSignup;
+
   createAccountModal.hidden = false;
   fillCreateAccountForm({
     ...profile,
     email: prefillEmail || profile.email || readAccountEmail(),
   });
   if (createAccountStatus) createAccountStatus.textContent = "";
-  createEmailInput?.focus();
+  (isReportSignup ? createPasswordInput : createEmailInput)?.focus();
 }
 
 function closeCreateAccountModal() {
@@ -1215,6 +1249,13 @@ function closeCreateAccountModal() {
   if (passwordConfirmLabel) passwordConfirmLabel.hidden = false;
   if (createPasswordInput) createPasswordInput.required = true;
   if (createPasswordConfirmInput) createPasswordConfirmInput.required = true;
+  if (createCompanySizeInput) createCompanySizeInput.required = true;
+  if (createTradeInput) createTradeInput.required = true;
+  [createEmailInput, createFirstNameInput, createLastNameInput, createPhoneInput, createCompanyInput, createCompanySizeInput, createTradeInput]
+    .forEach((input) => {
+      const label = input?.closest("label");
+      if (label) label.hidden = false;
+    });
 }
 
 function openResetPasswordModal(prefillEmail = "") {
@@ -1327,6 +1368,8 @@ async function refreshAuthState() {
   const savedEmail = user?.email || readAccountEmail();
 
   if (emailInput && user?.email) emailInput.value = user.email;
+  if (reportFirstNameInput && !reportFirstNameInput.value) reportFirstNameInput.value = profile.first_name || readPendingReport()?.firstName || "";
+  if (reportLastNameInput && !reportLastNameInput.value) reportLastNameInput.value = profile.last_name || readPendingReport()?.lastName || "";
   if (phoneInput && !phoneInput.value) phoneInput.value = getProfilePhone(profile) || readPendingReport()?.phone || "";
   if (accountLoginEmailInput && savedEmail) accountLoginEmailInput.value = savedEmail;
   if (reportLoginEmailInput && savedEmail) reportLoginEmailInput.value = savedEmail;
@@ -1522,12 +1565,33 @@ function hasCompleteLeadProfile(profile = {}) {
     profile.last_name,
     getProfilePhone(profile),
     profile.company_name,
-    profile.company_size,
-    profile.trade,
   ];
 
   return requiredValues.every((value) => String(value || "").trim().length > 0)
     && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(profile.email));
+}
+
+function getReportIntakeProfile() {
+  let companyName = "";
+  try {
+    const rawWebsite = websiteInput?.value.trim() || "";
+    const websiteUrl = new URL(/^https?:\/\//i.test(rawWebsite) ? rawWebsite : `https://${rawWebsite}`);
+    companyName = websiteUrl.hostname.replace(/^www\./i, "").split(".")[0].replace(/[-_]+/g, " ");
+    companyName = companyName.replace(/\b\w/g, (letter) => letter.toUpperCase());
+  } catch {
+    companyName = "My Business";
+  }
+
+  return {
+    product: "Builder Rank",
+    email: normalizeEmail(emailInput?.value || ""),
+    first_name: reportFirstNameInput?.value.trim() || "",
+    last_name: reportLastNameInput?.value.trim() || "",
+    phone: normalizePhone(phoneInput?.value || ""),
+    company_name: companyName || "My Business",
+    company_size: "",
+    trade: "",
+  };
 }
 
 function fillCreateAccountForm(profile = {}) {
@@ -2350,7 +2414,7 @@ function setLoading(isLoading) {
   const button = auditForm.querySelector("button");
   button.disabled = isLoading;
   if (returnedReportButton) returnedReportButton.disabled = isLoading;
-  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Report" : "Claim Free Report";
+  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Report" : "Generate My Free Report";
   auditStatus.textContent = isLoading
     ? "Crawling the website, checking schema, reading text, and scoring LLM readability..."
     : auditStatus.textContent;

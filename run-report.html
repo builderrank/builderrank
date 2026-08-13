@@ -26,7 +26,7 @@
           <a href="/why-geo">Why GEO</a>
           <a href="/marketing-platform">Marketing Platform</a>
           <a href="/pricing">Pricing</a>
-          <a href="/account">Login</a>
+          <a href="/account">Customer Login</a>
           <button class="nav-pay-button" type="button" data-payment-link>Free Report</button>
         </nav>
       </header>
@@ -39,38 +39,26 @@
           </div>
           <h1>Generate the contractor or service business AI visibility report.</h1>
           <p class="hero-text">
-            Create a free account or log in, then enter one business website, primary market, and phone
-            number. Builder Rank saves the report to your workspace and emails the PDF automatically.
+            Enter your business and contact details to generate one free AI visibility report. We will
+            create your workspace, save the report, and email the PDF automatically.
           </p>
-          <div id="reportAuthPanel" class="report-auth-panel">
-            <div>
-              <p class="eyebrow">Step 1 · Account</p>
-              <strong id="reportAuthTitle">Create a free account or log in to start</strong>
-              <p id="reportAuthSummary">This keeps your free report, PDF, and future dashboard access tied to one workspace.</p>
-            </div>
-            <div id="reportLoginForm" class="login-form compact-login-form">
-              <label>
-                <span>Email</span>
-                <input id="reportLoginEmailInput" type="email" placeholder="you@company.com" required />
-              </label>
-              <label>
-                <span>Password</span>
-                <input id="reportLoginPasswordInput" type="password" minlength="8" placeholder="Your password" required />
-              </label>
-              <button id="reportLoginButton" type="button">Log In</button>
-            </div>
-            <div class="auth-actions">
-              <button id="reportCreateOpenButton" class="secondary-button" type="button">Create Account</button>
-              <a href="/account">Returning customer dashboard</a>
-              <button id="reportResetOpenButton" class="text-button" type="button">Forgot password?</button>
-            </div>
-          </div>
           <form id="auditForm" class="audit-form">
             <div class="report-form-intro">
-              <p class="eyebrow">Step 2 · Business details</p>
-              <strong>Tell Builder Rank which website and market to inspect.</strong>
+              <p class="eyebrow">Your free report</p>
+              <strong>Tell Builder Rank where to send it and which business to inspect.</strong>
             </div>
-            <input id="emailInput" type="hidden" />
+            <label class="first-name-field">
+              <span>First name</span>
+              <input id="reportFirstNameInput" autocomplete="given-name" required />
+            </label>
+            <label class="last-name-field">
+              <span>Last name</span>
+              <input id="reportLastNameInput" autocomplete="family-name" required />
+            </label>
+            <label class="email-field">
+              <span>Email</span>
+              <input id="emailInput" type="email" autocomplete="email" placeholder="you@company.com" required />
+            </label>
             <label class="url-field">
               <span>Business website</span>
               <input id="websiteInput" type="url" placeholder="https://example-service-business.com" required />
@@ -88,7 +76,7 @@
               <span>Promo code</span>
               <input id="promoCodeInput" data-promo-code-input type="text" inputmode="latin" autocomplete="off" placeholder="Optional" />
             </label>
-            <button id="auditSubmitButton" type="submit">Claim Free Report</button>
+            <button id="auditSubmitButton" type="submit">Generate My Free Report</button>
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
             <strong>Free report unlocked</strong>
@@ -97,7 +85,7 @@
           </div>
           <div class="report-actions" aria-label="Save report">
             <p id="auditStatus" class="audit-status" role="status">
-              Log in or create an account, then complete the required fields to claim one free report.
+              Complete the fields above. We will create your free account before generating the report.
             </p>
             <div class="save-buttons" hidden>
               <button id="pdfButton" type="button">Save PDF</button>
@@ -199,7 +187,7 @@
             <div class="phase active">
               <span>Step 1</span>
               <strong>Enter the business details</strong>
-              <p>Provide the website, primary market, phone number, and customer account before generating the free report.</p>
+              <p>Provide your contact information, website, primary market, and phone number.</p>
             </div>
             <div class="phase">
               <span>Step 2</span>

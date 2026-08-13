@@ -3142,6 +3142,8 @@ h3 {
 
 .email-field,
 .password-field,
+.first-name-field,
+.last-name-field,
 .url-field,
 .city-field,
 .phone-field,
@@ -3150,12 +3152,29 @@ h3 {
   gap: 8px;
 }
 
+/* Keep the three primary business fields on identical label/input baselines. */
+.url-field,
+.city-field,
+.phone-field {
+  grid-template-rows: auto 48px;
+  align-self: stretch;
+}
+
+.url-field input,
+.city-field input,
+.phone-field input {
+  height: 48px;
+  margin-bottom: 0;
+}
+
 .email-field,
 .password-field,
 .url-field {
   grid-column: span 2;
 }
 
+.first-name-field,
+.last-name-field,
 .city-field,
 .phone-field,
 .promo-field {
@@ -3168,6 +3187,8 @@ h3 {
 
 .email-field span,
 .password-field span,
+.first-name-field span,
+.last-name-field span,
 .url-field span,
 .city-field span,
 .phone-field span,
@@ -5093,6 +5114,8 @@ li {
 
   .email-field,
   .password-field,
+  .first-name-field,
+  .last-name-field,
   .url-field,
   .city-field,
   .phone-field,
