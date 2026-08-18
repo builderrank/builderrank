@@ -523,7 +523,10 @@ async function callGemini(provider, auditContext) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: geminiResponseSchema(),
-          maxOutputTokens: 1600,
+          maxOutputTokens: 2200,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
         },
       }),
     },
