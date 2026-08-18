@@ -1,5 +1,6 @@
 import {
   extractBearerToken,
+  callSupabaseRpc,
   getSupabaseUser,
   readJsonBody,
   requireSupabaseServiceRole,
@@ -23,6 +24,8 @@ export default async function handler(request, response) {
     return;
   }
 
+  let claimedRunId = "";
+  let claimedUserId = "";
   try {
     requireSupabaseServiceRole();
     const user = await getSupabaseUser(extractBearerToken(request));
@@ -33,7 +36,24 @@ export default async function handler(request, response) {
 
     const body = await readJsonBody(request);
     const report = body.report || {};
-    const to = safeString(body.email, user.email);
+    const reportRunId = safeString(report.reportRunId || body.reportRunId);
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(reportRunId)) {
+      throw Object.assign(new Error("A completed report run is required before email delivery."), { statusCode: 400 });
+    }
+    const incompleteModels = Array.isArray(report.modelAnalyses)
+      ? report.modelAnalyses.filter((item) => item.status !== "complete")
+      : ["missing"];
+    if (incompleteModels.length || report.modelAnalyses.length !== 3) {
+      throw Object.assign(new Error("All three model sections must be complete before email delivery."), { statusCode: 409 });
+    }
+    const claim = await callSupabaseRpc("br_claim_report_email", { p_run_id: reportRunId, p_user_id: user.id });
+    if (claim?.already_sent) {
+      sendJson(response, 200, { ok: true, alreadySent: true });
+      return;
+    }
+    claimedRunId = reportRunId;
+    claimedUserId = user.id;
+    const to = safeString(user.email).toLowerCase();
     const company = safeString(report.company, "Contractor report");
     const slug = slugify(company);
     const payload = {
@@ -78,8 +98,22 @@ export default async function handler(request, response) {
       throw new Error(data?.message || "Could not send report email.");
     }
 
+    await callSupabaseRpc("br_finalize_report_email", { p_run_id: reportRunId, p_user_id: user.id, p_success: true, p_provider_id: data.id || null });
+    claimedRunId = "";
     sendJson(response, 200, { ok: true, id: data.id });
   } catch (error) {
+    if (claimedRunId && claimedUserId) {
+      try {
+        await callSupabaseRpc("br_finalize_report_email", {
+          p_run_id: claimedRunId,
+          p_user_id: claimedUserId,
+          p_success: false,
+          p_provider_id: null,
+        });
+      } catch (finalizeError) {
+        console.error("Could not release report email claim", finalizeError);
+      }
+    }
     sendJson(response, error.statusCode || 500, {
       error: "Could not email report",
       detail: error.message,
