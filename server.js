@@ -370,7 +370,9 @@ async function analyzeWithModels(auditContext) {
           score: extractScore(result.score),
           summary: modelSummaryText(result, provider.label),
           recommendations: Array.isArray(result.recommendations)
-            ? result.recommendations.map((item) => truncateModelText(stringifyModelText(item), 280)).slice(0, 4)
+            ? normalizeRecommendationList(result.recommendations)
+              .map((item) => polishRecommendationText(item, 280))
+              .slice(0, 4)
             : [],
         };
       } catch (error) {
@@ -1176,7 +1178,28 @@ export function truncateModelText(value, maximumLength) {
   if (sentenceEnd >= Math.min(140, Math.floor(maximumLength * 0.55))) return candidate.slice(0, sentenceEnd + 1);
 
   const wordEnd = candidate.lastIndexOf(" ");
-  return `${candidate.slice(0, wordEnd > 0 ? wordEnd : maximumLength).replace(/[,:;\s]+$/, "")}…`;
+  return `${candidate.slice(0, wordEnd > 0 ? wordEnd : maximumLength).replace(/[,:;\s]+$/, "")}...`;
+}
+
+export function normalizeRecommendationList(values) {
+  const normalized = values.map(stringifyModelText).filter(Boolean);
+  const merged = [];
+
+  for (const value of normalized) {
+    if (merged.length && /^s included\b/i.test(value) && /\bwhat$/i.test(merged[merged.length - 1])) {
+      const prior = merged.pop();
+      merged.push(`${prior}'s${value.slice(1)}`);
+    } else {
+      merged.push(value);
+    }
+  }
+
+  return merged;
+}
+
+export function polishRecommendationText(value, maximumLength = 280) {
+  const text = truncateModelText(value, maximumLength);
+  return /[.!?]$/.test(text) ? text : `${text.replace(/[,:;\s]+$/, "")}...`;
 }
 
 function repairNestedModelResult(result) {

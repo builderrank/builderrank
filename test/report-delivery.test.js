@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { renderReportPdfBase64 } from "../api/email-report.js";
-import { assertCompleteModelResult, buildModelScores, isRetryableProviderError, truncateModelText } from "../server.js";
+import { assertCompleteModelResult, buildModelScores, isRetryableProviderError, normalizeRecommendationList, polishRecommendationText, truncateModelText } from "../server.js";
 
 test("rejects incomplete live-model responses", () => {
   assert.throws(
@@ -30,6 +30,21 @@ test("truncates model text without cutting a completed sentence", () => {
   const first = "This is a complete and useful sentence with enough detail for the customer to understand the result. ";
   const value = `${first}${"Additional supporting detail ".repeat(30)}`;
   assert.equal(truncateModelText(value, 180), first.trim());
+});
+
+test("joins model recommendation fragments created at schema length boundaries", () => {
+  assert.deepEqual(normalizeRecommendationList([
+    "Add a service page with a What",
+    "s included section in crawlable text.",
+    "Publish licensing details.",
+  ]), [
+    "Add a service page with a What's included section in crawlable text.",
+    "Publish licensing details.",
+  ]);
+});
+
+test("marks visibly truncated recommendations with an ellipsis", () => {
+  assert.equal(polishRecommendationText("Link to the state lookup if possible to"), "Link to the state lookup if possible to...");
 });
 
 test("creates a branded PDF attachment from report data", () => {
