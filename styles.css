@@ -3503,6 +3503,71 @@ button:disabled {
   line-height: 1.55;
 }
 
+.score-explainer {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.score-explainer > strong,
+.score-explainer > p,
+.score-explainer > small {
+  display: block;
+}
+
+.score-explainer > p {
+  margin: .4rem 0 .8rem;
+}
+
+.score-explainer > small {
+  margin-top: .8rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+}
+
+.score-scale {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .45rem;
+}
+
+.score-scale span {
+  padding: .45rem .55rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  font-size: .8rem;
+}
+
+.category-topline strong small {
+  display: block;
+  margin-top: .15rem;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.category-card li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: .55rem;
+}
+
+.check-status {
+  border-radius: 999px;
+  padding: .18rem .48rem;
+  font-size: .7rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.check-status.pass { background: #dcfce7; color: #166534; }
+.check-status.fail { background: #fee2e2; color: #991b1b; }
+
 .report-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);

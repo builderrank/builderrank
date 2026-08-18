@@ -64,8 +64,8 @@
               <input id="websiteInput" type="url" placeholder="https://example-service-business.com" required />
             </label>
             <label class="city-field">
-              <span>Primary market</span>
-              <input id="marketInput" list="marketSuggestions" placeholder="Denver, CO" required />
+              <span>ZIP code or primary service area</span>
+              <input id="marketInput" list="marketSuggestions" placeholder="84655 or Santaquin, UT" required />
             </label>
             <datalist id="marketSuggestions"></datalist>
             <label class="phone-field">
@@ -89,6 +89,7 @@
             </p>
             <div class="save-buttons" hidden>
               <button id="pdfButton" type="button">Save PDF</button>
+              <button id="copySummaryButton" type="button">Copy Customer Summary</button>
               <button id="jsonButton" type="button">Export JSON</button>
               <button id="emailReportButton" type="button">Email Report</button>
             </div>
@@ -115,6 +116,17 @@
             AI can identify the business, but it needs stronger license, service-area, and project proof
             before it confidently recommends this business for high-intent service searches.
           </p>
+          <div class="score-explainer" aria-label="How to read the report scores">
+            <strong>How to read these numbers</strong>
+            <p>Every score is out of 100. Higher means AI systems can more confidently understand, verify, and recommend the business.</p>
+            <div class="score-scale">
+              <span><b>85–100</b> Strong</span>
+              <span><b>70–84</b> Competitive</span>
+              <span><b>60–69</b> Developing</span>
+              <span><b>0–59</b> Needs work</span>
+            </div>
+            <small>The overall score blends website evidence with available live-model reviews. Model scores show each AI system’s assessment; category scores show which website signals helped or hurt.</small>
+          </div>
         </aside>
       </section>
 
