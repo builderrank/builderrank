@@ -1,5 +1,6 @@
 import {
   extractBearerToken,
+  callSupabaseRpc,
   getSupabaseUser,
   requireSupabaseServiceRole,
   safeString,
@@ -73,6 +74,33 @@ export async function assertReportRunAllowed({ email, checkoutReference = "" } =
   };
 }
 
+export async function reserveReportRun({ userId, email, checkoutReference, requestFingerprint, website, market = "" }) {
+  const result = await callSupabaseRpc("br_reserve_report_run", {
+    p_user_id: userId,
+    p_email: safeString(email).toLowerCase(),
+    p_checkout_reference: safeString(checkoutReference),
+    p_request_fingerprint: safeString(requestFingerprint),
+    p_website: safeString(website),
+    p_market: safeString(market),
+  });
+  if (!result?.run_id) throw Object.assign(new Error("Could not reserve this report run."), { statusCode: 503 });
+  if (result.duplicate && result.status === "complete") {
+    throw Object.assign(new Error("This report request was already completed. Open it from your account."), { statusCode: 409 });
+  }
+  if (result.duplicate && ["reserved", "running"].includes(result.status)) {
+    throw Object.assign(new Error("This report is already running. Please wait for it to finish."), { statusCode: 409 });
+  }
+  return result;
+}
+
+export async function finalizeReportRun(runId, { success, failureCode = "" }) {
+  return callSupabaseRpc("br_finalize_report_run", {
+    p_run_id: runId,
+    p_success: Boolean(success),
+    p_failure_code: safeString(failureCode).slice(0, 120) || null,
+  });
+}
+
 export async function getReportUsage(email) {
   const normalizedEmail = safeString(email).toLowerCase();
   if (!normalizedEmail) {
@@ -85,10 +113,17 @@ export async function getReportUsage(email) {
     order: "created_at.desc",
     limit: "5",
   });
+  const completedRuns = await selectSupabaseRows("br_report_runs", {
+    select: "id,completed_at",
+    email: `eq.${normalizedEmail}`,
+    status: "eq.complete",
+    order: "completed_at.desc",
+    limit: "5",
+  });
 
   return {
-    count: reports.length,
-    latestReportAt: reports[0]?.created_at || "",
+    count: Math.max(reports.length, completedRuns.length),
+    latestReportAt: reports[0]?.created_at || completedRuns[0]?.completed_at || "",
   };
 }
 

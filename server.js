@@ -3,6 +3,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { pathToFileURL } from "node:url";
+import { createHmac } from "node:crypto";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import emailReportHandler from "./api/email-report.js";
 import hubSpotAccountHandler from "./api/hubspot-account.js";
 import hubSpotReportHandler from "./api/hubspot-report.js";
@@ -12,7 +15,7 @@ import launchReadinessHandler from "./api/launch-readiness.js";
 import paymentConfigHandler from "./api/payment-config.js";
 import paymentStatusHandler from "./api/payment-status.js";
 import reportEligibilityHandler from "./api/report-eligibility.js";
-import { assertReportRunAllowed } from "./api/report-eligibility.js";
+import { finalizeReportRun, reserveReportRun } from "./api/report-eligibility.js";
 import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
 import signupNotificationHandler from "./api/signup-notification.js";
@@ -35,7 +38,10 @@ const PORT = Number(process.env.PORT || 4174);
 const ROOT = process.cwd();
 const MAX_PAGES = 6;
 const FETCH_TIMEOUT_MS = 12000;
-const MODEL_TIMEOUT_MS = 30000;
+const MAX_PAGE_BYTES = 1_500_000;
+const MAX_REDIRECTS = 5;
+const MODEL_TIMEOUT_MS = 18000;
+const MODEL_MAX_ATTEMPTS = 3;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.2";
 const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
@@ -64,12 +70,32 @@ const server = createServer(async (request, response) => {
         return;
       }
       const body = await readJsonBody(request);
-      await assertReportRunAllowed({
+      const checkoutReference = String(body.checkoutReference || body.checkout_reference || "").trim();
+      const website = normalizeWebsiteUrl(body.website);
+      const market = String(body.market || "").trim().slice(0, 160);
+      const fingerprintSecret = process.env.REPORT_ABUSE_HASH_SALT || process.env.TRACKING_HASH_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const requestFingerprint = createHmac("sha256", fingerprintSecret)
+        .update(`${request.socket?.remoteAddress || "local"}|${request.headers["user-agent"] || "unknown"}|${user.id}`)
+        .digest("hex");
+      const reservation = await reserveReportRun({
+        userId: user.id,
         email: user.email,
-        checkoutReference: body.checkoutReference || body.checkout_reference,
+        checkoutReference,
+        requestFingerprint,
+        website,
+        market,
       });
-      const audit = await runAudit(body.website, body.market);
-      sendJson(response, 200, audit);
+      try {
+        const audit = await runAudit(website, market);
+        if (audit.modelAnalyses.some((item) => item.status !== "complete")) {
+          throw Object.assign(new Error("All three AI models must complete before a report can be delivered."), { statusCode: 503 });
+        }
+        await finalizeReportRun(reservation.run_id, { success: true });
+        sendJson(response, 200, audit);
+      } catch (error) {
+        await finalizeReportRun(reservation.run_id, { success: false, failureCode: "local_run_failure" });
+        throw error;
+      }
       return;
     }
 
@@ -334,8 +360,7 @@ async function analyzeWithModels(auditContext) {
       }
 
       try {
-        const result = normalizeModelResult(await provider.call(provider, auditContext), provider.label);
-        assertCompleteModelResult(result, provider.label);
+        const result = await callProviderWithRetry(provider, auditContext);
 
         return {
           provider: provider.key,
@@ -365,6 +390,41 @@ async function analyzeWithModels(auditContext) {
         };
       }
     }),
+  );
+}
+
+async function callProviderWithRetry(provider, auditContext) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= MODEL_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const result = normalizeModelResult(await provider.call(provider, auditContext), provider.label);
+      assertCompleteModelResult(result, provider.label);
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableProviderError(error) || attempt === MODEL_MAX_ATTEMPTS) throw error;
+      const retryAfterMs = Number(error.retryAfterMs || 0);
+      const backoffMs = Math.max(retryAfterMs, 350 * (2 ** (attempt - 1))) + Math.floor(Math.random() * 180);
+      console.warn("Retrying Builder Rank model analysis", {
+        provider: provider.key,
+        model: provider.model,
+        attempt: attempt + 1,
+        reason: String(error?.message || "transient provider error").slice(0, 180),
+      });
+      await new Promise((resolve) => setTimeout(resolve, Math.min(backoffMs, 2500)));
+    }
+  }
+
+  throw lastError;
+}
+
+export function isRetryableProviderError(error) {
+  if (error?.name === "AbortError") return true;
+  const status = Number(error?.statusCode || 0);
+  if ([408, 409, 425, 429].includes(status) || status >= 500) return true;
+  return /timeout|timed out|network|fetch failed|connection|incomplete|max[_ -]?tokens|did not finish normally/i.test(
+    String(error?.message || ""),
   );
 }
 
@@ -877,23 +937,75 @@ async function fetchText(url) {
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        accept: "text/html, text/plain, application/xhtml+xml, */*;q=0.8",
-        "user-agent": "BuilderRankLocalAuditor/0.1 (+https://builderrank.local)",
-      },
-      redirect: "follow",
-    });
-
-    if (!response.ok) {
-      throw new Error(`${url} returned ${response.status}`);
+    let currentUrl = url;
+    for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+      await assertPublicDestination(currentUrl);
+      const response = await fetch(currentUrl, {
+        signal: controller.signal,
+        headers: {
+          accept: "text/html, text/plain, application/xhtml+xml, */*;q=0.8",
+          "user-agent": "BuilderRankLocalAuditor/0.1 (+https://builderrank.io)",
+        },
+        redirect: "manual",
+      });
+      if ([301, 302, 303, 307, 308].includes(response.status)) {
+        const location = response.headers.get("location");
+        if (!location || redirects === MAX_REDIRECTS) throw new Error("Website exceeded the safe redirect limit");
+        currentUrl = new URL(location, currentUrl).href;
+        continue;
+      }
+      if (!response.ok) throw new Error(`${currentUrl} returned ${response.status}`);
+      const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+      if (contentType && !/text\/|application\/(xhtml\+xml|xml)/.test(contentType)) {
+        throw new Error("Website returned an unsupported content type");
+      }
+      return readLimitedResponseText(response, MAX_PAGE_BYTES);
     }
-
-    return await response.text();
+    throw new Error("Website exceeded the safe redirect limit");
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function assertPublicDestination(value) {
+  const url = new URL(value);
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) {
+    throw new Error("Only public http or https websites can be audited");
+  }
+  const addresses = isIP(url.hostname)
+    ? [{ address: url.hostname }]
+    : await lookup(url.hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some(({ address }) => isPrivateAddress(address))) {
+    throw new Error("Website resolves to a private or reserved network address");
+  }
+}
+
+function isPrivateAddress(value) {
+  const address = String(value || "").toLowerCase().replace(/^::ffff:/, "");
+  if (/^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(address)) return true;
+  const v4 = address.match(/^172\.(\d+)\./);
+  if (v4 && Number(v4[1]) >= 16 && Number(v4[1]) <= 31) return true;
+  return address === "::" || address === "::1" || /^(fc|fd|fe8|fe9|fea|feb)/.test(address);
+}
+
+async function readLimitedResponseText(response, maximumBytes) {
+  const declared = Number(response.headers.get("content-length") || 0);
+  if (declared > maximumBytes) throw new Error("Website page is too large to audit safely");
+  if (!response.body?.getReader) return (await response.text()).slice(0, maximumBytes);
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maximumBytes) {
+      await reader.cancel();
+      throw new Error("Website page is too large to audit safely");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk))).toString("utf8");
 }
 
 async function fetchWithTimeout(url, options) {
@@ -922,7 +1034,11 @@ async function parseProviderResponse(response, providerName) {
 
   if (!response.ok) {
     const message = data.error?.message || data.error || `${providerName} returned ${response.status}`;
-    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+    const error = new Error(typeof message === "string" ? message : JSON.stringify(message));
+    error.statusCode = response.status;
+    const retryAfter = Number(response.headers.get("retry-after") || 0);
+    if (retryAfter > 0) error.retryAfterMs = retryAfter * 1000;
+    throw error;
   }
 
   return data;
@@ -1258,6 +1374,16 @@ function normalizeWebsiteUrl(value) {
   if (!["http:", "https:"].includes(url.protocol)) {
     throw new Error("Only http and https URLs can be audited");
   }
+
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const privateV4 = /^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(host)
+    || (() => { const match = host.match(/^172\.(\d+)\./); return match && Number(match[1]) >= 16 && Number(match[1]) <= 31; })();
+  if (host === "localhost" || host.endsWith(".localhost") || host === "::1" || privateV4 || /^(fc|fd|fe8|fe9|fea|feb)/i.test(host)) {
+    throw new Error("Only public websites can be audited");
+  }
+
+  url.username = "";
+  url.password = "";
 
   return url.href;
 }

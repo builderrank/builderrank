@@ -1,13 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { renderReportPdfBase64 } from "../api/email-report.js";
-import { assertCompleteModelResult, buildModelScores, truncateModelText } from "../server.js";
+import { assertCompleteModelResult, buildModelScores, isRetryableProviderError, truncateModelText } from "../server.js";
 
 test("rejects incomplete live-model responses", () => {
   assert.throws(
     () => assertCompleteModelResult({ summary: "The strongest signal for AI is", recommendations: [] }, "Gemini"),
     /incomplete audit response/,
   );
+});
+
+test("retries only transient provider failures", () => {
+  assert.equal(isRetryableProviderError(Object.assign(new Error("rate limited"), { statusCode: 429 })), true);
+  assert.equal(isRetryableProviderError(Object.assign(new Error("provider unavailable"), { statusCode: 503 })), true);
+  assert.equal(isRetryableProviderError(new Error("response incomplete: max_tokens")), true);
+  assert.equal(isRetryableProviderError(Object.assign(new Error("invalid API key"), { statusCode: 401 })), false);
+  assert.equal(isRetryableProviderError(Object.assign(new Error("bad request"), { statusCode: 400 })), false);
 });
 
 test("does not invent model scores when providers do not report", () => {
