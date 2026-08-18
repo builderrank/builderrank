@@ -395,8 +395,9 @@ function createBrandedPdf() {
 
     analyses.forEach((analysis) => {
       const title = `${analysis.label || analysis.provider || "AI model"}: ${analysis.score ?? "--"} (${analysis.status || "status"})`;
-      const recommendations = Array.isArray(analysis.recommendations) && analysis.recommendations.length
-        ? `\n${analysis.recommendations.slice(0, 5).map((item) => `- ${item}`).join("\n")}`
+      const cleanedRecommendations = normalizePdfRecommendations(analysis.recommendations);
+      const recommendations = cleanedRecommendations.length
+        ? `\n${cleanedRecommendations.slice(0, 5).map((item) => `- ${item}`).join("\n")}`
         : "";
       bodyCard(title, `${analysis.summary || "No model summary was generated."}${recommendations}`);
     });
@@ -444,6 +445,20 @@ function createBrandedPdf() {
     footerNote,
     toBuffer,
   };
+}
+
+function normalizePdfRecommendations(values) {
+  const normalized = Array.isArray(values) ? values.map((item) => String(item || "").trim()).filter(Boolean) : [];
+  const merged = [];
+  for (const value of normalized) {
+    if (merged.length && /^s included\b/i.test(value) && /\bwhat(?:\.\.\.|…)?$/i.test(merged[merged.length - 1])) {
+      const prior = merged.pop().replace(/(?:\.\.\.|…)$/, "");
+      merged.push(`${prior}'s${value.slice(1)}`);
+    } else {
+      merged.push(value);
+    }
+  }
+  return merged.map((item) => /[.!?…]$/.test(item) ? item : `${item.replace(/[,:;\s]+$/, "")}...`);
 }
 
 function buildPdfFromPages(pageContents) {
@@ -526,6 +541,10 @@ function assemblePdf(objects, catalogId) {
 
 function escapePdfText(value) {
   return String(value)
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
     .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, " ")
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
