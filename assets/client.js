@@ -217,6 +217,7 @@ const evidenceList = document.querySelector("#evidenceList");
 const modelAnalysisList = document.querySelector("#modelAnalysisList");
 const auditSubmitButton = document.querySelector("#auditSubmitButton");
 const pdfButton = document.querySelector("#pdfButton");
+const copySummaryButton = document.querySelector("#copySummaryButton");
 const jsonButton = document.querySelector("#jsonButton");
 const emailReportButton = document.querySelector("#emailReportButton");
 const saveButtons = document.querySelector(".save-buttons");
@@ -394,6 +395,18 @@ if (auditForm) {
     document.title = reportFilename("pdf").replace(/\.pdf$/, "");
     window.print();
     document.title = originalTitle;
+  });
+
+  copySummaryButton?.addEventListener("click", async () => {
+    const summary = customerSummaryText(audit);
+    try {
+      await navigator.clipboard.writeText(summary);
+      copySummaryButton.textContent = "Copied";
+      if (auditStatus) auditStatus.textContent = "Customer-ready report summary copied to your clipboard.";
+      window.setTimeout(() => { copySummaryButton.textContent = "Copy Customer Summary"; }, 1800);
+    } catch {
+      if (auditStatus) auditStatus.textContent = "Could not copy automatically. Export the JSON or select the report text manually.";
+    }
   });
 
   jsonButton?.addEventListener("click", () => {
@@ -1986,7 +1999,7 @@ function validateMarketField(field, { report = true } = {}) {
 
   const normalizedMarket = normalizeMarket(field.value);
   const isValid = isValidMarket(normalizedMarket);
-  const message = "Use a real city and state, like Colorado Springs, CO.";
+  const message = "Use a 5-digit ZIP code or a service area with state, like 84655 or Santaquin, UT.";
   field.setCustomValidity(isValid ? "" : message);
 
   if (!isValid) {
@@ -2014,6 +2027,7 @@ function normalizePromoCode(value) {
 function normalizeMarket(value) {
   const rawMarket = String(value || "").trim().replace(/\s+/g, " ");
   if (!rawMarket) return "";
+  if (/^\d{5}(?:-\d{4})?$/.test(rawMarket)) return rawMarket;
 
   const aliasKey = searchKey(rawMarket);
   if (MARKET_ALIASES[aliasKey]) return MARKET_ALIASES[aliasKey];
@@ -2044,7 +2058,8 @@ function normalizeMarket(value) {
 
 function isValidMarket(value) {
   const market = normalizeMarket(value);
-  if (usMarketByKey.size) return usMarketByKey.has(searchKey(market));
+  if (/^\d{5}(?:-\d{4})?$/.test(market)) return true;
+  if (usMarketByKey.size && usMarketByKey.has(searchKey(market))) return true;
 
   const match = market.match(/^([A-Za-z][A-Za-z .'-]{1,60}),\s*([A-Z]{2})$/);
   if (!match) return false;
@@ -2250,9 +2265,9 @@ function render() {
   };
 
   overallScore.textContent = score;
-  chatgptScore.textContent = modelScores.chatgpt;
-  claudeScore.textContent = modelScores.claude;
-  geminiScore.textContent = modelScores.gemini;
+  chatgptScore.textContent = formatModelScore(modelScores.chatgpt);
+  claudeScore.textContent = formatModelScore(modelScores.claude);
+  geminiScore.textContent = formatModelScore(modelScores.gemini);
   reportTitle.textContent = audit.company;
   gradeBadge.textContent = audit.grade || gradeForScore(score);
   scoreArc.style.strokeDasharray = `${circumference}`;
@@ -2312,7 +2327,7 @@ function renderCategory(category) {
           <h3>${escapeHtml(category.label)}</h3>
           <p>${escapeHtml(category.description)}</p>
         </div>
-        <strong>${category.score}</strong>
+        <strong title="${escapeHtml(scoreMeaning(category.score))}">${category.score}/100 <small>${escapeHtml(scoreMeaning(category.score))}</small></strong>
       </div>
       <div class="bar" aria-hidden="true"><span style="width: ${category.score}%"></span></div>
       <ul>
@@ -2323,12 +2338,25 @@ function renderCategory(category) {
 }
 
 function renderCheck(check) {
+  const statusLabel = check.status === "pass" ? "Found" : "Missing";
   return `
     <li>
       <span class="status-dot ${check.status}"></span>
-      ${escapeHtml(check.label)}
+      <span>${escapeHtml(check.label)}</span>
+      <em class="check-status ${check.status}">${statusLabel}</em>
     </li>
   `;
+}
+
+function scoreMeaning(score) {
+  if (score >= 85) return "Strong";
+  if (score >= 70) return "Competitive";
+  if (score >= 60) return "Developing";
+  return "Needs work";
+}
+
+function formatModelScore(score) {
+  return Number.isFinite(Number(score)) && score !== null ? `${score}/100` : "Not reported";
 }
 
 function renderFix(fix) {
@@ -2343,6 +2371,29 @@ function renderFix(fix) {
 
 function renderIntent(intent) {
   return `<span>${escapeHtml(intent)}</span>`;
+}
+
+function customerSummaryText(report = {}) {
+  const categories = Array.isArray(report.categories)
+    ? report.categories.map((category) => `- ${category.label}: ${category.score}/100 (${scoreMeaning(category.score)})`).join("\n")
+    : "";
+  const fixes = Array.isArray(report.fixes)
+    ? report.fixes.slice(0, 5).map((fix) => `- ${fix.priority}: ${fix.title} — ${fix.body}`).join("\n")
+    : "";
+  const models = Array.isArray(report.modelAnalyses)
+    ? report.modelAnalyses.map((analysis) => `- ${analysis.label}: ${analysis.score ?? "No score"}/100 — ${analysis.summary}`).join("\n")
+    : "";
+
+  return [
+    `${report.company || "Builder Rank report"} — AI Visibility Report`,
+    `${report.website || ""}${report.market ? ` · ${report.market}` : ""}`,
+    `Overall AI Health Score: ${report.score ?? "Pending"}/100 · ${report.grade || "Ungraded"}`,
+    report.summary || "",
+    categories ? `Category scores\n${categories}` : "",
+    models ? `AI model results\n${models}` : "",
+    fixes ? `Highest-impact fixes\n${fixes}` : "",
+    "Scores are out of 100: 85–100 Strong, 70–84 Competitive, 60–69 Developing, and 0–59 Needs Work.",
+  ].filter(Boolean).join("\n\n");
 }
 
 function renderEvidence(evidence) {

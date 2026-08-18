@@ -335,6 +335,7 @@ async function analyzeWithModels(auditContext) {
 
       try {
         const result = normalizeModelResult(await provider.call(provider, auditContext), provider.label);
+        assertCompleteModelResult(result, provider.label);
 
         return {
           provider: provider.key,
@@ -344,10 +345,15 @@ async function analyzeWithModels(auditContext) {
           score: extractScore(result.score),
           summary: modelSummaryText(result, provider.label),
           recommendations: Array.isArray(result.recommendations)
-            ? result.recommendations.map((item) => stringifyModelText(item).slice(0, 260)).slice(0, 4)
+            ? result.recommendations.map((item) => truncateModelText(stringifyModelText(item), 280)).slice(0, 4)
             : [],
         };
       } catch (error) {
+        console.warn("Builder Rank model analysis failed", {
+          provider: provider.key,
+          model: provider.model,
+          reason: error?.name === "AbortError" ? "timeout" : String(error?.message || "unknown provider error").slice(0, 240),
+        });
         return {
           provider: provider.key,
           label: provider.label,
@@ -373,7 +379,7 @@ async function callOpenAI(provider, auditContext) {
       model: provider.model,
       instructions: modelSystemPrompt("ChatGPT"),
       input: modelUserPrompt(auditContext),
-      max_output_tokens: 1000,
+      max_output_tokens: 1800,
       text: {
         format: {
           type: "json_schema",
@@ -385,6 +391,9 @@ async function callOpenAI(provider, auditContext) {
     }),
   });
   const data = await parseProviderResponse(response, "OpenAI");
+  if (data.status === "incomplete") {
+    throw new Error(`OpenAI response incomplete: ${data.incomplete_details?.reason || "unknown reason"}`);
+  }
   return parseJsonFromText(data.output_text || extractOpenAIText(data));
 }
 
@@ -398,7 +407,7 @@ async function callAnthropic(provider, auditContext) {
     },
     body: JSON.stringify({
       model: provider.model,
-      max_tokens: 900,
+      max_tokens: 1600,
       system: modelSystemPrompt("Claude"),
       tools: [
         {
@@ -420,6 +429,9 @@ async function callAnthropic(provider, auditContext) {
     }),
   });
   const data = await parseProviderResponse(response, "Anthropic");
+  if (data.stop_reason === "max_tokens") {
+    throw new Error("Anthropic response reached the output-token limit");
+  }
   const toolUse = data.content?.find((item) => item.type === "tool_use" && item.name === "record_builder_rank_audit");
 
   if (toolUse?.input) {
@@ -451,12 +463,16 @@ async function callGemini(provider, auditContext) {
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: geminiResponseSchema(),
-          maxOutputTokens: 900,
+          maxOutputTokens: 1600,
         },
       }),
     },
   );
   const data = await parseProviderResponse(response, "Gemini");
+  const finishReason = data.candidates?.[0]?.finishReason;
+  if (finishReason && finishReason !== "STOP") {
+    throw new Error(`Gemini response did not finish normally: ${finishReason}`);
+  }
   return parseJsonFromText(data.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("\n") || "");
 }
 
@@ -565,20 +581,20 @@ function blendModelScore(heuristicScore, modelAnalyses) {
   return Math.round(heuristicScore * 0.55 + modelAverage * 0.45);
 }
 
-function buildModelScores(score, signals, modelAnalyses) {
-  const fallback = {
-    chatgpt: clamp(score + signals.directAnswersBonus - 1, 0, 100),
-    claude: clamp(score + signals.cleanStructureBonus - 2, 0, 100),
-    gemini: clamp(score + signals.localEntityBonus - 3, 0, 100),
+export function buildModelScores(score, signals, modelAnalyses) {
+  const modelScores = {
+    chatgpt: null,
+    claude: null,
+    gemini: null,
   };
 
   for (const analysis of modelAnalyses) {
     if (analysis.status === "complete") {
-      fallback[analysis.provider] = analysis.score;
+      modelScores[analysis.provider] = analysis.score;
     }
   }
 
-  return fallback;
+  return modelScores;
 }
 
 function collectSignals({ combinedHtml, combinedText, homepage, llms, market, pages }) {
@@ -1018,7 +1034,30 @@ function modelSummaryText(result, providerLabel) {
     .map(stringifyModelText)
     .filter(Boolean);
 
-  return parts.join(" ").slice(0, 700);
+  return truncateModelText(parts.join(" "), 700);
+}
+
+export function assertCompleteModelResult(result, providerLabel) {
+  const summary = stringifyModelText(result?.summary);
+  const recommendations = Array.isArray(result?.recommendations)
+    ? result.recommendations.map(stringifyModelText).filter((item) => item.length >= 40)
+    : [];
+
+  if (summary.length < 140 || recommendations.length < 3) {
+    throw new Error(`${providerLabel} returned an incomplete audit response`);
+  }
+}
+
+export function truncateModelText(value, maximumLength) {
+  const text = String(value || "").trim();
+  if (text.length <= maximumLength) return text;
+
+  const candidate = text.slice(0, maximumLength + 1);
+  const sentenceEnd = Math.max(candidate.lastIndexOf(". "), candidate.lastIndexOf("! "), candidate.lastIndexOf("? "));
+  if (sentenceEnd >= Math.min(140, Math.floor(maximumLength * 0.55))) return candidate.slice(0, sentenceEnd + 1);
+
+  const wordEnd = candidate.lastIndexOf(" ");
+  return `${candidate.slice(0, wordEnd > 0 ? wordEnd : maximumLength).replace(/[,:;\s]+$/, "")}…`;
 }
 
 function repairNestedModelResult(result) {

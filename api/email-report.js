@@ -10,7 +10,7 @@ import {
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <support@builderrank.io>";
 const REPORT_EMAIL_REPLY_TO = process.env.REPORT_EMAIL_REPLY_TO || "support@builderrank.io";
-const REPORT_EMAIL_BCC = process.env.REPORT_EMAIL_BCC || "";
+const REPORT_EMAIL_BCC = process.env.REPORT_EMAIL_BCC || process.env.OPERATOR_EMAIL_TO || "kaleb@builderrank.io";
 
 export default async function handler(request, response) {
   if (request.method !== "POST") {
@@ -100,6 +100,7 @@ function renderEmailHtml(report) {
       <p><strong>${escapeHtml(report.company || "Contractor report")}</strong></p>
       <p>${escapeHtml(report.website || "")}${report.market ? ` · ${escapeHtml(report.market)}` : ""}</p>
       <p><strong>AI Health Score:</strong> ${escapeHtml(score)} · <strong>Grade:</strong> ${escapeHtml(grade)}</p>
+      <p><strong>How to read it:</strong> Scores are out of 100. 85–100 is Strong, 70–84 is Competitive, 60–69 is Developing, and 0–59 Needs Work. The overall score blends website evidence with available live-model reviews.</p>
       <p>${escapeHtml(report.summary || "Your report JSON export is attached.")}</p>
       ${fixes.length ? `<h2>Highest-impact fixes</h2><ul>${fixes.map(renderFix).join("")}</ul>` : ""}
       ${followUpMessage ? `<h2>Model follow-up</h2><p>${escapeHtml(followUpMessage)}</p>` : ""}
@@ -122,6 +123,7 @@ function renderEmailText(report) {
     report.market || "",
     `AI Health Score: ${report.score ?? "Pending"}`,
     `Grade: ${report.grade || "Ungraded"}`,
+    "How to read it: Scores are out of 100. 85–100 is Strong, 70–84 is Competitive, 60–69 is Developing, and 0–59 Needs Work. The overall score blends website evidence with available live-model reviews.",
     report.summary || "",
     fixes ? `Highest-impact fixes:\n${fixes}` : "",
     followUpMessage ? `Model follow-up:\n${followUpMessage}` : "",
@@ -143,13 +145,18 @@ function slugify(value) {
     .slice(0, 48) || "builder-rank-report";
 }
 
-function renderReportPdfBase64(report) {
+export function renderReportPdfBase64(report) {
   const score = report.score ?? "Pending";
   const grade = report.grade || "Ungraded";
   const pdf = createBrandedPdf();
 
   pdf.header(report.company || "Contractor report", report.market || "");
   pdf.scoreSummary(score, grade, report.website || "", report.summary || "No summary was generated.");
+  pdf.sectionTitle("How to Read Your Scores");
+  pdf.bodyCard(
+    "All scores are out of 100",
+    "85-100 is Strong, 70-84 is Competitive, 60-69 is Developing, and 0-59 Needs Work. The overall score blends website evidence with available live-model reviews. Model scores show each AI system's assessment; category scores show the website signals that helped or hurt.",
+  );
   pdf.sectionTitle("Report Card Categories");
   pdf.categories(report.categories);
   pdf.sectionTitle("Highest-Impact Fixes");
@@ -197,20 +204,21 @@ function createBrandedPdf() {
   let y = 0;
 
   const colors = {
-    ink: [0.07, 0.07, 0.07],
-    muted: [0.42, 0.42, 0.45],
+    ink: [0.97, 0.97, 0.97],
+    muted: [0.70, 0.70, 0.73],
     orange: [1, 0.475, 0],
     black: [0.02, 0.02, 0.02],
-    panel: [0.96, 0.96, 0.94],
-    line: [0.82, 0.82, 0.82],
+    panel: [0.055, 0.055, 0.055],
+    line: [0.23, 0.23, 0.23],
     white: [1, 1, 1],
+    red: [0.95, 0.31, 0.34],
   };
 
   function beginPage() {
     current = [];
     pages.push(current);
     y = pageHeight - margin;
-    rect(0, 0, pageWidth, pageHeight, colors.white);
+    rect(0, 0, pageWidth, pageHeight, colors.black);
     rect(0, pageHeight - 122, pageWidth, 122, colors.black);
     rect(0, pageHeight - 122, pageWidth, 5, colors.orange);
     text("BUILDER RANK", margin, pageHeight - 48, 12, "bold", colors.orange);
@@ -269,19 +277,19 @@ function createBrandedPdf() {
   }
 
   function scoreSummary(score, grade, website, summary) {
-    ensureSpace(160);
-    const cardY = y - 130;
-    rect(margin, cardY, contentWidth, 130, colors.panel);
-    strokeRect(margin, cardY, contentWidth, 130, colors.line);
-    rect(margin, cardY + 126, contentWidth, 4, colors.orange);
-    text("AI Health Score", margin + 20, cardY + 96, 11, "bold", colors.muted);
-    text(String(score), margin + 20, cardY + 56, 34, "bold", colors.orange);
-    text(`Grade ${grade}`, margin + 110, cardY + 63, 17, "bold", colors.ink);
-    text(website || "Website not set", margin + 110, cardY + 43, 10, "regular", colors.muted);
-    lines(summary, margin + 250, cardY + 94, {
+    ensureSpace(180);
+    const cardY = y - 150;
+    rect(margin, cardY, contentWidth, 150, colors.panel);
+    strokeRect(margin, cardY, contentWidth, 150, colors.line);
+    rect(margin, cardY + 146, contentWidth, 4, colors.orange);
+    text("AI Health Score", margin + 20, cardY + 116, 11, "bold", colors.muted);
+    text(String(score), margin + 20, cardY + 76, 34, "bold", colors.orange);
+    text(`Grade ${grade}`, margin + 110, cardY + 113, 17, "bold", colors.ink);
+    text(website || "Website not set", margin + 110, cardY + 91, 10, "regular", colors.muted);
+    lines(summary, margin + 110, cardY + 65, {
       size: 10,
       lineHeight: 14,
-      maxWidth: contentWidth - 275,
+      maxWidth: contentWidth - 135,
       fill: colors.ink,
     });
     y = cardY - 24;
@@ -323,9 +331,13 @@ function createBrandedPdf() {
         fill: colors.muted,
       });
       const barY = cardY + height - 52 - Math.max(descriptionHeight, 11);
-      rect(margin + 16, barY, contentWidth - 32, 6, [0.86, 0.86, 0.86]);
+      rect(margin + 16, barY, contentWidth - 32, 6, [0.18, 0.18, 0.18]);
       rect(margin + 16, barY, (contentWidth - 32) * clampPdfScore(category.score) / 100, 6, colors.orange);
-      checkLines.forEach((line, index) => text(line, margin + 20, barY - 16 - index * 11, 8.8, "regular", colors.ink));
+      checkLines.forEach((line, index) => {
+        const failed = /\(fail\)/i.test(line);
+        text(failed ? "x" : "+", margin + 20, barY - 16 - index * 11, 9, "bold", failed ? colors.red : colors.orange);
+        text(line.replace(/^[-+]\s*/, ""), margin + 32, barY - 16 - index * 11, 8.8, "regular", colors.ink);
+      });
       y = cardY - 12;
     });
   }
@@ -375,8 +387,8 @@ function createBrandedPdf() {
 
   function footerNote(note) {
     ensureSpace(44);
-    rect(margin, y - 34, contentWidth, 34, [1, 0.94, 0.88]);
-    text(note, margin + 14, y - 21, 9.5, "bold", colors.ink);
+    rect(margin, y - 34, contentWidth, 34, [0.13, 0.075, 0.035]);
+    text(note, margin + 14, y - 21, 9.5, "bold", colors.orange);
     y -= 50;
   }
 

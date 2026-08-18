@@ -10,6 +10,8 @@
     "customer:handoff": "node scripts/beta-customer-handoff.mjs",
     "customer:dry-run": "node scripts/beta-launch-dry-run.mjs",
     "customer:demo-dry-run": "node scripts/beta-launch-dry-run.mjs docs/demo-remodeler-customer.json",
+    "report:pdf": "node scripts/render-report-pdf.mjs",
+    "report:rerun": "node scripts/rerun-report.mjs",
     "preflight:beta": "node scripts/beta-preflight.mjs",
     "production:env-handoff": "node scripts/production-env-handoff.mjs",
     "production:secrets": "node scripts/generate-production-secrets.mjs",
