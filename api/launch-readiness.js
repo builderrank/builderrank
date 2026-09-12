@@ -8,15 +8,15 @@ const required = [
   ["RESEND_API_KEY", strongSecret, "Required for report delivery and tracking-health alerts."],
   ["REPORT_EMAIL_FROM", validReportFrom, "Use Builder Rank <Support@builderrank.io> after Resend domain verification."],
   ["REPORT_EMAIL_REPLY_TO", validReplyTo, "Use Support@builderrank.io so customer replies land in Google Workspace."],
+  ["STRIPE_WEBHOOK_SECRET", strongSecret, "Required to verify every paid-report credit before it can be used."],
+  ["OPENAI_API_KEY", strongSecret, "Required because customer reports must include live ChatGPT analysis."],
+  ["ANTHROPIC_API_KEY", strongSecret, "Required because customer reports must include live Claude analysis."],
+  ["GEMINI_API_KEY", strongSecret, "Required because customer reports must include live Gemini analysis."],
 ];
 
 const recommended = [
   ["TRACKING_ALERT_EMAIL_TO", Boolean, "Recommended for stale Site Signal, domain mismatch, and missing lead-event QA alerts."],
-  ["STRIPE_WEBHOOK_SECRET", Boolean, "Recommended before paid report reconciliation is considered production-ready."],
   ["HUBSPOT_ACCESS_TOKEN", Boolean, "Recommended if private beta intake should sync into HubSpot."],
-  ["OPENAI_API_KEY", Boolean, "Recommended for full ChatGPT report-card analysis."],
-  ["ANTHROPIC_API_KEY", Boolean, "Recommended for full Claude report-card analysis."],
-  ["GEMINI_API_KEY", Boolean, "Recommended for full Gemini report-card analysis."],
 ];
 
 const optional = [
