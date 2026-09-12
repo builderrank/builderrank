@@ -489,7 +489,7 @@ async function beginFreeReport() {
     const session = await getCurrentSession();
     if (!session?.access_token) {
       savePendingReportDraft();
-      if (auditStatus) auditStatus.textContent = "Choose a password to save and generate your free report.";
+      if (auditStatus) auditStatus.textContent = "One quick step: choose a password, then we’ll generate your report.";
       openCreateAccountModal(emailInput?.value, { mode: "report", profile: getReportIntakeProfile() });
       return;
     }
@@ -552,7 +552,7 @@ async function validateReportIntake() {
 
   if (!session?.user) {
     savePendingReportDraft();
-    if (auditStatus) auditStatus.textContent = "Choose a password to create your account and generate the report.";
+    if (auditStatus) auditStatus.textContent = "One quick step: choose a password, then we’ll generate your report.";
     openCreateAccountModal(emailInput?.value, { mode: "report", profile: getReportIntakeProfile() });
     return false;
   }
@@ -694,7 +694,7 @@ function setCheckoutPreparing(isPreparing) {
     ? "Checking..."
     : checkoutConfirmed
       ? "Generate Report"
-      : "Generate My Free Report";
+      : "Show My Lead Opportunities";
 }
 
 function savePendingReport({ checkoutReference = readPendingReport()?.checkoutReference || "" } = {}) {
@@ -855,9 +855,9 @@ function hydrateCheckoutReturn() {
   }
 
   if (!isCheckoutReturn) {
-    if (auditSubmitButton) auditSubmitButton.textContent = "Generate My Free Report";
+    if (auditSubmitButton) auditSubmitButton.textContent = "Show My Lead Opportunities";
     if (auditStatus) {
-      auditStatus.textContent = "Complete the fields above. We will create your free account before generating the report.";
+      auditStatus.textContent = "Complete the fields above to see your lead opportunities.";
     }
     return;
   }
@@ -1262,7 +1262,7 @@ function openCreateAccountModal(prefillEmail = "", options = {}) {
   const passwordConfirmLabel = createPasswordConfirmInput?.closest("label");
 
   if (eyebrow) eyebrow.textContent = isReportSignup ? "Save Your Report" : isProfileCompletion ? "Free Account" : "Create Account";
-  if (title) title.textContent = isReportSignup ? "Choose a password for your free account" : isProfileCompletion ? "Complete your free Builder Rank account" : "Set up your Builder Rank workspace";
+  if (title) title.textContent = isReportSignup ? "One quick step: choose a password" : isProfileCompletion ? "Complete your free Builder Rank account" : "Set up your Builder Rank workspace";
   if (submitButton) submitButton.textContent = isReportSignup ? "Create Account & Generate Report" : isProfileCompletion ? "Save Free Account" : "Create Account";
   if (passwordLabel) passwordLabel.hidden = isProfileCompletion;
   if (passwordConfirmLabel) passwordConfirmLabel.hidden = isProfileCompletion;
@@ -2551,7 +2551,7 @@ function setLoading(isLoading) {
   const button = auditForm.querySelector("button");
   button.disabled = isLoading;
   if (returnedReportButton) returnedReportButton.disabled = isLoading;
-  button.textContent = isLoading ? "Running Audit..." : checkoutConfirmed ? "Generate Report" : "Generate My Free Report";
+  button.textContent = isLoading ? "Finding Lead Opportunities..." : checkoutConfirmed ? "Generate Report" : "Show My Lead Opportunities";
   auditStatus.textContent = isLoading
     ? "Crawling the website, checking schema, reading text, and scoring LLM readability..."
     : auditStatus.textContent;

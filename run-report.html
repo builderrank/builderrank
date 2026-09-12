@@ -31,21 +31,21 @@
         </nav>
       </header>
 
-      <section id="report-workspace" class="hero">
+      <section id="report-workspace" class="hero report-conversion-hero">
         <div class="hero-copy">
           <div class="hero-brand">
             <img src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <p class="eyebrow">Report Workspace</p>
           </div>
-          <h1>Generate the contractor or service business AI visibility report.</h1>
+          <h1>Get found in AI search. Win more jobs.</h1>
           <p class="hero-text">
-            Enter your business and contact details to generate one free AI visibility report. We will
-            create your workspace, save the report, and email the PDF automatically.
+            See what’s stopping homeowners from finding your business—and get three changes that can
+            create more estimate opportunities. Your free report takes about 60 seconds.
           </p>
           <form id="auditForm" class="audit-form">
             <div class="report-form-intro">
               <p class="eyebrow">Your free report</p>
-              <strong>Tell Builder Rank where to send it and which business to inspect.</strong>
+              <strong>Enter your business details. We’ll run the report and email your PDF automatically.</strong>
             </div>
             <label class="first-name-field">
               <span>First name</span>
@@ -72,11 +72,15 @@
               <span>Phone</span>
               <input id="phoneInput" type="tel" autocomplete="tel" inputmode="tel" placeholder="(555) 123-4567" required />
             </label>
-            <label class="promo-field">
-              <span>Promo code</span>
-              <input id="promoCodeInput" data-promo-code-input type="text" inputmode="latin" autocomplete="off" placeholder="Optional" />
-            </label>
-            <button id="auditSubmitButton" type="submit">Generate My Free Report</button>
+            <details class="promo-disclosure">
+              <summary>Have a promo code?</summary>
+              <label class="promo-field">
+                <span>Promo code</span>
+                <input id="promoCodeInput" data-promo-code-input type="text" inputmode="latin" autocomplete="off" placeholder="Enter code" />
+              </label>
+            </details>
+            <button id="auditSubmitButton" type="submit">Show My Lead Opportunities</button>
+            <p class="report-form-trust">No credit card required. We’ll create a free account so you can download and revisit your report.</p>
           </form>
           <div id="checkoutNotice" class="checkout-notice" hidden>
             <strong>Free report unlocked</strong>
@@ -85,7 +89,7 @@
           </div>
           <div class="report-actions" aria-label="Save report">
             <p id="auditStatus" class="audit-status" role="status">
-              Complete the fields above. We will create your free account before generating the report.
+              Complete the fields above to see your lead opportunities.
             </p>
             <div class="save-buttons" hidden>
               <button id="pdfButton" type="button">Download PDF</button>
@@ -96,43 +100,26 @@
           </div>
         </div>
 
-        <aside class="score-card" aria-label="Builder Rank score">
-          <div class="score-ring">
-            <svg viewBox="0 0 160 160" role="img" aria-label="Builder Rank score">
-              <circle class="ring-bg" cx="80" cy="80" r="68"></circle>
-              <circle id="scoreArc" class="ring-progress" cx="80" cy="80" r="68"></circle>
-            </svg>
-            <div>
-              <strong id="overallScore">72</strong>
-              <span>AI Health Score</span>
-            </div>
+        <aside class="score-card report-preview-card" aria-label="What your free report includes">
+          <p class="eyebrow">What you’ll get</p>
+          <h2>A clear path to more homeowner discovery.</h2>
+          <div class="report-preview-list">
+            <div><strong>01</strong><span>Your current AI-search position</span></div>
+            <div><strong>02</strong><span>Where more qualified jobs can come from</span></div>
+            <div><strong>03</strong><span>Three actions to create more estimate opportunities</span></div>
           </div>
-          <div class="model-strip" aria-label="LLM model readability">
-            <span>ChatGPT <strong id="chatgptScore">74</strong></span>
-            <span>Claude <strong id="claudeScore">71</strong></span>
-            <span>Gemini <strong id="geminiScore">69</strong></span>
-          </div>
-          <p id="scoreSummary">
-            AI can identify the business, but it needs stronger license, service-area, and project proof
-            before it confidently recommends this business for high-intent service searches.
-          </p>
-          <div class="score-explainer" aria-label="How to read the report scores">
-            <strong>How to read these numbers</strong>
-            <p>Every score is out of 100. Higher means AI systems can more confidently understand, verify, and recommend the business.</p>
-            <div class="score-scale">
-              <span><b>85–100</b> Strong</span>
-              <span><b>70–84</b> Competitive</span>
-              <span><b>60–69</b> Developing</span>
-              <span><b>0–59</b> Needs work</span>
-            </div>
-            <small>The overall score blends website evidence with available live-model reviews. Model scores show each AI system’s assessment; category scores show which website signals helped or hurt.</small>
+          <p class="report-preview-models">Reviewed using live ChatGPT, Claude, and Gemini analysis.</p>
+          <div hidden aria-hidden="true">
+            <svg><circle id="scoreArc"></circle></svg>
+            <strong id="overallScore">0</strong><strong id="chatgptScore">0</strong><strong id="claudeScore">0</strong><strong id="geminiScore">0</strong>
+            <p id="scoreSummary"></p>
           </div>
         </aside>
       </section>
 
       <section id="customerBrief" class="customer-brief" aria-label="AI lead opportunity brief" hidden></section>
 
-      <section class="report-grid" aria-label="Report card">
+      <section class="report-grid" aria-label="Report card" hidden>
         <article class="panel audit-panel">
           <div class="panel-header">
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
@@ -239,6 +226,7 @@
           </div>
           <button id="createAccountCloseButton" class="icon-button" type="button" aria-label="Close create account form">X</button>
         </div>
+        <p class="modal-context">One quick step: choose a password so you can download and revisit your report anytime.</p>
         <form id="createAccountForm" class="create-account-form">
           <label>
             <span>Email</span>
