@@ -3,12 +3,14 @@ import { runAudit } from "../server.js";
 import {
   extractBearerToken,
   getSupabaseUser,
+  upsertSupabaseRow,
   readJsonBody,
   requireSupabaseServiceRole,
   sendJson,
 } from "./_shared.js";
 import { finalizeReportRun, reserveReportRun } from "./report-eligibility.js";
 import { sendOperatorNotification } from "./_operator-notifications.js";
+import { buildCustomerReport } from "./_customer-report.js";
 
 export const config = {
   maxDuration: 60,
@@ -51,15 +53,16 @@ export default async function handler(request, response) {
         failureCode: "provider_incomplete",
       });
     }
-    await finalizeReportRun(reservation.run_id, { success: true });
     audit.reportRunId = reservation.run_id;
+    await storeInternalReport({ audit, reservation, user });
+    await finalizeReportRun(reservation.run_id, { success: true });
     try {
       const reference = String(body.checkoutReference || body.checkout_reference || `${user.id}:${audit.website}:${Date.now()}`).slice(0, 180);
       await sendOperatorNotification({ type: "report", dedupeKey: `report:${reference}`, subject: `New Builder Rank report: ${audit.company || audit.website}`, heading: "A customer generated a new Builder Rank report", userId: user.id, fields: [
         { label: "Customer", value: user.email }, { label: "Company", value: audit.company }, { label: "Website", value: audit.website }, { label: "Market", value: audit.market }, { label: "Score", value: audit.score }, { label: "Grade", value: audit.grade }, { label: "Generated", value: new Date().toISOString() },
       ] });
     } catch (notificationError) { console.warn("Operator report notification failed", notificationError.message); }
-    sendJson(response, 200, audit);
+    sendJson(response, 200, buildCustomerReport(audit));
   } catch (error) {
     if (reservation?.run_id) {
       try {
@@ -76,6 +79,19 @@ export default async function handler(request, response) {
       detail: error.message,
     });
   }
+}
+
+async function storeInternalReport({ audit, reservation, user }) {
+  await upsertSupabaseRow("br_internal_reports", {
+    report_run_id: reservation.run_id,
+    user_id: user.id,
+    email: user.email,
+    company: audit.company || "Contractor report",
+    website: audit.website,
+    market: audit.market || "",
+    score: Number.isFinite(Number(audit.score)) ? Number(audit.score) : null,
+    report: audit,
+  }, "report_run_id");
 }
 
 function validateWebsiteInput(value) {

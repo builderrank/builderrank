@@ -15,13 +15,16 @@ import launchReadinessHandler from "./api/launch-readiness.js";
 import paymentConfigHandler from "./api/payment-config.js";
 import paymentStatusHandler from "./api/payment-status.js";
 import reportEligibilityHandler from "./api/report-eligibility.js";
+import reportDownloadHandler from "./api/report-download.js";
 import { finalizeReportRun, reserveReportRun } from "./api/report-eligibility.js";
-import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole } from "./api/_shared.js";
+import { extractBearerToken, getSupabaseUser, requireSupabaseServiceRole, upsertSupabaseRow } from "./api/_shared.js";
+import { buildCustomerReport } from "./api/_customer-report.js";
 import stripeWebhookHandler from "./api/stripe-webhook.js";
 import signupNotificationHandler from "./api/signup-notification.js";
 import supabaseKeepaliveHandler from "./api/supabase-keepalive.js";
 import adminWorkspacesHandler from "./api/admin-workspaces.js";
 import adminUsageHandler from "./api/admin-usage.js";
+import adminReportsHandler from "./api/admin-reports.js";
 import aiCreditsHandler from "./api/ai-credits.js";
 import betaIntakeHandler from "./api/beta-intake.js";
 import bootstrapWorkspaceHandler from "./api/bootstrap-workspace.js";
@@ -90,8 +93,19 @@ const server = createServer(async (request, response) => {
         if (audit.modelAnalyses.some((item) => item.status !== "complete")) {
           throw Object.assign(new Error("All three AI models must complete before a report can be delivered."), { statusCode: 503 });
         }
+        audit.reportRunId = reservation.run_id;
+        await upsertSupabaseRow("br_internal_reports", {
+          report_run_id: reservation.run_id,
+          user_id: user.id,
+          email: user.email,
+          company: audit.company || "Contractor report",
+          website: audit.website,
+          market: audit.market || "",
+          score: Number.isFinite(Number(audit.score)) ? Number(audit.score) : null,
+          report: audit,
+        }, "report_run_id");
         await finalizeReportRun(reservation.run_id, { success: true });
-        sendJson(response, 200, audit);
+        sendJson(response, 200, buildCustomerReport(audit));
       } catch (error) {
         await finalizeReportRun(reservation.run_id, { success: false, failureCode: "local_run_failure" });
         throw error;
@@ -114,6 +128,11 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (url.pathname === "/api/admin-reports") {
+      await callApiHandler(adminReportsHandler, request, response);
+      return;
+    }
+
     if (url.pathname === "/api/ai-credits") {
       await callApiHandler(aiCreditsHandler, request, response);
       return;
@@ -131,6 +150,11 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/report-eligibility") {
       await callApiHandler(reportEligibilityHandler, request, response);
+      return;
+    }
+
+    if (url.pathname === "/api/report-download") {
+      await callApiHandler(reportDownloadHandler, request, response);
       return;
     }
 

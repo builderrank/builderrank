@@ -219,6 +219,9 @@ const auditSubmitButton = document.querySelector("#auditSubmitButton");
 const pdfButton = document.querySelector("#pdfButton");
 const copySummaryButton = document.querySelector("#copySummaryButton");
 const jsonButton = document.querySelector("#jsonButton");
+const customerBrief = document.querySelector("#customerBrief");
+const reportGrid = document.querySelector(".report-grid");
+const reportScoreCard = document.querySelector("#report-workspace .score-card");
 const emailReportButton = document.querySelector("#emailReportButton");
 const saveButtons = document.querySelector(".save-buttons");
 const paymentButtons = document.querySelectorAll("[data-payment-link]");
@@ -390,11 +393,40 @@ if (auditForm) {
     }
   });
 
-  pdfButton?.addEventListener("click", () => {
-    const originalTitle = document.title;
-    document.title = reportFilename("pdf").replace(/\.pdf$/, "");
-    window.print();
-    document.title = originalTitle;
+  pdfButton?.addEventListener("click", async () => {
+    const session = await getCurrentSession();
+    if (!session?.access_token || !audit?.reportRunId) {
+      if (auditStatus) auditStatus.textContent = "Log in and complete a report before downloading the PDF.";
+      return;
+    }
+    pdfButton.disabled = true;
+    pdfButton.textContent = "Downloading...";
+    try {
+      const response = await fetch("/api/report-download", {
+        method: "POST",
+        headers: { authorization: `Bearer ${session.access_token}`, "content-type": "application/json" },
+        body: JSON.stringify({ reportRunId: audit.reportRunId }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.detail || error.error || "Could not download the report.");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = reportFilename("pdf");
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      if (auditStatus) auditStatus.textContent = "Your one-page Builder Rank report was downloaded.";
+    } catch (error) {
+      if (auditStatus) auditStatus.textContent = error.message;
+    } finally {
+      pdfButton.disabled = false;
+      pdfButton.textContent = "Download PDF";
+    }
   });
 
   copySummaryButton?.addEventListener("click", async () => {
@@ -1896,7 +1928,7 @@ async function emailCurrentReport({ automatic = false, report = audit } = {}) {
       : `Report emailed to ${session.user.email}.`;
     return { ok: true, id: payload.id };
   } catch (error) {
-    const message = `${error.message} You can still save the PDF or export JSON, then click Email Report to try again.`;
+    const message = `${error.message} You can still save the brief as a PDF, then click Email Report to try again.`;
     if (auditStatus) auditStatus.textContent = automatic
       ? `Report complete, but the automatic email was not sent. ${message}`
       : message;
@@ -2258,6 +2290,7 @@ function render() {
   const score = scoreAudit();
   const circumference = 2 * Math.PI * 68;
   const offset = circumference - (score / 100) * circumference;
+  const isCustomerBrief = Array.isArray(audit.actions);
   const modelScores = audit.modelScores || {
     chatgpt: clamp(score + 2, 0, 100),
     claude: clamp(score - 1, 0, 100),
@@ -2265,21 +2298,52 @@ function render() {
   };
 
   overallScore.textContent = score;
-  chatgptScore.textContent = formatModelScore(modelScores.chatgpt);
-  claudeScore.textContent = formatModelScore(modelScores.claude);
-  geminiScore.textContent = formatModelScore(modelScores.gemini);
+  chatgptScore.textContent = isCustomerBrief ? "Reviewed" : formatModelScore(modelScores.chatgpt);
+  claudeScore.textContent = isCustomerBrief ? "Reviewed" : formatModelScore(modelScores.claude);
+  geminiScore.textContent = isCustomerBrief ? "Reviewed" : formatModelScore(modelScores.gemini);
   reportTitle.textContent = audit.company;
-  gradeBadge.textContent = audit.grade || gradeForScore(score);
+  gradeBadge.textContent = isCustomerBrief ? audit.positionLabel : (audit.grade || gradeForScore(score));
   scoreArc.style.strokeDasharray = `${circumference}`;
   scoreArc.style.strokeDashoffset = `${offset}`;
-  scoreSummary.textContent = audit.summary || summaryForScore(score, audit.market);
+  scoreSummary.textContent = isCustomerBrief
+    ? "Get found by more homeowners. Create more chances to earn the estimate request and win the job."
+    : (audit.summary || summaryForScore(score, audit.market));
 
-  auditCategories.innerHTML = audit.categories.map(renderCategory).join("");
-  fixList.innerHTML = audit.fixes.map(renderFix).join("");
-  intentList.innerHTML = audit.intents.map(renderIntent).join("");
-  evidenceList.innerHTML = renderEvidence(audit.evidence);
-  modelAnalysisList.innerHTML = renderModelAnalyses(audit.modelAnalyses);
+  if (isCustomerBrief) {
+    renderCustomerBrief(audit);
+    if (customerBrief) customerBrief.hidden = false;
+    if (reportGrid) reportGrid.hidden = true;
+    if (reportScoreCard) reportScoreCard.hidden = true;
+    auditCategories.innerHTML = `<section class="category-card"><div><span>Where more jobs can come from</span><strong>${escapeHtml(audit.opportunity || "High-intent local searches")}</strong></div><p>${escapeHtml(audit.opportunitySummary || "")}</p></section>`;
+    fixList.innerHTML = audit.actions.map((action) => renderFix({ priority: String(action.number).padStart(2, "0"), title: action.title, body: action.body })).join("");
+    intentList.innerHTML = `<div class="evidence-card"><strong>The goal</strong><p>${escapeHtml(audit.goal || "More qualified homeowners discovering your business and requesting an estimate.")}</p></div>`;
+    modelAnalysisList.closest(".panel")?.setAttribute("hidden", "");
+    evidenceList.closest(".panel")?.setAttribute("hidden", "");
+    if (jsonButton) jsonButton.hidden = true;
+  } else {
+    auditCategories.innerHTML = (audit.categories || []).map(renderCategory).join("");
+    fixList.innerHTML = (audit.fixes || []).map(renderFix).join("");
+    intentList.innerHTML = (audit.intents || []).map(renderIntent).join("");
+    evidenceList.innerHTML = renderEvidence(audit.evidence);
+    modelAnalysisList.innerHTML = renderModelAnalyses(audit.modelAnalyses);
+  }
   if (saveButtons) saveButtons.hidden = !hasGeneratedReport;
+}
+
+function renderCustomerBrief(report = {}) {
+  if (!customerBrief) return;
+  const actions = (report.actions || []).slice(0, 3);
+  customerBrief.innerHTML = `
+    <div class="customer-brief-masthead"><strong>BUILDER <span>RANK</span></strong><small>AI LEAD OPPORTUNITY BRIEF</small></div>
+    <div class="customer-brief-company"><h2>${escapeHtml(report.company || "Contractor report")}</h2><p>${escapeHtml([report.market, report.website].filter(Boolean).join(" | "))}</p></div>
+    <div class="customer-brief-opportunity">
+      <div><span>YOUR OPPORTUNITY</span><h3>Get found by more homeowners. Create more chances to earn the estimate request and win the job.</h3></div>
+      <aside><small>CURRENT AI POSITION</small><strong>${escapeHtml(report.score ?? "--")} / 100</strong><span>${escapeHtml(report.positionLabel || "Review complete")}</span></aside>
+    </div>
+    <div class="customer-brief-job-source"><div><small>WHERE MORE JOBS CAN COME FROM</small><strong>${escapeHtml(report.opportunity || "High-intent local searches")}</strong></div><p>${escapeHtml(report.opportunitySummary || "")}</p></div>
+    <div class="customer-brief-actions"><h3>3 MOVES TO CREATE MORE LEAD OPPORTUNITIES</h3>${actions.map((action, index) => `<article><b>${String(index + 1).padStart(2, "0")}</b><div><strong>${escapeHtml(action.title)}</strong><p>${escapeHtml(action.body)}</p></div></article>`).join("")}</div>
+    <div class="customer-brief-goal"><small>THE GOAL</small><strong>${escapeHtml(report.goal || "More qualified homeowners discovering your business and requesting an estimate.")}</strong></div>
+  `;
 }
 
 function reportFilename(extension) {
@@ -2374,6 +2438,17 @@ function renderIntent(intent) {
 }
 
 function customerSummaryText(report = {}) {
+  if (Array.isArray(report.actions)) {
+    const actions = report.actions.slice(0, 3).map((action, index) => `${index + 1}. ${action.title} — ${action.body}`).join("\n");
+    return [
+      `${report.company || "Builder Rank report"} — AI Lead Opportunity Brief`,
+      `${report.website || ""}${report.market ? ` · ${report.market}` : ""}`,
+      `Current AI position: ${report.score ?? "Pending"}/100 · ${report.positionLabel || "Review complete"}`,
+      `Where more jobs can come from: ${report.opportunity || "High-intent local searches"}`,
+      actions ? `3 moves to create more lead opportunities\n${actions}` : "",
+      `The goal: ${report.goal || "More qualified homeowners discovering your business and requesting an estimate."}`,
+    ].filter(Boolean).join("\n\n");
+  }
   const categories = Array.isArray(report.categories)
     ? report.categories.map((category) => `- ${category.label}: ${category.score}/100 (${scoreMeaning(category.score)})`).join("\n")
     : "";

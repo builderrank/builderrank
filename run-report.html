@@ -88,9 +88,9 @@
               Complete the fields above. We will create your free account before generating the report.
             </p>
             <div class="save-buttons" hidden>
-              <button id="pdfButton" type="button">Save PDF</button>
+              <button id="pdfButton" type="button">Download PDF</button>
               <button id="copySummaryButton" type="button">Copy Customer Summary</button>
-              <button id="jsonButton" type="button">Export JSON</button>
+              <button id="jsonButton" type="button" hidden>Export JSON</button>
               <button id="emailReportButton" type="button">Email Report</button>
             </div>
           </div>
@@ -130,12 +130,14 @@
         </aside>
       </section>
 
+      <section id="customerBrief" class="customer-brief" aria-label="AI lead opportunity brief" hidden></section>
+
       <section class="report-grid" aria-label="Report card">
         <article class="panel audit-panel">
           <div class="panel-header">
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <div>
-              <p class="eyebrow">Report Card</p>
+              <p class="eyebrow">Lead Opportunity</p>
               <h2 id="reportTitle">Front Range Remodels</h2>
             </div>
             <span id="gradeBadge" class="grade-badge">B-</span>
@@ -147,7 +149,7 @@
           <div class="panel-header">
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <div>
-              <p class="eyebrow">Highest Impact Fixes</p>
+              <p class="eyebrow">3 Moves to Create More Lead Opportunities</p>
               <h2>What to change first</h2>
             </div>
           </div>
@@ -158,8 +160,8 @@
           <div class="panel-header">
             <img class="panel-logo" src="/assets/builder-rank-logo.png" data-builder-logo alt="" />
             <div>
-              <p class="eyebrow">Customer Intent</p>
-              <h2>Searches AI should connect to this business</h2>
+              <p class="eyebrow">Business Outcome</p>
+              <h2>What success looks like</h2>
             </div>
           </div>
           <div id="intentList" class="intent-list"></div>
@@ -209,7 +211,7 @@
             <div class="phase">
               <span>Step 3</span>
               <strong>Get the report and next fixes</strong>
-              <p>The report is saved to the account, exported as PDF/JSON, and emailed to the customer.</p>
+              <p>The simplified lead-opportunity brief is saved to the account and emailed to the customer.</p>
             </div>
           </div>
         </article>

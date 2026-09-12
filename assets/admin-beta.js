@@ -26,8 +26,12 @@ const usageRows = document.querySelector("#adminUsageRows");
 const activityFeed = document.querySelector("#adminActivityFeed");
 const recheckFeed = document.querySelector("#adminRecheckFeed");
 const usageResult = document.querySelector("#adminUsageResult");
+const reportRefreshButton = document.querySelector("#adminReportRefresh");
+const reportRows = document.querySelector("#adminReportRows");
+const reportDetail = document.querySelector("#adminReportDetail");
 
 let adminToken = "";
+let privateReports = [];
 
 document.querySelectorAll("[data-builder-logo]").forEach((image) => {
   image.src = "/assets/builder-rank-logo.png";
@@ -40,6 +44,42 @@ tokenForm?.addEventListener("submit", (event) => {
   tokenStatus.textContent = adminToken ? "Admin token ready for this page session." : "Enter ADMIN_API_TOKEN before calling admin endpoints.";
   if (adminToken) void loadAdminWorkspaces();
   if (adminToken) void loadAdminUsage();
+  if (adminToken) void loadPrivateReports();
+});
+
+reportRefreshButton?.addEventListener("click", () => void loadPrivateReports());
+
+async function loadPrivateReports() {
+  if (!adminToken) { if (reportDetail) reportDetail.textContent = "Enter ADMIN_API_TOKEN first."; return; }
+  reportRefreshButton.disabled = true;
+  reportRefreshButton.textContent = "Refreshing...";
+  try {
+    const response = await fetch("/api/admin-reports?limit=25", { headers: { "x-builderrank-admin-token": adminToken } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || data.error || "Could not load private reports.");
+    privateReports = data.reports || [];
+    reportRows.innerHTML = privateReports.map((row, index) => `<tr>
+      <td><strong>${escapeHtml(row.company || "Contractor report")}</strong><br><span>${escapeHtml(row.email || "No email")}</span></td>
+      <td><a href="${escapeHtml(row.website || "#")}" target="_blank" rel="noopener">${escapeHtml(domainFromUrl(row.website) || row.website || "Unknown")}</a></td>
+      <td>${escapeHtml(row.market || "Not set")}</td>
+      <td>${escapeHtml(row.score ?? "--")}</td>
+      <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
+      <td><button type="button" data-private-report="${index}">Open full data</button></td>
+    </tr>`).join("") || '<tr><td colspan="6">No private reports have been archived yet.</td></tr>';
+    reportDetail.textContent = `${privateReports.length} private report${privateReports.length === 1 ? "" : "s"} loaded.`;
+  } catch (error) {
+    reportDetail.textContent = error.message;
+  } finally {
+    reportRefreshButton.disabled = false;
+    reportRefreshButton.textContent = "Refresh reports";
+  }
+}
+
+reportRows?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-private-report]");
+  if (!button) return;
+  const row = privateReports[Number(button.dataset.privateReport)];
+  if (row?.report) reportDetail.textContent = JSON.stringify(row.report, null, 2);
 });
 
 usageRefreshButton?.addEventListener("click", () => void loadAdminUsage());

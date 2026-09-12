@@ -5,8 +5,10 @@ import {
   readJsonBody,
   requireSupabaseServiceRole,
   safeString,
+  selectSupabaseRows,
   sendJson,
 } from "./_shared.js";
+import { buildCustomerReport } from "./_customer-report.js";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const REPORT_EMAIL_FROM = process.env.REPORT_EMAIL_FROM || "Builder Rank <support@builderrank.io>";
@@ -35,16 +37,9 @@ export default async function handler(request, response) {
     }
 
     const body = await readJsonBody(request);
-    const report = body.report || {};
-    const reportRunId = safeString(report.reportRunId || body.reportRunId);
+    const reportRunId = safeString(body.reportRunId || body.report?.reportRunId);
     if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(reportRunId)) {
       throw Object.assign(new Error("A completed report run is required before email delivery."), { statusCode: 400 });
-    }
-    const incompleteModels = Array.isArray(report.modelAnalyses)
-      ? report.modelAnalyses.filter((item) => item.status !== "complete")
-      : ["missing"];
-    if (incompleteModels.length || report.modelAnalyses.length !== 3) {
-      throw Object.assign(new Error("All three model sections must be complete before email delivery."), { statusCode: 409 });
     }
     const claim = await callSupabaseRpc("br_claim_report_email", { p_run_id: reportRunId, p_user_id: user.id });
     if (claim?.already_sent) {
@@ -53,6 +48,16 @@ export default async function handler(request, response) {
     }
     claimedRunId = reportRunId;
     claimedUserId = user.id;
+    const internalRows = await selectSupabaseRows("br_internal_reports", {
+      select: "report",
+      report_run_id: `eq.${reportRunId}`,
+      user_id: `eq.${user.id}`,
+      limit: "1",
+    });
+    if (!internalRows[0]?.report) {
+      throw Object.assign(new Error("The private source report could not be found."), { statusCode: 404 });
+    }
+    const report = buildCustomerReport({ ...internalRows[0].report, reportRunId });
     const to = safeString(user.email).toLowerCase();
     const company = safeString(report.company, "Contractor report");
     const slug = slugify(company);
@@ -67,12 +72,6 @@ export default async function handler(request, response) {
         {
           filename: `${slug}-builder-rank.pdf`,
           content: renderReportPdfBase64(report),
-        },
-        {
-          filename: `${slug}-builder-rank.json`,
-          content: Buffer.from(JSON.stringify({ exportedAt: new Date().toISOString(), report }, null, 2)).toString(
-            "base64",
-          ),
         },
       ],
     };
@@ -123,52 +122,46 @@ export default async function handler(request, response) {
 
 function renderEmailHtml(report) {
   const score = report.score ?? "Pending";
-  const grade = report.grade || "Ungraded";
-  const fixes = Array.isArray(report.fixes) ? report.fixes.slice(0, 5) : [];
-  const followUpMessage = modelFollowUpMessage(report);
+  const actions = Array.isArray(report.actions) ? report.actions.slice(0, 3) : [];
 
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111;max-width:640px">
       <h1 style="margin-bottom:8px">Your Builder Rank report is ready</h1>
-      <p>Thank you for requesting a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.</p>
+      <p>We reviewed how clearly AI systems can understand and recommend your business. Your one-page opportunity brief is attached.</p>
       <p><strong>${escapeHtml(report.company || "Contractor report")}</strong></p>
       <p>${escapeHtml(report.website || "")}${report.market ? ` · ${escapeHtml(report.market)}` : ""}</p>
-      <p><strong>AI Health Score:</strong> ${escapeHtml(score)} · <strong>Grade:</strong> ${escapeHtml(grade)}</p>
-      <p><strong>How to read it:</strong> Scores are out of 100. 85–100 is Strong, 70–84 is Competitive, 60–69 is Developing, and 0–59 Needs Work. The overall score blends website evidence with available live-model reviews.</p>
-      <p>${escapeHtml(report.summary || "Your report JSON export is attached.")}</p>
-      ${fixes.length ? `<h2>Highest-impact fixes</h2><ul>${fixes.map(renderFix).join("")}</ul>` : ""}
-      ${followUpMessage ? `<h2>Model follow-up</h2><p>${escapeHtml(followUpMessage)}</p>` : ""}
-      <p>If you have questions about the results or want help prioritizing the fixes, reply to this email.</p>
+      <p><strong>Current AI position:</strong> ${escapeHtml(score)}/100 · ${escapeHtml(report.positionLabel)}</p>
+      <p><strong>Where more jobs can come from:</strong> ${escapeHtml(report.opportunity)}</p>
+      ${actions.length ? `<h2>3 moves to create more lead opportunities</h2><ol>${actions.map(renderAction).join("")}</ol>` : ""}
+      <p><strong>The goal:</strong> ${escapeHtml(report.goal)}</p>
+      <p>Reply to this email if you want to walk through the findings and decide what to fix first.</p>
     </div>
   `;
 }
 
 function renderEmailText(report) {
-  const followUpMessage = modelFollowUpMessage(report);
-  const fixes = Array.isArray(report.fixes)
-    ? report.fixes.slice(0, 5).map((fix) => `- ${fix.priority}: ${fix.title}`).join("\n")
+  const actions = Array.isArray(report.actions)
+    ? report.actions.slice(0, 3).map((action) => `${action.number}. ${action.title}\n${action.body}`).join("\n\n")
     : "";
 
   return [
     "Your Builder Rank report is ready",
-    "Thank you for requesting a Builder Rank report. The attached PDF gives you a clean copy of the results, and the JSON export is included for your records.",
+    "We reviewed how clearly AI systems can understand and recommend your business. Your one-page opportunity brief is attached.",
     report.company || "Contractor report",
     report.website || "",
     report.market || "",
-    `AI Health Score: ${report.score ?? "Pending"}`,
-    `Grade: ${report.grade || "Ungraded"}`,
-    "How to read it: Scores are out of 100. 85–100 is Strong, 70–84 is Competitive, 60–69 is Developing, and 0–59 Needs Work. The overall score blends website evidence with available live-model reviews.",
-    report.summary || "",
-    fixes ? `Highest-impact fixes:\n${fixes}` : "",
-    followUpMessage ? `Model follow-up:\n${followUpMessage}` : "",
-    "If you have questions about the results or want help prioritizing the fixes, reply to this email.",
+    `Current AI position: ${report.score ?? "Pending"}/100 · ${report.positionLabel || "Review complete"}`,
+    `Where more jobs can come from: ${report.opportunity || "High-intent local searches"}`,
+    actions ? `3 moves to create more lead opportunities:\n${actions}` : "",
+    `The goal: ${report.goal || "More qualified homeowners discovering your business and requesting an estimate."}`,
+    "Reply to this email if you want to walk through the findings and decide what to fix first.",
   ]
     .filter(Boolean)
     .join("\n\n");
 }
 
-function renderFix(fix) {
-  return `<li><strong>${escapeHtml(fix.priority || "Fix")}:</strong> ${escapeHtml(fix.title || "")}</li>`;
+function renderAction(action) {
+  return `<li><strong>${escapeHtml(action.title || "Recommended action")}</strong><br>${escapeHtml(action.body || "")}</li>`;
 }
 
 function slugify(value) {
@@ -180,36 +173,68 @@ function slugify(value) {
 }
 
 export function renderReportPdfBase64(report) {
-  const score = report.score ?? "Pending";
-  const grade = report.grade || "Ungraded";
-  const pdf = createBrandedPdf();
+  return createLeadOpportunityPdf(buildCustomerReport(report)).toString("base64");
+}
 
-  pdf.header(report.company || "Contractor report", report.market || "");
-  pdf.scoreSummary(score, grade, report.website || "", report.summary || "No summary was generated.");
-  pdf.sectionTitle("How to Read Your Scores");
-  pdf.bodyCard(
-    "All scores are out of 100",
-    "85-100 is Strong, 70-84 is Competitive, 60-69 is Developing, and 0-59 Needs Work. The overall score blends website evidence with available live-model reviews. Model scores show each AI system's assessment; category scores show the website signals that helped or hurt.",
-  );
-  pdf.sectionTitle("Report Card Categories");
-  pdf.categories(report.categories);
-  pdf.sectionTitle("Highest-Impact Fixes");
-  pdf.fixes(report.fixes);
-  pdf.sectionTitle("Customer Intent");
-  pdf.intent(report.intents);
-  pdf.sectionTitle("Live Model Analysis");
-  pdf.modelAnalyses(report.modelAnalyses);
-  pdf.sectionTitle("Audit Evidence");
-  pdf.evidence(report.evidence);
+function createLeadOpportunityPdf(report) {
+  const pageWidth = 612;
+  const pageHeight = 792;
+  const margin = 42;
+  const contentWidth = pageWidth - margin * 2;
+  const orange = [1, 0.365, 0.08];
+  const ink = [0.06, 0.06, 0.07];
+  const muted = [0.34, 0.34, 0.37];
+  const pale = [0.965, 0.957, 0.945];
+  const white = [1, 1, 1];
+  const ops = [];
+  const color = (value) => value.map((item) => Number(item).toFixed(3)).join(" ");
+  const rect = (x, bottomY, width, height, fill) => ops.push(`${color(fill)} rg\n${x} ${bottomY} ${width} ${height} re f`);
+  const text = (value, x, baselineY, size = 10, bold = false, fill = ink) => {
+    ops.push(`${color(fill)} rg\nBT\n/${bold ? "F2" : "F1"} ${size} Tf\n${x} ${baselineY} Td\n(${escapePdfText(value)}) Tj\nET`);
+  };
+  const lines = (value, x, startY, size, maxWidth, lineHeight, bold = false, fill = ink, maxLines = 3) => {
+    wrapPdfText(value, maxWidth, size).slice(0, maxLines).forEach((line, index) => text(line, x, startY - index * lineHeight, size, bold, fill));
+  };
 
-  const followUpMessage = modelFollowUpMessage(report);
-  if (followUpMessage) {
-    pdf.sectionTitle("Model Follow-Up");
-    pdf.bodyCard("Builder Rank review", followUpMessage);
-  }
+  rect(0, 0, pageWidth, pageHeight, white);
+  text("BUILDER", margin, 756, 13, true, ink);
+  text("RANK", margin + 58, 756, 13, true, orange);
+  text("AI LEAD OPPORTUNITY BRIEF", 397, 756, 9, true, ink);
+  rect(margin, 742, contentWidth, 1, ink);
 
-  pdf.footerNote("Reply to this email if you have questions or want help prioritizing the fixes.");
-  return pdf.toBuffer().toString("base64");
+  text(report.company || "Contractor report", margin, 704, 24, true, ink);
+  text([report.market, report.website].filter(Boolean).join("  |  "), margin, 684, 9, false, muted);
+
+  text("YOUR OPPORTUNITY", margin, 644, 10, true, orange);
+  lines("Get found by more homeowners. Create more chances to earn the estimate request and win the job.", margin, 620, 18, 350, 23, true, ink, 3);
+  rect(420, 565, 150, 82, pale);
+  text("CURRENT AI POSITION", 436, 625, 8, true, muted);
+  text(`${report.score ?? "--"} / 100`, 436, 594, 25, true, orange);
+  text(report.positionLabel || "Review complete", 436, 576, 9, true, ink);
+
+  rect(0, 467, pageWidth, 76, pale);
+  text("WHERE MORE JOBS CAN COME FROM", margin, 518, 9, true, ink);
+  text(report.opportunity || "High-intent local searches", margin, 492, 18, true, ink);
+  lines(report.opportunitySummary, 326, 516, 9, 244, 13, false, muted, 4);
+
+  text("3 MOVES TO CREATE MORE LEAD OPPORTUNITIES", margin, 430, 13, true, ink);
+  rect(margin, 417, contentWidth, 1, ink);
+  const actions = report.actions?.length ? report.actions.slice(0, 3) : [{ number: 1, title: "Strengthen your online proof", body: "Make the business easier for AI and homeowners to understand and trust." }];
+  const rowTops = [382, 292, 202];
+  actions.forEach((action, index) => {
+    const y = rowTops[index];
+    text(String(index + 1).padStart(2, "0"), margin + 8, y, 28, true, orange);
+    text(action.title || "Recommended action", margin + 82, y + 2, 13, true, ink);
+    lines(action.body || "", margin + 82, y - 18, 9.5, 420, 13, false, muted, 3);
+    rect(margin, y - 58, contentWidth, 0.7, [0.78, 0.78, 0.78]);
+  });
+
+  text("THE GOAL", margin, 112, 9, true, orange);
+  lines(report.goal, margin + 76, 113, 12, 430, 16, true, ink, 3);
+  rect(margin, 57, contentWidth, 1, ink);
+  text("Reply to your Builder Rank email to review the findings and decide what to fix first.", margin, 38, 8.5, false, muted);
+
+  return buildPdfFromPages([ops]);
 }
 
 function modelFollowUpMessage(report) {

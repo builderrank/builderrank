@@ -1,5 +1,6 @@
 import adminWorkspacesHandler from "./admin-workspaces.js";
 import adminUsageHandler from "./admin-usage.js";
+import adminReportsHandler from "./admin-reports.js";
 import aiCreditsHandler from "./ai-credits.js";
 import auditHandler from "./audit.js";
 import betaIntakeHandler from "./beta-intake.js";
@@ -17,6 +18,7 @@ import notFoundHandler from "./not-found.js";
 import paymentConfigHandler from "./payment-config.js";
 import paymentStatusHandler from "./payment-status.js";
 import reportEligibilityHandler from "./report-eligibility.js";
+import reportDownloadHandler from "./report-download.js";
 import stripeWebhookHandler from "./stripe-webhook.js";
 import signupNotificationHandler from "./signup-notification.js";
 import supabaseKeepaliveHandler from "./supabase-keepalive.js";
@@ -28,6 +30,7 @@ import targetTermsHandler from "./target-terms.js";
 const handlers = new Map([
   ["/api/admin-workspaces", adminWorkspacesHandler],
   ["/api/admin-usage", adminUsageHandler],
+  ["/api/admin-reports", adminReportsHandler],
   ["/api/ai-credits", aiCreditsHandler],
   ["/api/audit", auditHandler],
   ["/api/beta-intake", betaIntakeHandler],
@@ -44,6 +47,7 @@ const handlers = new Map([
   ["/api/payment-config", paymentConfigHandler],
   ["/api/payment-status", paymentStatusHandler],
   ["/api/report-eligibility", reportEligibilityHandler],
+  ["/api/report-download", reportDownloadHandler],
   ["/api/stripe-webhook", stripeWebhookHandler],
   ["/api/signup-notification", signupNotificationHandler],
   ["/api/supabase-keepalive", supabaseKeepaliveHandler],

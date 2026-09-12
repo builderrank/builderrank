@@ -3574,6 +3574,63 @@ button:disabled {
   gap: 18px;
 }
 
+.customer-brief {
+  max-width: 980px;
+  margin: 36px auto;
+  padding: 42px 48px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #dedbd6;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.14);
+}
+
+.customer-brief-masthead,
+.customer-brief-opportunity,
+.customer-brief-job-source,
+.customer-brief-goal {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.customer-brief-masthead { border-bottom: 2px solid #111; padding-bottom: 14px; }
+.customer-brief-masthead strong { letter-spacing: 0.12em; }
+.customer-brief-masthead strong span,
+.customer-brief-opportunity > div > span,
+.customer-brief-goal small { color: #ff5d14; }
+.customer-brief-company { padding: 32px 0; }
+.customer-brief-company h2 { margin: 0 0 6px; color: #111; font-size: clamp(30px, 5vw, 48px); }
+.customer-brief-company p { margin: 0; color: #5d5d62; }
+.customer-brief-opportunity { align-items: stretch; padding-bottom: 30px; }
+.customer-brief-opportunity > div { flex: 1; }
+.customer-brief-opportunity h3 { max-width: 620px; margin: 10px 0 0; color: #111; font-size: clamp(24px, 3.5vw, 38px); line-height: 1.16; }
+.customer-brief-opportunity aside { min-width: 220px; padding: 24px; background: #f5f2ee; display: flex; flex-direction: column; justify-content: center; }
+.customer-brief-opportunity aside strong { margin: 10px 0 4px; color: #ff5d14; font-size: 34px; }
+.customer-brief-job-source { margin: 0 -48px; padding: 26px 48px; background: #f5f2ee; align-items: center; }
+.customer-brief-job-source > div { min-width: 42%; display: grid; gap: 10px; }
+.customer-brief-job-source strong { font-size: 26px; }
+.customer-brief-job-source p { max-width: 430px; margin: 0; color: #5d5d62; }
+.customer-brief-actions { padding: 34px 0 12px; }
+.customer-brief-actions h3 { margin: 0; padding-bottom: 14px; border-bottom: 2px solid #111; color: #111; }
+.customer-brief-actions article { display: grid; grid-template-columns: 88px 1fr; gap: 22px; padding: 24px 10px; border-bottom: 1px solid #ccc; }
+.customer-brief-actions article > b { color: #ff5d14; font-size: 38px; font-weight: 500; }
+.customer-brief-actions article strong { color: #111; font-size: 20px; }
+.customer-brief-actions article p { margin: 7px 0 0; color: #5d5d62; }
+.customer-brief-goal { align-items: baseline; padding: 28px 0 10px; }
+.customer-brief-goal small { min-width: 90px; font-weight: 800; }
+.customer-brief-goal strong { flex: 1; font-size: 20px; }
+
+@media (max-width: 700px) {
+  .customer-brief { padding: 28px 22px; }
+  .customer-brief-masthead,
+  .customer-brief-opportunity,
+  .customer-brief-job-source,
+  .customer-brief-goal { flex-direction: column; }
+  .customer-brief-opportunity aside { min-width: 0; }
+  .customer-brief-job-source { margin: 0 -22px; padding: 24px 22px; }
+  .customer-brief-actions article { grid-template-columns: 56px 1fr; }
+}
+
 .panel {
   padding: 22px;
   background: rgba(14, 14, 14, 0.92);
@@ -5518,6 +5575,8 @@ li {
   .save-buttons {
     display: none;
   }
+
+  .customer-brief { margin: 0; padding: 28px; border: 0; box-shadow: none; }
 
   .marketing-copy,
   .marketing-card,

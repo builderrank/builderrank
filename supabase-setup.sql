@@ -55,6 +55,35 @@ create unique index if not exists reports_user_checkout_reference_uidx
   on public.reports (user_id, checkout_reference)
   where checkout_reference is not null and checkout_reference <> '';
 
+-- Full audit payloads are private operator records. Customer-facing report rows
+-- remain in public.reports and contain only the simplified report projection.
+create table if not exists public.br_internal_reports (
+  id uuid primary key default gen_random_uuid(),
+  report_run_id uuid not null unique,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  email text,
+  company text,
+  website text not null,
+  market text,
+  score integer,
+  report jsonb not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.br_internal_reports enable row level security;
+
+drop policy if exists "internal_reports_no_client_access" on public.br_internal_reports;
+create policy "internal_reports_no_client_access"
+on public.br_internal_reports
+as restrictive
+for all
+to anon, authenticated
+using (false)
+with check (false);
+
+create index if not exists br_internal_reports_created_idx on public.br_internal_reports (created_at desc);
+create index if not exists br_internal_reports_user_idx on public.br_internal_reports (user_id, created_at desc);
+
 create table if not exists public.purchases (
   id uuid primary key default gen_random_uuid(),
   stripe_event_id text unique,

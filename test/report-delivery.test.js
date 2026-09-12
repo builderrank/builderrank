@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { renderReportPdfBase64 } from "../api/email-report.js";
+import { buildCustomerReport, opportunityFromIntents } from "../api/_customer-report.js";
 import { assertCompleteModelResult, buildModelScores, isRetryableProviderError, normalizeRecommendationList, polishRecommendationText, truncateModelText } from "../server.js";
 
 test("rejects incomplete live-model responses", () => {
@@ -64,4 +65,37 @@ test("creates a branded PDF attachment from report data", () => {
   const pdf = Buffer.from(encoded, "base64");
   assert.equal(pdf.subarray(0, 8).toString(), "%PDF-1.4");
   assert.ok(pdf.length > 1000);
+  assert.match(pdf.toString("binary"), /3 MOVES TO CREATE MORE LEAD OPPORTUNITIES/);
+  assert.doesNotMatch(pdf.toString("binary"), /Live Model Analysis|Audit Evidence|Report Card Categories/);
+});
+
+test("customer report keeps only the concise lead-opportunity view", () => {
+  const customer = buildCustomerReport({
+    reportRunId: "run-1",
+    company: "Example Remodeler",
+    website: "https://example.com/",
+    market: "Denver, CO",
+    score: 72,
+    intents: ['"bathroom remodel contractor near me"'],
+    fixes: [
+      { priority: "Critical", title: "Add local proof", body: "Publish project evidence." },
+      { priority: "High", title: "Strengthen reviews", body: "Ask recent customers." },
+      { priority: "High", title: "Improve service pages", body: "Add pricing guidance." },
+      { priority: "Medium", title: "Internal-only fourth fix", body: "Should stay private." },
+    ],
+    categories: [{ label: "Internal category" }],
+    evidence: { pagesCrawled: ["https://example.com/private-evidence"] },
+    modelAnalyses: [{ status: "complete", raw: "private model detail" }],
+  });
+
+  assert.equal(customer.positionLabel, "Good foundation");
+  assert.equal(customer.opportunity, "Bathroom Remodel");
+  assert.equal(customer.actions.length, 3);
+  assert.equal("categories" in customer, false);
+  assert.equal("evidence" in customer, false);
+  assert.equal("modelAnalyses" in customer, false);
+});
+
+test("falls back to a safe opportunity label when search intent is unusable", () => {
+  assert.equal(opportunityFromIntents([]), "High-intent local searches");
 });
